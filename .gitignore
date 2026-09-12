@@ -5,3 +5,6 @@ next-env.d.ts
 *.tsbuildinfo
 .DS_Store
 qa/frames
+
+.vercel
+.env*
