@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------
+   Tokens. Carried over from the portfolio so the splash looks the
+   same on day one. Retune them here when the new site gets its own
+   palette; nothing below hardcodes a colour.
+   --------------------------------------------------------------- */
+
+:root {
+  --bg: #fffcf3;
+  --ink: #16140e;
+  --muted: #57534a;
+  --faint: #8b8577;
+  --line: rgb(22 20 14 / 0.16);
+  --accent: #f3b44a;
+  --accent-ink: #16140e;
+
+  --fs-display: clamp(34px, 4.2vw, 61.7px);
+  --fs-lead: clamp(16px, 1.3vw, 19px);
+  --fs-micro: 10.5px;
+  --lh-display: 1.04;
+  --tr-display: -0.03em;
+
+  --wrap: min(1307px, 90vw);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-1: 200ms;
+}
+
+* { box-sizing: border-box; min-width: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- Splash ------------------------------------------------------------- */
+.splash { background: var(--bg); color: var(--ink); }
+.splash-track { position: relative; }
+.splash-stage {
+  position: sticky; top: 0;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+}
+.splash-frame {
+  position: absolute;
+  top: 50%; left: 50%;
+  translate: -50% -50%;
+  will-change: transform, opacity;
+}
+.splash-frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Full size, never scaled, so the type stays at native resolution. This box
+   is exactly one screen, and it is the parent the hero fills. */
+.splash-hero {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  will-change: clip-path;
+}
+
+/* The greeting shares the hero's clip, so it occupies exactly the monitor
+   screen and grows with it. Decorative, so it never takes the pointer: at
+   opacity 0 it would otherwise still sit over the hero and swallow its clicks. */
+.splash-greeting {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--ink);
+  will-change: clip-path, opacity;
+  /* Fine horizontal banding, so the panel reads as a lit screen rather than a
+     flat cream rectangle. */
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgb(22 20 14 / 0.022) 0px,
+      rgb(22 20 14 / 0.022) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    var(--bg);
+}
+.splash-greeting b { font-weight: 700; }
+.splash-greeting span {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+
+/* Narrow viewports and reduced motion: room above, hero as the page. */
+.splash-flat { display: flex; flex-direction: column; }
+.splash-flat-media { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+
+/* --- Hero ----------------------------------------------------------------- */
+/* Fills its parent: one full screen inside the splash, content height below
+   900px where the parent has no fixed height. */
+.hero {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 48px 5vw;
+}
+.hero-body {
+  width: var(--wrap);
+  max-width: 46rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hero-headline {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0 0.35em;
+  font-size: var(--fs-display);
+  font-weight: 500;
+  line-height: var(--lh-display);
+  letter-spacing: var(--tr-display);
+}
+/* The rotating word. Sized to the longest candidate by an invisible sizer
+   sharing its box, so the line never reflows as the word changes. */
+.hero-word-stage {
+  position: relative;
+  display: inline-flex;
+  overflow: hidden;
+  height: 1.15em;
+}
+.hero-word-sizer { visibility: hidden; font-weight: 700; }
+.hero-word {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.hero-note {
+  margin: 0;
+  max-width: 42ch;
+  font-size: var(--fs-lead);
+  line-height: 1.55;
+  color: var(--muted);
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 22px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: filter var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+}
+.hero-cta-primary { background: var(--accent); color: var(--accent-ink); }
+.hero-cta-primary:hover { filter: brightness(0.94); }
+.hero-cta-primary:hover .hero-cta-icon { transform: translateX(2px); }
+.hero-cta-secondary { border: 1px solid var(--line); color: var(--ink); }
+.hero-cta-secondary:hover { background: rgb(22 20 14 / 0.05); }
+.hero-cta-icon { transition: transform var(--dur-1) var(--ease); }
+.hero-cta:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
