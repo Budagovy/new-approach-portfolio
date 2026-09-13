@@ -151,12 +151,12 @@ const readClip = () => {
       const n = getComputedStyle(document.querySelector(".splash-hero")).clipPath.match(/-?[\d.]+px/g)?.map(parseFloat) ?? [0];
       return Math.max(...n);
     })();
-    const cta = document.querySelector(".splash-hero a");
-    let hit = "no link in hero";
-    if (cta) {
-      const r = cta.getBoundingClientRect();
+    const target = document.querySelector(".hero-eyebrow");
+    let hit = "no target in hero";
+    if (target) {
+      const r = target.getBoundingClientRect();
       const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-      hit = top && (top === cta || cta.contains(top)) ? "link" : (top?.className || top?.tagName || "nothing");
+      hit = top && (top === target || target.contains(top)) ? "hit" : (top?.className || top?.tagName || "nothing");
     }
     return {
       maxInset: c,
@@ -169,7 +169,7 @@ const readClip = () => {
   ok("room has left", end.roomOpacity, 0, 0.01);
   /* The greeting shares the hero's clip and sits above it. Faded to zero it
      is invisible but would still take the click unless it ignores the pointer. */
-  ok("hero link is clickable", end.hit, "link");
+  ok("hero content is clickable", end.hit, "hit");
 
   console.log("\n== console ==");
   if (errors.length) console.log("       " + errors.join("\n       "));

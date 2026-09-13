@@ -131,31 +131,29 @@ body {
 .hero-headline {
   margin: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: center;
-  gap: 0 0.35em;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15em;
   font-size: var(--fs-display);
   font-weight: 500;
   line-height: var(--lh-display);
   letter-spacing: var(--tr-display);
 }
-/* The rotating word. Sized to the longest candidate by an invisible sizer
-   sharing its box, so the line never reflows as the word changes. */
+/* The rotating phrase. Sized to the longest candidate by an invisible sizer
+   sharing its box, so the line never reflows as the phrase changes. Left to
+   wrap like normal text so a long phrase breaks onto two lines on narrow
+   screens instead of overflowing. */
 .hero-word-stage {
   position: relative;
-  display: inline-flex;
-  overflow: hidden;
-  height: 1.15em;
+  display: block;
+  width: 100%;
 }
 .hero-word-sizer { visibility: hidden; font-weight: 700; }
 .hero-word {
   position: absolute;
-  left: 0;
-  top: 0;
+  inset: 0;
   font-weight: 700;
   color: var(--accent);
-  white-space: nowrap;
 }
 .hero-note {
   margin: 0;
@@ -164,26 +162,3 @@ body {
   line-height: 1.55;
   color: var(--muted);
 }
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 8px;
-}
-.hero-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 22px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: filter var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
-}
-.hero-cta-primary { background: var(--accent); color: var(--accent-ink); }
-.hero-cta-primary:hover { filter: brightness(0.94); }
-.hero-cta-primary:hover .hero-cta-icon { transform: translateX(2px); }
-.hero-cta-secondary { border: 1px solid var(--line); color: var(--ink); }
-.hero-cta-secondary:hover { background: rgb(22 20 14 / 0.05); }
-.hero-cta-icon { transition: transform var(--dur-1) var(--ease); }
-.hero-cta:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }

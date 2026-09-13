@@ -1,8 +1,14 @@
 {
-  "eyebrow": "New Approach — Architecture Studio",
-  "prefix": "We design spaces that feel",
-  "words": ["modern", "grounded", "sculptural", "quiet", "bold"],
-  "note": "A small studio for houses, interiors and additions that stay honest to the site, the client and the budget.",
-  "primaryCta": { "label": "View projects", "href": "#work" },
-  "secondaryCta": { "label": "Start a project", "href": "#contact" }
+  "eyebrow": "Yonatan Budagov — Senior Product Designer",
+  "prefix": "I design products that",
+  "words": [
+    "solve real problems.",
+    "make complexity simple.",
+    "feel intuitive.",
+    "turn friction into flow.",
+    "help people do more.",
+    "help businesses grow.",
+    "make usage easier."
+  ],
+  "note": "6 years of connecting user needs with business goals from discovery to launch."
 }

@@ -51,7 +51,7 @@ or the panel will sit off the bezel. `qa/splash.mjs` fails when it does.
 ## QA
 
 With the dev server up (`npm run dev`, port 3220): `npm run qa`.
-19 checks: screen fit against the bezel, the push, arrival, the hero's links
+19 checks: screen fit against the bezel, the push, arrival, the hero content
 taking the click, mobile, reduced motion, console errors. Tolerance defaults to
 exact; a check that needs slack asks for it.
 

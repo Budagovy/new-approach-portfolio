@@ -10,9 +10,9 @@ const sans = Google_Sans_Flex({
 });
 
 export const metadata: Metadata = {
-  title: "New Approach — Architecture Portfolio",
+  title: "Yonatan Budagov — Senior Product Designer",
   description:
-    "New Approach is a small architecture studio for houses, interiors and additions.",
+    "Yonatan Budagov designs products that connect user needs with business goals, from discovery to launch.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
