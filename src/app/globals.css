@@ -139,21 +139,25 @@ body {
   line-height: var(--lh-display);
   letter-spacing: var(--tr-display);
 }
-/* The rotating phrase. Sized to the longest candidate by an invisible sizer
-   sharing its box, so the line never reflows as the phrase changes. Left to
-   wrap like normal text so a long phrase breaks onto two lines on narrow
-   screens instead of overflowing. */
+/* The rotating phrase. All seven candidates are stacked in the same grid
+   cell, so the box is always as tall as whichever one wraps the most at the
+   current width, not just the longest by character count (a long single
+   word like "businesses" can wrap sooner than a longer but shorter-worded
+   phrase). Only the active one is visible; the rest sit at opacity 0. */
 .hero-word-stage {
   position: relative;
-  display: block;
+  display: grid;
   width: 100%;
+  overflow: hidden;
 }
-.hero-word-sizer { visibility: hidden; font-weight: 700; }
 .hero-word {
-  position: absolute;
-  inset: 0;
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 700;
   color: var(--accent);
+  text-align: center;
 }
 .hero-note {
   margin: 0;

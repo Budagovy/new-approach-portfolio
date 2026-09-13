@@ -21,7 +21,6 @@ const WORD_HOLD_MS = 2200;
  */
 export function AnimatedHero({ data }: { data: AnimatedHeroData }) {
   const [index, setIndex] = useState(0);
-  const longest = data.words.reduce((a, b) => (b.length > a.length ? b : a), "");
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -39,9 +38,6 @@ export function AnimatedHero({ data }: { data: AnimatedHeroData }) {
         <h1 className="hero-headline">
           <span className="hero-line">{data.prefix}</span>
           <span className="hero-word-stage" aria-live="polite">
-            <span className="hero-word-sizer" aria-hidden="true">
-              {longest}
-            </span>
             {data.words.map((word, i) => (
               <motion.span
                 key={word}
