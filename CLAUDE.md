@@ -47,6 +47,14 @@ or the panel will sit off the bezel. `qa/splash.mjs` fails when it does.
 - Video playback starts from the effect, never from an `autoPlay` attribute,
   so reduced motion is honoured before hydration.
 - Timings live in `src/lib/motion.ts`. Tokens live in `src/app/globals.css`.
+- No non-deterministic value (`Date.now()`, `Math.random()`, `window.*`) in a
+  render or in `useState`'s initial value. The server renders at a different
+  moment than the client hydrates; `useRotatingIndex` learned this by
+  computing its index from `Date.now()` inside `useState`, which disagreed
+  between server and client whenever that gap crossed a word boundary and
+  surfaced as a real hydration mismatch, with the animated word sometimes
+  painting wrong. Start deterministic (`useState(0)`), correct it inside an
+  effect, client-only.
 
 ## QA
 

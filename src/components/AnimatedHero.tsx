@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { DotPattern } from "@/components/DotPattern";
+import { useRotatingIndex } from "@/lib/useRotatingIndex";
 
 export interface AnimatedHeroData {
   eyebrow: string;
@@ -20,14 +20,7 @@ const WORD_HOLD_MS = 2200;
  * every string comes from content/hero.json.
  */
 export function AnimatedHero({ data }: { data: AnimatedHeroData }) {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      setIndex((i) => (i + 1) % data.words.length);
-    }, WORD_HOLD_MS);
-    return () => clearTimeout(id);
-  }, [index, data.words.length]);
+  const index = useRotatingIndex(data.words.length, WORD_HOLD_MS);
 
   return (
     <div className="hero">

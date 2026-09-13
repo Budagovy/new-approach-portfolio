@@ -154,6 +154,12 @@ body {
   display: grid;
   width: 100%;
   overflow: hidden;
+  /* This stage sits inside a scaled ancestor when rendered as the monitor
+     preview. Isolating it into its own stacking/paint context keeps the
+     overflow clip reliable there rather than depending on how the browser
+     happens to composite a clipped box inside a scaled one. */
+  isolation: isolate;
+  contain: paint;
 }
 .hero-word {
   grid-area: 1 / 1;
