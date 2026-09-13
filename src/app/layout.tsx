@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Google_Sans_Flex } from "next/font/google";
+import { DotPattern } from "@/components/DotPattern";
 import "./globals.css";
 
 const sans = Google_Sans_Flex({
@@ -17,7 +18,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={sans.variable}>
-      <body>{children}</body>
+      <body>
+        <DotPattern className="fixed inset-0 -z-10 h-full w-full" />
+        {children}
+      </body>
     </html>
   );
 }

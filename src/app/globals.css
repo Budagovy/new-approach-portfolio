@@ -101,12 +101,14 @@ body {
 /* Fills its parent: one full screen inside the splash, content height below
    900px where the parent has no fixed height. */
 .hero {
+  position: relative;
   height: 100%;
   display: grid;
   place-items: center;
   padding: 48px 5vw;
 }
 .hero-body {
+  position: relative;
   width: var(--wrap);
   max-width: 46rem;
   display: flex;

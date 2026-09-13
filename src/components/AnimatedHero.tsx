@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import { DotPattern } from "@/components/DotPattern";
 
 export interface AnimatedHeroData {
   eyebrow: string;
@@ -33,6 +34,7 @@ export function AnimatedHero({ data }: { data: AnimatedHeroData }) {
 
   return (
     <div className="hero">
+      <DotPattern />
       <div className="hero-body">
         <span className="hero-eyebrow">{data.eyebrow}</span>
 
