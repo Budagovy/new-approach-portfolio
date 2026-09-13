@@ -64,10 +64,10 @@ body {
   will-change: clip-path;
 }
 
-/* The greeting shares the hero's clip, so it occupies exactly the monitor
+/* The preview shares the hero's clip, so it occupies exactly the monitor
    screen and grows with it. Decorative, so it never takes the pointer: at
    opacity 0 it would otherwise still sit over the hero and swallow its clicks. */
-.splash-greeting {
+.splash-preview {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -85,12 +85,17 @@ body {
     ),
     var(--bg);
 }
-.splash-greeting b { font-weight: 700; }
-.splash-greeting span {
+/* A full copy of the hero, rendered at its natural CONTENT size (100vw
+   wide, auto height, so it hugs the hero's own content instead of
+   stretching to fill 100dvh) then shrunk with a scale transform to fit the
+   monitor rectangle. Same content as the real hero below; only the
+   transform makes it small. Measured so the fit accounts for both the
+   monitor's width and height, since a portrait phone's monitor slice is a
+   different shape from a wide desktop one. */
+.splash-preview-stage {
   position: absolute;
-  transform: translate(-50%, -50%);
-  white-space: nowrap;
-  letter-spacing: -0.02em;
+  width: 100vw;
+  translate: -50% -50%;
 }
 
 /* Narrow viewports and reduced motion: room above, hero as the page. */

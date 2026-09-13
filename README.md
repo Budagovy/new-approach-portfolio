@@ -35,9 +35,10 @@ The pinned splash runs on every screen width, mobile included. Only visitors
 who turn off motion get the plain fallback: video above, hero as the page
 below it.
 
-## Change the words on the monitor
+## What shows on the monitor before you scroll
 
-`content/splash.json`: `greeting` and `greetingAccent` (the bold tail).
+The monitor shows the hero itself, shrunk to fit, not separate placeholder
+copy. Change the hero and the monitor preview changes with it.
 
 ## Using a different video
 

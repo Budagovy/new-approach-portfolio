@@ -1,6 +1,4 @@
 {
-  "greeting": "Nice to meet",
-  "greetingAccent": "you",
   "video": {
     "src": "/media/hero.mp4",
     "poster": "/media/hero-poster.jpg",

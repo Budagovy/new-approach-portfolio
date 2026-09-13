@@ -26,7 +26,7 @@ const ok = (name, got, want, tol = 0) => {
 /* CSS collapses inset() to 1, 2 or 3 values when sides repeat, so expand it
    the way the box-shorthand rules do rather than assuming four. */
 const readClip = () => {
-  const g = document.querySelector(".splash-greeting");
+  const g = document.querySelector(".splash-preview");
   const n = getComputedStyle(g).clipPath.match(/-?[\d.]+px/g)?.map(parseFloat) ?? [];
   if (!n.length) return null;
   const [t, r = t, b = t, l = r] = n;
@@ -50,16 +50,16 @@ const readClip = () => {
     heroW: Math.round(document.querySelector(".splash-hero").getBoundingClientRect().width),
     heroH: Math.round(document.querySelector(".splash-hero").getBoundingClientRect().height),
     slotFilled: !!document.querySelector(".splash-hero > *"),
-    greetingText: document.querySelector(".splash-greeting span")?.textContent.trim(),
+    previewFilled: !!document.querySelector(".splash-preview-stage > *"),
   }));
   ok("pinned splash used at 1470", s.pinned, true);
   ok("hero never scaled", s.heroTransform, "none");
   ok("hero slot is one screen wide", s.heroW, VW, 1);
   ok("hero slot is one screen tall", s.heroH, VH, 1);
   ok("slot renders the child hero", s.slotFilled, true);
-  ok("greeting on the monitor", !!s.greetingText, true);
+  ok("monitor shows the hero preview", s.previewFilled, true);
 
-  /* The greeting must cover the monitor with no bezel inside it. Sampled from
+  /* The preview must cover the monitor with no bezel inside it. Sampled from
      rendered pixels at several points in the loop, so camera drift cannot
      hide between two screenshots. */
   const isCream = (px) => Math.abs(px[0] - 255) < 8 && Math.abs(px[1] - 249) < 8 && Math.abs(px[2] - 229) < 10;
@@ -83,7 +83,7 @@ const readClip = () => {
     if (bad) inside = `${bad}/8 edge samples not cream at t=${frac}`;
   }
   console.log("\n== screen fit ==");
-  ok("greeting covers the monitor", inside, "ok");
+  ok("preview covers the monitor", inside, "ok");
 
   /* Inside the clip must be the panel; walking outward, the first thing that
      is not cream must be the dark bezel within a few pixels. Bright means
@@ -129,7 +129,7 @@ const readClip = () => {
     await page.evaluate((y) => scrollTo(0, y), Math.round(span * f));
     await page.waitForTimeout(800);
     const m = await page.evaluate(() => {
-      const g = document.querySelector(".splash-greeting");
+      const g = document.querySelector(".splash-preview");
       const n = getComputedStyle(g).clipPath.match(/-?[\d.]+px/g)?.map(parseFloat) ?? [];
       const [t, r = t, b = t, l = r] = n;
       const sc = getComputedStyle(document.querySelector(".splash-frame")).transform.match(/matrix\(([^)]+)\)/);
@@ -167,7 +167,7 @@ const readClip = () => {
   console.log("\n== arrival ==");
   ok("hero fills the viewport", end.maxInset, 0, 0.5);
   ok("room has left", end.roomOpacity, 0, 0.01);
-  /* The greeting shares the hero's clip and sits above it. Faded to zero it
+  /* The preview shares the hero's clip and sits above it. Faded to zero it
      is invisible but would still take the click unless it ignores the pointer. */
   ok("hero content is clickable", end.hit, "hit");
 
@@ -182,16 +182,35 @@ const readClip = () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await page.goto(URL, { waitUntil: "networkidle" });
   await page.waitForTimeout(1500);
-  const m = await page.evaluate(() => ({
-    pinned: !!document.querySelector(".splash-track"),
-    hero: !!document.querySelector(".splash-hero > *"),
-    overflow: document.documentElement.scrollWidth > innerWidth,
-  }));
+  const m = await page.evaluate(() => {
+    const previewLayer = document.querySelector(".splash-preview");
+    const previewStage = document.querySelector(".splash-preview-stage");
+    const cs = getComputedStyle(previewLayer);
+    const n = cs.clipPath.match(/-?[\d.]+px/g)?.map(parseFloat) ?? [];
+    const [t, r = t, b = t, l = r] = n;
+    const monitor = { top: t, bottom: innerHeight - b, left: l, right: innerWidth - r };
+    const eyebrow = previewStage?.querySelector(".hero-eyebrow");
+    const note = previewStage?.querySelector(".hero-note");
+    const eb = eyebrow?.getBoundingClientRect();
+    const nb = note?.getBoundingClientRect();
+    // On a portrait phone the monitor slice is a different shape than on
+    // desktop; a fit that only matches width can let the preview's content
+    // spill past the monitor's top and bottom.
+    const previewFits = !!(eb && nb) &&
+      eb.top >= monitor.top - 1 && nb.bottom <= monitor.bottom + 1;
+    return {
+      pinned: !!document.querySelector(".splash-track"),
+      hero: !!document.querySelector(".splash-hero > *"),
+      overflow: document.documentElement.scrollWidth > innerWidth,
+      previewFits,
+    };
+  });
   await page.screenshot({ path: "qa/frames/mobile.png", fullPage: true });
   console.log("\n== mobile 390 ==");
   ok("pinned splash used", m.pinned, true);
   ok("slot renders the child hero", m.hero, true);
   ok("no horizontal overflow", m.overflow, false);
+  ok("preview content fits the monitor", m.previewFits, true);
   await page.close();
 }
 

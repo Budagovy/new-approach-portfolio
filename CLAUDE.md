@@ -42,7 +42,7 @@ or the panel will sit off the bezel. `qa/splash.mjs` fails when it does.
 - No em-dash in visible copy.
 - Animate transform and opacity only. No scroll event listeners: Motion
   `useScroll` only.
-- The greeting layer has `pointer-events: none`. Without it the faded greeting
+- The preview layer has `pointer-events: none`. Without it the faded preview
   sits over the hero and swallows every click.
 - Video playback starts from the effect, never from an `autoPlay` attribute,
   so reduced motion is honoured before hydration.
@@ -51,14 +51,28 @@ or the panel will sit off the bezel. `qa/splash.mjs` fails when it does.
 ## QA
 
 With the dev server up (`npm run dev`, port 3220): `npm run qa`.
-19 checks: screen fit against the bezel, the push, arrival, the hero content
+20 checks: screen fit against the bezel, the push, arrival, the hero content
 taking the click, mobile, reduced motion, console errors. Tolerance defaults to
 exact; a check that needs slack asks for it.
 
 ## Placeholders
 
-`src/app/icon.svg` is still a placeholder mark. The greeting ("Nice to meet
-you") was carried over from the portfolio.
+`src/app/icon.svg` is still a placeholder mark.
+
+## The monitor preview
+
+Before the push begins, the monitor shows the hero itself, not separate copy:
+`SplashScreen` renders a second copy of `children`, held at its natural
+content size (`.splash-preview-stage` is 100vw wide but auto height, so it
+hugs the hero's own content) then shrunk with a scale transform to fit inside
+the screen rectangle. It fades out as the push starts, handing over to the
+full-size hero underneath.
+
+The fit is measured, not guessed: a `ResizeObserver` on that stage feeds its
+real width and height into the scale calculation, so it fits both dimensions
+of the monitor rectangle. Matching width alone breaks on a portrait phone,
+where the monitor slice is a different shape than on desktop and content
+would spill past the top and bottom.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

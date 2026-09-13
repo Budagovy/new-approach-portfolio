@@ -30,10 +30,6 @@ export interface SplashVideo {
 }
 
 export interface SplashData {
-  /** What the monitor says before the push begins. */
-  greeting: string;
-  /** The tail of that line, set in the heavier weight. */
-  greetingAccent: string;
   video: SplashVideo;
 }
 
@@ -115,6 +111,26 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, [measure]);
+
+  /* The preview holds the hero at its natural content size (the stage is
+     100vw wide but auto height, so it hugs the hero's own content instead of
+     stretching to 100dvh). Measured so the scale can fit BOTH dimensions of
+     the monitor rectangle: matching width alone works on a wide desktop
+     monitor slice, but a portrait phone's monitor slice is a different shape
+     and the content would spill past its top and bottom. */
+  const previewStageRef = useRef<HTMLDivElement>(null);
+  const previewW = useMotionValue(0);
+  const previewH = useMotionValue(0);
+  useEffect(() => {
+    const el = previewStageRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      previewW.set(entry.contentRect.width);
+      previewH.set(entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [previewW, previewH]);
 
   /* Video progress, 0 to 1. Driven by rAF rather than React state so tracking
      the monitor never costs a render. */
@@ -201,17 +217,25 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
   });
 
   /*
-   * At rest the monitor carries a greeting, not the page: clipped to the
-   * monitor, the hero would frame an arbitrary slice of itself.
+   * At rest the monitor already shows the hero, just small: clipped to the
+   * monitor at full size like the real hero below, the crop would land on an
+   * arbitrary slice of it rather than a coherent thumbnail. So this layer
+   * holds its own copy of the hero, shrunk with a scale transform to fit the
+   * screen rectangle, sitting on top of the full-size one underneath.
    *
-   * The greeting sits ON TOP of the hero and fades away to reveal it. The hero
-   * is never faded: it carries the page ground, so cross-fading it would let
-   * the footage show through. Tied to the push so the handover always lands at
-   * the same point in the move.
+   * It fades away once the push starts, handing over to the full-size hero
+   * beneath it. That one is never faded: it carries the page ground, so
+   * cross-fading it would let the footage show through. Tied to the push so
+   * the handover always lands at the same point in the move.
    */
-  const greetOpacity = useTransform(push, [0.02, 0.22], [1, 0]);
-  const greetX = useTransform(vt, (f) => rectAt(f).cx);
-  const greetY = useTransform(vt, (f) => rectAt(f).cy);
+  const previewOpacity = useTransform(push, [0.02, 0.22], [1, 0]);
+  const previewX = useTransform(vt, (f) => rectAt(f).cx);
+  const previewY = useTransform(vt, (f) => rectAt(f).cy);
+  const previewScale = useTransform([vt, previewW, previewH], ([f, w, h]: number[]) => {
+    if (w === 0 || h === 0) return 0;
+    const r = rectAt(f);
+    return Math.min(r.w / w, r.h / h);
+  });
 
   /* The room only leaves once the hero already fills most of the view. */
   const roomOpacity = useTransform(push, [0.82, 1], [1, 0]);
@@ -257,29 +281,21 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
             {children}
           </motion.div>
 
-          {/* The greeting, above the hero, sized for the monitor. It is
-              decorative and never takes the pointer, or it would sit invisibly
-              over the hero's links once it has faded. */}
+          {/* The preview: the same hero, shrunk to monitor size, above the
+              full-size one. Decorative and never takes the pointer, or it
+              would sit invisibly over the hero's content once it has faded. */}
           <motion.div
-            className="splash-greeting"
+            className="splash-preview"
             aria-hidden="true"
-            style={{ clipPath: clip, opacity: greetOpacity }}
+            style={{ clipPath: clip, opacity: previewOpacity }}
           >
-            <motion.span
-              style={{
-                left: greetX,
-                top: greetY,
-                fontSize: `clamp(11px, ${(base.h * 0.12).toFixed(1)}px, 30px)`,
-              }}
+            <motion.div
+              ref={previewStageRef}
+              className="splash-preview-stage"
+              style={{ left: previewX, top: previewY, scale: previewScale }}
             >
-              {data.greeting}
-              {data.greetingAccent ? (
-                <>
-                  {" "}
-                  <b>{data.greetingAccent}</b>
-                </>
-              ) : null}
-            </motion.span>
+              {children}
+            </motion.div>
           </motion.div>
         </div>
       </div>
