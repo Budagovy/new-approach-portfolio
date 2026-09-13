@@ -31,8 +31,9 @@ Design the hero as **one full screen** (100vw by 100vh) and give its root
 `height: 100%`. It is drawn at full size and revealed through the monitor,
 never scaled, which is why the type stays sharp.
 
-On screens narrower than 900px, and for visitors who turn off motion, the
-video sits above and the hero is simply the page below it.
+The pinned splash runs on every screen width, mobile included. Only visitors
+who turn off motion get the plain fallback: video above, hero as the page
+below it.
 
 ## Change the words on the monitor
 

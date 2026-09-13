@@ -22,8 +22,9 @@ The contract for whatever goes in the slot:
   the reader arrives.
 - **It is never scaled.** It is drawn once at full size and revealed through a
   clip, which is why type stays sharp. Do not add a transform to its root.
-- **Below 900px and under reduced motion** the room sits above and the hero is
-  simply the page, at content height. The hero must work in both.
+- **Under reduced motion only** the room sits above and the hero is simply
+  the page, at content height. Every other width, including mobile, gets the
+  pinned splash. The hero must work in both.
 
 ## The video and its calibration
 

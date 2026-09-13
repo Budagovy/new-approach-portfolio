@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
 import { HERO } from "@/lib/motion";
-import { useMediaQuery } from "@/lib/useMediaQuery";
 
 /** Where the monitor screen sits in the frame, as percentages of it. */
 export interface ScreenRect {
@@ -46,8 +45,9 @@ export interface SplashData {
  * through a clip, so design it as one full screen: it fills its parent, which
  * in the pinned splash is exactly 100vw by 100dvh.
  *
- * Below 900px, and under reduced motion, the room plays as a plain backdrop
- * and the hero is simply the page beneath it.
+ * Pinned on every viewport width so mobile gets the same hook as desktop.
+ * Only reduced motion falls back to a plain backdrop with the hero as the
+ * page beneath it.
  */
 export function SplashScreen({
   data,
@@ -59,8 +59,7 @@ export function SplashScreen({
   children: ReactNode;
 }) {
   const reduce = useReducedMotion();
-  const wide = useMediaQuery("(min-width: 900px)");
-  return wide && !reduce ? (
+  return !reduce ? (
     <SplashPinned data={data} id={id}>{children}</SplashPinned>
   ) : (
     <SplashFlat data={data} id={id} reduce={!!reduce}>{children}</SplashFlat>

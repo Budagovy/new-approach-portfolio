@@ -177,20 +177,20 @@ const readClip = () => {
   await page.close();
 }
 
-/* ---- narrow: room above, hero as the page ------------------------------ */
+/* ---- narrow: same pinned splash as desktop, just portrait --------------- */
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await page.goto(URL, { waitUntil: "networkidle" });
   await page.waitForTimeout(1500);
   const m = await page.evaluate(() => ({
-    flat: !!document.querySelector(".splash-flat"),
-    hero: !!document.querySelector(".splash-flat-hero > *"),
+    pinned: !!document.querySelector(".splash-track"),
+    hero: !!document.querySelector(".splash-hero > *"),
     overflow: document.documentElement.scrollWidth > innerWidth,
   }));
   await page.screenshot({ path: "qa/frames/mobile.png", fullPage: true });
   console.log("\n== mobile 390 ==");
-  ok("flat splash used", m.flat, true);
-  ok("hero renders below the room", m.hero, true);
+  ok("pinned splash used", m.pinned, true);
+  ok("slot renders the child hero", m.hero, true);
   ok("no horizontal overflow", m.overflow, false);
   await page.close();
 }
