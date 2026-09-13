@@ -62,7 +62,7 @@ const readClip = () => {
   /* The greeting must cover the monitor with no bezel inside it. Sampled from
      rendered pixels at several points in the loop, so camera drift cannot
      hide between two screenshots. */
-  const isCream = (px) => Math.abs(px[0] - 255) < 8 && Math.abs(px[1] - 252) < 8 && Math.abs(px[2] - 243) < 10;
+  const isCream = (px) => Math.abs(px[0] - 255) < 8 && Math.abs(px[1] - 249) < 8 && Math.abs(px[2] - 229) < 10;
   let inside = "ok";
   for (const frac of [0, 0.33, 0.66]) {
     await page.evaluate((f) => { const v = document.querySelector("video"); v.pause(); v.currentTime = v.duration * f; }, frac);
