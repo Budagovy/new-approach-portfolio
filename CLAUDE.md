@@ -62,17 +62,37 @@ exact; a check that needs slack asks for it.
 ## The monitor preview
 
 Before the push begins, the monitor shows the hero itself, not separate copy:
-`SplashScreen` renders a second copy of `children`, held at its natural
-content size (`.splash-preview-stage` is 100vw wide but auto height, so it
-hugs the hero's own content) then shrunk with a scale transform to fit inside
-the screen rectangle. It fades out as the push starts, handing over to the
-full-size hero underneath.
+`SplashScreen` renders a second copy of `children` in `.splash-preview-stage`,
+shrunk with a scale transform to fit inside the screen rectangle. It fades
+out as the push starts, handing over to the full-size hero underneath.
 
-The fit is measured, not guessed: a `ResizeObserver` on that stage feeds its
-real width and height into the scale calculation, so it fits both dimensions
-of the monitor rectangle. Matching width alone breaks on a portrait phone,
-where the monitor slice is a different shape than on desktop and content
-would spill past the top and bottom.
+`.splash-preview-stage` has no width or height of its own: it shrink-wraps to
+whatever `children` naturally renders at, which is the hero's own content box
+(e.g. `hero-body`), not the full viewport. It used to be pinned to 100vw,
+which measured the wrong box — a `.hero` that stretches to fill its parent
+rather than the narrower content centred inside it — so the scale came out
+far too small, leaving the preview tiny in a sea of empty cream. `vw`-based
+CSS inside the hero (`--wrap`, `--fs-display`) still resolves against the
+true viewport regardless of this box's own width, so nothing downstream
+needed to change.
+
+The fit itself is measured, not guessed: a `ResizeObserver` on that stage
+feeds its real width and height into the scale calculation, so it fits both
+dimensions of the monitor rectangle. Matching width alone breaks on a
+portrait phone, where the monitor slice is a different shape than on desktop
+and content would spill past the top and bottom.
+
+**The handoff.** The full-size hero underneath is never scaled or moved: full
+size, centred in the viewport, always. If the preview faded out without
+matching that first, the two would be visibly different sizes wherever they
+overlapped mid-fade — a small preview crossfading into a much larger
+fragment of the real hero peeking through the growing clip. So the preview's
+scale and position walk from "fit the monitor" to "match the real hero
+exactly", and that walk (`ALIGN_END`) completes well before the opacity fade
+(`FADE_END`) does. Alignment finishes while the real hero underneath is
+barely visible yet; by the time the fade makes it visible, there is nothing
+left to see a seam in. Widening `ALIGN_END` to the same span as the fade
+reintroduces the double-exposure glitch this fixed.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

@@ -224,18 +224,41 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
    * screen rectangle, sitting on top of the full-size one underneath.
    *
    * It fades away once the push starts, handing over to the full-size hero
-   * beneath it. That one is never faded: it carries the page ground, so
-   * cross-fading it would let the footage show through. Tied to the push so
-   * the handover always lands at the same point in the move.
+   * beneath it. That one is never faded, never scaled and never moved: it
+   * carries the page ground at native size, centred in the viewport, the
+   * whole time. So this layer's scale and position are walked from "fit the
+   * monitor" to "match that exactly", so the two are never a visibly
+   * different size where they overlap during the fade.
+   *
+   * That walk finishes much sooner than the opacity does (ALIGN_END well
+   * before FADE_END): if both ran on the same span, the middle of the fade
+   * would show two still-mismatched copies blended together, a glitch. Snap
+   * to alignment first, while the real hero underneath is barely visible
+   * yet, then let the fade carry on with nothing left to see the seam.
    */
-  const previewOpacity = useTransform(push, [0.02, 0.22], [1, 0]);
-  const previewX = useTransform(vt, (f) => rectAt(f).cx);
-  const previewY = useTransform(vt, (f) => rectAt(f).cy);
-  const previewScale = useTransform([vt, previewW, previewH], ([f, w, h]: number[]) => {
-    if (w === 0 || h === 0) return 0;
+  const ALIGN_END = 0.06;
+  const FADE_END = 0.22;
+  const previewOpacity = useTransform(push, [0.02, FADE_END], [1, 0]);
+  const previewX = useTransform([vt, push], ([f, pushV]: number[]) => {
     const r = rectAt(f);
-    return Math.min(r.w / w, r.h / h);
+    const t = Math.min(1, pushV / ALIGN_END);
+    return r.cx + (vw / 2 - r.cx) * t;
   });
+  const previewY = useTransform([vt, push], ([f, pushV]: number[]) => {
+    const r = rectAt(f);
+    const t = Math.min(1, pushV / ALIGN_END);
+    return r.cy + (vh / 2 - r.cy) * t;
+  });
+  const previewScale = useTransform(
+    [vt, previewW, previewH, push],
+    ([f, w, h, pushV]: number[]) => {
+      if (w === 0 || h === 0) return 0;
+      const r = rectAt(f);
+      const fit = Math.min(r.w / w, r.h / h);
+      const t = Math.min(1, pushV / ALIGN_END);
+      return fit + (1 - fit) * t;
+    }
+  );
 
   /* The room only leaves once the hero already fills most of the view. */
   const roomOpacity = useTransform(push, [0.82, 1], [1, 0]);

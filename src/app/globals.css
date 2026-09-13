@@ -85,16 +85,16 @@ body {
     ),
     var(--bg);
 }
-/* A full copy of the hero, rendered at its natural CONTENT size (100vw
-   wide, auto height, so it hugs the hero's own content instead of
-   stretching to fill 100dvh) then shrunk with a scale transform to fit the
-   monitor rectangle. Same content as the real hero below; only the
-   transform makes it small. Measured so the fit accounts for both the
-   monitor's width and height, since a portrait phone's monitor slice is a
-   different shape from a wide desktop one. */
+/* A full copy of the hero, rendered at its natural CONTENT size (shrink-wrapped
+   to the hero's own content box, not stretched to fill the viewport) then
+   shrunk with a scale transform to fit the monitor rectangle. The hero's own
+   width still resolves against the true viewport through its vw-based CSS,
+   so it is not affected by this box being narrower. Same content as the real
+   hero below; only the transform makes it small. Measured so the fit
+   accounts for both the monitor's width and height, since a portrait phone's
+   monitor slice is a different shape from a wide desktop one. */
 .splash-preview-stage {
   position: absolute;
-  width: 100vw;
   translate: -50% -50%;
 }
 
