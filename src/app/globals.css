@@ -24,9 +24,39 @@
   --wrap: min(1307px, 90vw);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-1: 200ms;
+
+  /* Content container width and inline padding, measured (not assumed)
+     from pleurat.com's own container at a sweep of viewport widths: below
+     962px it runs edge to edge with a flat 25px gutter; above that it steps
+     through three more tiers (98vw/40px, 96vw/52px, then a hard 1524px
+     ceiling reached via 88vw/68px). Four tiers, not one continuous formula,
+     because that's what the reference actually does. */
+  --content-max: 100%;
+  --content-pad: 25px;
+}
+
+@media (min-width: 962px) {
+  :root { --content-max: 98vw; --content-pad: 40px; }
+}
+@media (min-width: 1186px) {
+  :root { --content-max: 96vw; --content-pad: 52px; }
+}
+@media (min-width: 1536px) {
+  :root { --content-max: min(1524px, 88vw); --content-pad: 68px; }
 }
 
 * { box-sizing: border-box; min-width: 0; }
+
+/* Shared content container: same left/right edges on every section that
+   uses it, at every width. Backgrounds and video stay outside this (full
+   bleed on the section itself); this only wraps the content that needs to
+   line up. */
+.container {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--content-pad);
+}
 
 html { -webkit-text-size-adjust: 100%; }
 
@@ -188,7 +218,7 @@ body {
    (.stack-mobile-list) instead — same card face, no absolute positioning. */
 .cards-section {
   background: var(--bg);
-  padding: clamp(64px, 10vw, 120px) 5vw;
+  padding-block: clamp(64px, 10vw, 120px);
   min-height: 1px;
 }
 
@@ -203,10 +233,8 @@ body {
   box-shadow: 0 20px 45px -26px rgb(40 54 24 / 0.35);
 }
 
-/* Touch fallback: a plain vertical list. */
+/* Touch fallback: a plain vertical list, filling the shared container. */
 .stack-mobile-list {
-  width: min(560px, 100%);
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: clamp(20px, 5vw, 32px);

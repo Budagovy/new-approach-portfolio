@@ -89,13 +89,19 @@ function CardFace({ card, exploreLabel }: { card: ServiceCard; exploreLabel: str
  * Touch: the stack has nothing to hover, so it falls back to a plain
  * vertical list, full width, in reading order.
  */
-/** Below this, the fanned stack cannot fit without cropping; use the list. */
-const COMPACT_BREAKPOINT = 760;
+/**
+ * Below this, the resting fan (fixed-width cards, CARD_WIDTH + 4*OVERLAP =
+ * 1040px total) doesn't fit inside the container's content box at any of
+ * the tiers above; use the list instead. Recomputed for the new tiered
+ * container, not the old flat 5vw padding.
+ */
+const COMPACT_BREAKPOINT = 1240;
 
 export function ServiceCards({ data }: { data: ServiceCardsData }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [isTouch, setIsTouch] = useState(false);
   const [isNarrow, setIsNarrow] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState(0);
   const [hasMounted, setHasMounted] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -106,7 +112,10 @@ export function ServiceCards({ data }: { data: ServiceCardsData }) {
     updatePointer();
     pointerMq.addEventListener("change", updatePointer);
 
-    const updateWidth = () => setIsNarrow(window.innerWidth < COMPACT_BREAKPOINT);
+    const updateWidth = () => {
+      setIsNarrow(window.innerWidth < COMPACT_BREAKPOINT);
+      setViewportWidth(window.innerWidth);
+    };
     updateWidth();
     window.addEventListener("resize", updateWidth);
 
@@ -141,6 +150,20 @@ export function ServiceCards({ data }: { data: ServiceCardsData }) {
   const totalWidth =
     cards.length > 0 ? cards[cards.length - 1]._baseX + CARD_WIDTH : CARD_WIDTH;
 
+  /**
+   * The fan renders as soon as it fits at rest (COMPACT_BREAKPOINT), but a
+   * hover push of the full PUSH_DISTANCE can still carry an edge card past
+   * the viewport edge on the narrower end of that range, causing real page
+   * horizontal scroll (confirmed at 1240-1440px). Scale the push down to
+   * whatever room is actually available on either side of the resting fan,
+   * so it can never push a card further than the viewport allows; it only
+   * reaches the full, original distance once there's room to spare.
+   */
+  const pushDistance = Math.min(
+    PUSH_DISTANCE,
+    Math.max(40, (viewportWidth - totalWidth) / 2 - 24)
+  );
+
   const getCardStyle = (card: PreparedCard, index: number): CSSVars => {
     if (reduceMotion) {
       return {
@@ -163,10 +186,10 @@ export function ServiceCards({ data }: { data: ServiceCardsData }) {
 
     if (hasActive) {
       if (index < (activeIndex as number)) {
-        x -= PUSH_DISTANCE;
+        x -= pushDistance;
         y -= SPREAD * 0.4;
       } else if (index > (activeIndex as number)) {
-        x += PUSH_DISTANCE;
+        x += pushDistance;
         y += SPREAD * 0.4;
       }
       if (isActive) {
@@ -208,39 +231,41 @@ export function ServiceCards({ data }: { data: ServiceCardsData }) {
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.6, ease: EASE }}
     >
-      {isCompact ? (
-        <div className="stack-mobile-list">
-          {cards.map((card) => (
-            <div key={card.tag} className="card" style={{ background: card.bg, color: card.text }}>
-              <CardFace card={card} exploreLabel={data.exploreLabel} />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="stack-outer">
-          <div
-            className="stack-frame"
-            style={
-              {
-                "--stack-width": `${totalWidth}px`,
-                "--stack-height": `${CARD_HEIGHT + (reduceMotion ? 0 : HOVER_LIFT) + 24}px`,
-              } as CSSVars
-            }
-          >
-            {cards.map((card, index) => (
-              <div
-                key={card.tag}
-                className="card stack-card"
-                style={getCardStyle(card, index)}
-                onMouseEnter={() => setActiveIndex(index)}
-                onMouseLeave={() => setActiveIndex(null)}
-              >
+      <div className="container">
+        {isCompact ? (
+          <div className="stack-mobile-list">
+            {cards.map((card) => (
+              <div key={card.tag} className="card" style={{ background: card.bg, color: card.text }}>
                 <CardFace card={card} exploreLabel={data.exploreLabel} />
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="stack-outer">
+            <div
+              className="stack-frame"
+              style={
+                {
+                  "--stack-width": `${totalWidth}px`,
+                  "--stack-height": `${CARD_HEIGHT + (reduceMotion ? 0 : HOVER_LIFT) + 24}px`,
+                } as CSSVars
+              }
+            >
+              {cards.map((card, index) => (
+                <div
+                  key={card.tag}
+                  className="card stack-card"
+                  style={getCardStyle(card, index)}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
+                >
+                  <CardFace card={card} exploreLabel={data.exploreLabel} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </motion.section>
   );
 }
