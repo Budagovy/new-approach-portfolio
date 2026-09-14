@@ -28,8 +28,9 @@ with your own component:
 ```
 
 Design the hero as **one full screen** (100vw by 100vh) and give its root
-`height: 100%`. It is drawn at full size and revealed through the monitor,
-never scaled, which is why the type stays sharp.
+`height: 100%`. `SplashScreen` scales and positions it for you as the scroll
+carries it from a small hero on the monitor to full size as the page; don't
+add a competing transform to the hero's own root.
 
 The pinned splash runs on every screen width, mobile included. Only visitors
 who turn off motion get the plain fallback: video above, hero as the page
@@ -38,7 +39,8 @@ below it.
 ## What shows on the monitor before you scroll
 
 The monitor shows the hero itself, shrunk to fit, not separate placeholder
-copy. Change the hero and the monitor preview changes with it.
+copy — the same element that becomes the full page as you scroll, not a
+second copy swapped out partway through.
 
 ## Using a different video
 

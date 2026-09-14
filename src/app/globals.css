@@ -55,24 +55,31 @@ body {
 }
 .splash-frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* Full size, never scaled, so the type stays at native resolution. This box
-   is exactly one screen, and it is the parent the hero fills. */
+/* Clips to the monitor's current window. Sits at exactly inset:0 — never
+   moved or scaled itself — because the clip-path insets below are computed
+   in viewport-absolute pixels, which only stays correct as long as this
+   element's own local (0,0) is the viewport's (0,0). The transform that
+   actually grows the hero lives one level down, on .splash-hero-stage,
+   specifically so it never has to share an element with this clip. */
 .splash-hero {
   position: absolute;
   inset: 0;
-  background: var(--bg);
+  overflow: hidden;
   will-change: clip-path;
 }
-
-/* The preview shares the hero's clip, so it occupies exactly the monitor
-   screen and grows with it. Decorative, so it never takes the pointer: at
-   opacity 0 it would otherwise still sit over the hero and swallow its clicks. */
-.splash-preview {
+/* One hero instance, rendered at its natural full-page size always (100vw by
+   100dvh, so its internal vw/vh-based CSS resolves against the true
+   viewport) then scaled and positioned by SplashScreen to cover its parent's
+   current clip window. Scale never exceeds 1, so type is never magnified
+   past its own painted resolution — only ever shown at native size or
+   smaller. */
+.splash-hero-stage {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
+  width: 100vw;
+  height: 100dvh;
+  translate: -50% -50%;
   color: var(--ink);
-  will-change: clip-path, opacity;
+  will-change: transform;
   /* Fine horizontal banding, so the panel reads as a lit screen rather than a
      flat cream rectangle. */
   background:
@@ -84,18 +91,6 @@ body {
       transparent 3px
     ),
     var(--bg);
-}
-/* A full copy of the hero, rendered at its natural CONTENT size (shrink-wrapped
-   to the hero's own content box, not stretched to fill the viewport) then
-   shrunk with a scale transform to fit the monitor rectangle. The hero's own
-   width still resolves against the true viewport through its vw-based CSS,
-   so it is not affected by this box being narrower. Same content as the real
-   hero below; only the transform makes it small. Measured so the fit
-   accounts for both the monitor's width and height, since a portrait phone's
-   monitor slice is a different shape from a wide desktop one. */
-.splash-preview-stage {
-  position: absolute;
-  translate: -50% -50%;
 }
 
 /* Narrow viewports and reduced motion: room above, hero as the page. */

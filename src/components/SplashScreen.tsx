@@ -112,25 +112,27 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
     return () => window.removeEventListener("resize", measure);
   }, [measure]);
 
-  /* The preview holds the hero at its natural content size (the stage is
-     100vw wide but auto height, so it hugs the hero's own content instead of
-     stretching to 100dvh). Measured so the scale can fit BOTH dimensions of
-     the monitor rectangle: matching width alone works on a wide desktop
-     monitor slice, but a portrait phone's monitor slice is a different shape
-     and the content would spill past its top and bottom. */
-  const previewStageRef = useRef<HTMLDivElement>(null);
-  const previewW = useMotionValue(0);
-  const previewH = useMotionValue(0);
+  /* Guards the small-scale end of the hero's transform against a mismatch
+     between the monitor's aspect ratio and the hero's own: covering the
+     window by WIDTH (below) is what gives the "flying into the screen" crop
+     rather than a shrinking rectangle, but on a monitor rectangle much
+     squarer than the hero's content, covering by width alone can crop the
+     bottom of the content — the subtitle line gone below the bezel — well
+     before scale reaches 1. `.hero-body` is the actual content block (not
+     the full-page .hero, which is always exactly the stage's own height and
+     so useless as a size to compare against); measuring it is a real,
+     if narrow, coupling to the hero's internal markup, kept to this one
+     class name. */
+  const heroStageRef = useRef<HTMLDivElement>(null);
+  const heroContentH = useMotionValue(0);
   useEffect(() => {
-    const el = previewStageRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      previewW.set(entry.contentRect.width);
-      previewH.set(entry.contentRect.height);
-    });
-    ro.observe(el);
+    const stage = heroStageRef.current;
+    if (!stage) return;
+    const target = stage.querySelector<HTMLElement>(".hero-body") ?? stage;
+    const ro = new ResizeObserver(([entry]) => heroContentH.set(entry.contentRect.height));
+    ro.observe(target);
     return () => ro.disconnect();
-  }, [previewW, previewH]);
+  }, [heroContentH]);
 
   /* Video progress, 0 to 1. Driven by rAF rather than React state so tracking
      the monitor never costs a render. */
@@ -171,15 +173,21 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
   });
 
   /*
-   * The hero is NEVER scaled. A transformed layer is rasterised once at its
-   * painted size, so scaling the hero would draw the type small and then
-   * magnify it. Clipping keeps every glyph at native resolution for the whole
-   * move.
+   * ONE hero instance, always. It used to be two: a small scaled-down
+   * "preview" copy for rest, and a full-size never-scaled copy revealed
+   * through a growing clip, swapped (or crossfaded) between at some point in
+   * the scroll. Two independently-computed layers can only ever coincide by
+   * coincidence — any handoff between them, instant or gradual, is visibly
+   * two different sizes of the same content for at least a moment. Merging
+   * them removes the handoff instead of tuning it: heroTransform (below) IS
+   * the geometry, computed from the exact same roomScale and monitor
+   * rectangle the clip uses, so hero and window are mathematically the same
+   * shape at every step, not two curves hoped into agreement.
    *
-   * The clip is DERIVED from the room's scale rather than interpolated
-   * separately, so the bezel and the reveal can never slide against each
-   * other. That is what makes it read as flying into the screen rather than a
-   * rectangle growing over a zooming photograph.
+   * The clip is likewise DERIVED from the room's scale rather than
+   * interpolated separately, so the bezel and the reveal can never slide
+   * against each other. That is what makes it read as flying into the
+   * screen rather than a rectangle growing over a zooming photograph.
    */
 
   /* Scroll is smoothed before anything reads it. Raw wheel and trackpad input
@@ -196,31 +204,12 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
     t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
   const pushRaw = useTransform(p, [HERO.zoomStart, HERO.zoomEnd], [0, 1], { clamp: true });
-
-  /* The monitor preview (below) is shown at a deliberately smaller scale
-     than the real hero underneath (PREVIEW_MARGIN, so it fits the monitor
-     with room to breathe) — the real hero is never scaled at all, by
-     design, to keep its type sharp. Those are two different, fixed scales.
-     Any GRADUAL blend between them — fading opacity while either is
-     mid-transition, or even just fading at a constant scale while the room
-     grows underneath — shows both at once, at their different sizes, for
-     the length of the fade: a double image. Tried three variants of this
-     (interpolating scale and position to match, fading at a fixed size
-     while the room grows, fading at a fixed size while the room is held)
-     and confirmed each one still glitches by scanning the actual fade
-     frame by frame, not just by trusting the numbers.
-     There is no scale at which a gradual blend between them looks right,
-     so this is a swap, not a fade: the preview is fully visible until
-     SWAP_AT, then instantly gone. DELAY holds the room at its rest scale
-     until the same instant, then remaps the rest of pushRaw back onto a
-     full 0-1 range so the move still completes by the end of the track. */
-  const SWAP_AT = 0.02;
-  const DELAY = SWAP_AT;
-  const growRaw = useTransform(pushRaw, (raw) => Math.max(0, (raw - DELAY) / (1 - DELAY)));
-  const push = useTransform(growRaw, easeInOut);
+  const push = useTransform(pushRaw, easeInOut);
 
   /* A little past fill, so the room is still moving as it leaves rather than
-     stopping dead at the moment it hands over. */
+     stopping dead at the moment it hands over. Everything below — the clip
+     AND the hero's own transform — is driven by this one value, so nothing
+     downstream can drift out of step with anything else downstream. */
   const roomScale = useTransform(push, (v) => 1 + v * (fill * 1.18 - 1));
 
   /* The clip follows the monitor as the camera dollies AND as the push scales
@@ -238,44 +227,82 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
   });
 
   /*
-   * At rest the monitor already shows the hero, just small: clipped to the
-   * monitor at full size like the real hero below, the crop would land on an
-   * arbitrary slice of it rather than a coherent thumbnail. So this layer
-   * holds its own copy of the hero, shrunk with a scale transform to fit the
-   * screen rectangle, sitting on top of the full-size one underneath, and
-   * disappears the instant real scrolling begins (see SWAP_AT above).
+   * The hero's own transform: rendered at its natural full-page size always
+   * (100vw by 100dvh, so its internal vw/vh-based CSS resolves against the
+   * true viewport regardless of the scale applied to its box), then scaled
+   * and positioned to COVER the exact same window the clip just computed —
+   * same r.cx/r.cy/w/h, same source, so it cannot mismatch the window it is
+   * cropped to. Covering (not containing) it means the hero may overflow
+   * the window on one axis; the clip above crops that overflow away, the
+   * same way the room itself covers the viewport before being cropped to
+   * the footage frame.
+   *
+   * scale reaches exactly 1 (the hero's true, never-magnified size) at the
+   * exact instant the window's width AND height have both reached the
+   * viewport's — i.e. once the monitor has genuinely grown to fill the
+   * screen. Clamping scale to that point, and never past it, is what keeps
+   * type sharp at rest: the hero is only ever shown at native size or
+   * smaller, never magnified beyond its own painted resolution.
+   *
+   * Position is driven by `push` (0 at rest, 1 at the end of the track),
+   * NOT by that same clamped scale value: scale starts the walk already
+   * partway in (it is the monitor's natural fit ratio at rest, not 0), so
+   * using it to drive position too pulled position off the monitor and
+   * partway toward centre from the very first frame, at rest, before any
+   * scrolling — hero visibly offset from the monitor before you had even
+   * scrolled. push is genuinely 0 at rest and reaches exactly 1 at the end
+   * of the track, so position starts exactly on the monitor and finishes
+   * exactly at (vw/2, vh/2) — the same place an ordinary unscaled, centred,
+   * full-page hero sits — so nothing jumps when the pin releases.
+   *
+   * Content sets a third, softer influence on top of covering by
+   * width/height: on a monitor rectangle much squarer than the hero's
+   * content, covering by width alone can crop the bottom of the content —
+   * the subtitle gone below the bezel — well before scale reaches 1.
+   * Shrinking scale enough to fully rule that out was tried and rejected:
+   * it stops the hero covering the window on the other axis, opening a
+   * gap that shows the raw footage through the bezel — swapping a cropped
+   * line of copy for a visibly broken illusion of the screen itself, a
+   * worse trade. So this is a blend (CONTENT_WEIGHT), not a hard ceiling:
+   * mostly still covers the window, nudged smaller to give the content a
+   * little more room, accepting that a very square monitor rectangle may
+   * still crop the last line. Content stops influencing this once it
+   * already fits (contentCeiling >= coverFit) — it can only ever pull
+   * scale down, never past what covering the window would already give,
+   * so this cannot cost scale reaching exactly 1 at arrival either.
    */
-  const previewOpacity = useTransform(pushRaw, (raw) => (raw < SWAP_AT ? 1 : 0));
-  const previewX = useTransform(vt, (f) => rectAt(f).cx);
-  const previewY = useTransform(vt, (f) => rectAt(f).cy);
-  /* Filling the monitor rectangle exactly reads as the content stretched to
-     the edge of the screen, not a designed hero. Sized against the monitor's
-     WIDTH with a margin instead, so the proportion is consistent regardless
-     of the monitor's own aspect ratio (a portrait phone's slice is a
-     different shape than a wide desktop one, and that shape shouldn't be
-     what decides how big the text looks). Height is still a hard ceiling,
-     not a margin: on a monitor slice too short for even the margined width
-     fit, it takes over so nothing clips past the top and bottom. */
-  const PREVIEW_MARGIN = 0.7;
-  const previewScale = useTransform(
-    [vt, previewW, previewH],
-    ([f, w, h]: number[]) => {
-      if (w === 0 || h === 0) return 0;
+  const CONTENT_WEIGHT = 0.8;
+  const heroTransform = useTransform(
+    [roomScale, vt, push, heroContentH],
+    ([s, f, pushV, contentH]: number[]) => {
       const r = rectAt(f);
-      const widthFit = (r.w * PREVIEW_MARGIN) / w;
-      const heightCeiling = r.h / h;
-      return Math.min(widthFit, heightCeiling);
+      if (r.w === 0 || vw === 0 || vh === 0) return { cx: vw / 2, cy: vh / 2, scale: 1 };
+      const w = r.w * s;
+      const h = r.h * s;
+      const coverFit = Math.max(w / vw, h / vh);
+      const contentCeiling = contentH > 0 ? h / contentH : Infinity;
+      const blended = contentCeiling < coverFit
+        ? coverFit + (contentCeiling - coverFit) * CONTENT_WEIGHT
+        : coverFit;
+      const scale = Math.min(1, blended);
+      return {
+        cx: r.cx + (vw / 2 - r.cx) * pushV,
+        cy: r.cy + (vh / 2 - r.cy) * pushV,
+        scale,
+      };
     }
   );
+  const heroX = useTransform(heroTransform, (v) => v.cx);
+  const heroY = useTransform(heroTransform, (v) => v.cy);
+  const heroScale = useTransform(heroTransform, (v) => v.scale);
 
   /* The room only leaves once the hero already fills most of the view. */
   const roomOpacity = useTransform(push, [0.82, 1], [1, 0]);
-  /* Softening the room as it passes the camera hides the point where the
-     footage would start to show its own pixels. */
-  const roomBlur = useTransform(
-    useTransform(push, [0.25, 1], [0, 16]),
-    (b) => `blur(${b.toFixed(2)}px)`
-  );
+  /* Blur removed for now while the handoff geometry is the thing being
+     verified: it previously masked the point where the footage would show
+     its own pixels through the reveal, which is a real seam worth checking
+     for honestly rather than obscuring. Reintroduce once the geometry itself
+     is confirmed correct. */
 
   const origin = `${(screen.t0.cx + screen.t1.cx) / 2}% ${(screen.t0.cy + screen.t1.cy) / 2}%`;
 
@@ -291,7 +318,6 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
               height: `max(100dvh, calc(100vw / ${RATIO}))`,
               scale: roomScale,
               opacity: roomOpacity,
-              filter: roomBlur,
               transformOrigin: origin,
             }}
           >
@@ -307,23 +333,26 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
             />
           </motion.div>
 
-          {/* The hero, full size, never scaled, clipped to the monitor. */}
+          {/* The hero: one instance, always. Two nested elements, not one —
+              clip-path insets are computed in viewport-absolute pixels, which
+              only stays correct if the clipped element's own local origin
+              sits at the viewport's origin. Put the position/scale transform
+              on the SAME element as the clip and that stops being true: its
+              local (0,0) moves away from the viewport's, and the clip crops
+              the wrong region entirely. So the outer element does only the
+              clipping, sitting exactly at inset:0 same as before; the inner
+              one does only the transform, and gets cropped by its parent's
+              clip-path like any overflowing child would.
+              At rest this reads as a small hero on the screen; by the end,
+              scale has reached 1 and position has reached the viewport
+              centre, so it reads as the hero being the page, because by then
+              it simply is — same element throughout, no handoff to see a
+              seam in. */}
           <motion.div className="splash-hero" style={{ clipPath: clip }}>
-            {children}
-          </motion.div>
-
-          {/* The preview: the same hero, shrunk to monitor size, above the
-              full-size one. Decorative and never takes the pointer, or it
-              would sit invisibly over the hero's content once it has faded. */}
-          <motion.div
-            className="splash-preview"
-            aria-hidden="true"
-            style={{ clipPath: clip, opacity: previewOpacity }}
-          >
             <motion.div
-              ref={previewStageRef}
-              className="splash-preview-stage"
-              style={{ left: previewX, top: previewY, scale: previewScale }}
+              ref={heroStageRef}
+              className="splash-hero-stage"
+              style={{ left: heroX, top: heroY, scale: heroScale }}
             >
               {children}
             </motion.div>

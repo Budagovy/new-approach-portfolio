@@ -26,7 +26,7 @@ const ok = (name, got, want, tol = 0) => {
 /* CSS collapses inset() to 1, 2 or 3 values when sides repeat, so expand it
    the way the box-shorthand rules do rather than assuming four. */
 const readClip = () => {
-  const g = document.querySelector(".splash-preview");
+  const g = document.querySelector(".splash-hero");
   const n = getComputedStyle(g).clipPath.match(/-?[\d.]+px/g)?.map(parseFloat) ?? [];
   if (!n.length) return null;
   const [t, r = t, b = t, l = r] = n;
@@ -46,20 +46,23 @@ const readClip = () => {
   console.log("\n== structure ==");
   const s = await page.evaluate(() => ({
     pinned: !!document.querySelector(".splash-track"),
+    // The outer clipping layer must never itself carry a transform: moving
+    // its own origin away from the viewport's breaks the clip-path math,
+    // which reads insets as viewport-absolute pixels. The scale that grows
+    // the hero lives one level down, on .splash-hero-stage, specifically so
+    // it never has to share an element with this clip.
     heroTransform: getComputedStyle(document.querySelector(".splash-hero")).transform,
     heroW: Math.round(document.querySelector(".splash-hero").getBoundingClientRect().width),
     heroH: Math.round(document.querySelector(".splash-hero").getBoundingClientRect().height),
-    slotFilled: !!document.querySelector(".splash-hero > *"),
-    previewFilled: !!document.querySelector(".splash-preview-stage > *"),
+    slotFilled: !!document.querySelector(".splash-hero-stage > *"),
   }));
   ok("pinned splash used at 1470", s.pinned, true);
-  ok("hero never scaled", s.heroTransform, "none");
+  ok("hero clip layer itself has no transform", s.heroTransform, "none");
   ok("hero slot is one screen wide", s.heroW, VW, 1);
   ok("hero slot is one screen tall", s.heroH, VH, 1);
   ok("slot renders the child hero", s.slotFilled, true);
-  ok("monitor shows the hero preview", s.previewFilled, true);
 
-  /* The preview must cover the monitor with no bezel inside it. Sampled from
+  /* The hero must cover the monitor with no bezel inside it. Sampled from
      rendered pixels at several points in the loop, so camera drift cannot
      hide between two screenshots. */
   const isCream = (px) => Math.abs(px[0] - 255) < 8 && Math.abs(px[1] - 249) < 8 && Math.abs(px[2] - 229) < 10;
@@ -83,7 +86,7 @@ const readClip = () => {
     if (bad) inside = `${bad}/8 edge samples not cream at t=${frac}`;
   }
   console.log("\n== screen fit ==");
-  ok("preview covers the monitor", inside, "ok");
+  ok("hero covers the monitor", inside, "ok");
 
   /* Inside the clip must be the panel; walking outward, the first thing that
      is not cream must be the dark bezel within a few pixels. Bright means
@@ -121,7 +124,8 @@ const readClip = () => {
   ok("panel sits inside the bezel", edge, "ok");
 
   /* Through the push the clip must grow in step with the room, and the hero
-     layer must never go translucent. Pause the take to isolate the push. */
+     layer must never go translucent (it is never faded — it carries the
+     page ground). Pause the take to isolate the push. */
   await page.evaluate(() => { const v = document.querySelector("video"); v.pause(); v.currentTime = 0; });
   const span = await page.evaluate(() => document.querySelector(".splash-track").getBoundingClientRect().height - innerHeight);
   let faded = false, drift = 0, baseW = 0;
@@ -129,7 +133,7 @@ const readClip = () => {
     await page.evaluate((y) => scrollTo(0, y), Math.round(span * f));
     await page.waitForTimeout(800);
     const m = await page.evaluate(() => {
-      const g = document.querySelector(".splash-preview");
+      const g = document.querySelector(".splash-hero");
       const n = getComputedStyle(g).clipPath.match(/-?[\d.]+px/g)?.map(parseFloat) ?? [];
       const [t, r = t, b = t, l = r] = n;
       const sc = getComputedStyle(document.querySelector(".splash-frame")).transform.match(/matrix\(([^)]+)\)/);
@@ -145,11 +149,16 @@ const readClip = () => {
   ok("clip grows in step with the room", drift < 3, true);
   ok("hero never translucent", faded, false);
 
-  /* At the end of the track the hero is the page. */
+  /* At the end of the track the hero is the page: clip fully open, hero's
+     own transform back at native scale/position, room gone. */
   const end = await page.evaluate(() => {
     const c = (() => {
       const n = getComputedStyle(document.querySelector(".splash-hero")).clipPath.match(/-?[\d.]+px/g)?.map(parseFloat) ?? [0];
       return Math.max(...n);
+    })();
+    const stageScale = (() => {
+      const m = getComputedStyle(document.querySelector(".splash-hero-stage")).transform.match(/matrix\(([^)]+)\)/);
+      return m ? parseFloat(m[1].split(",")[0]) : 1;
     })();
     const target = document.querySelector(".hero-eyebrow");
     let hit = "no target in hero";
@@ -160,15 +169,15 @@ const readClip = () => {
     }
     return {
       maxInset: c,
+      stageScale,
       roomOpacity: +getComputedStyle(document.querySelector(".splash-frame")).opacity,
       hit,
     };
   });
   console.log("\n== arrival ==");
   ok("hero fills the viewport", end.maxInset, 0, 0.5);
+  ok("hero stage back at native scale", end.stageScale, 1, 0.01);
   ok("room has left", end.roomOpacity, 0, 0.01);
-  /* The preview shares the hero's clip and sits above it. Faded to zero it
-     is invisible but would still take the click unless it ignores the pointer. */
   ok("hero content is clickable", end.hit, "hit");
 
   console.log("\n== console ==");
@@ -183,26 +192,29 @@ const readClip = () => {
   await page.goto(URL, { waitUntil: "networkidle" });
   await page.waitForTimeout(1500);
   const m = await page.evaluate(() => {
-    const previewLayer = document.querySelector(".splash-preview");
-    const previewStage = document.querySelector(".splash-preview-stage");
-    const cs = getComputedStyle(previewLayer);
+    const heroLayer = document.querySelector(".splash-hero");
+    const heroStage = document.querySelector(".splash-hero-stage");
+    const cs = getComputedStyle(heroLayer);
     const n = cs.clipPath.match(/-?[\d.]+px/g)?.map(parseFloat) ?? [];
     const [t, r = t, b = t, l = r] = n;
     const monitor = { top: t, bottom: innerHeight - b, left: l, right: innerWidth - r };
-    const eyebrow = previewStage?.querySelector(".hero-eyebrow");
-    const note = previewStage?.querySelector(".hero-note");
+    const eyebrow = heroStage?.querySelector(".hero-eyebrow");
+    const note = heroStage?.querySelector(".hero-note");
     const eb = eyebrow?.getBoundingClientRect();
     const nb = note?.getBoundingClientRect();
     // On a portrait phone the monitor slice is a different shape than on
-    // desktop; a fit that only matches width can let the preview's content
-    // spill past the monitor's top and bottom.
-    const previewFits = !!(eb && nb) &&
-      eb.top >= monitor.top - 1 && nb.bottom <= monitor.bottom + 1;
+    // desktop, and content is only nudged toward fitting it (CONTENT_WEIGHT
+    // in SplashScreen), not strictly guaranteed to — a hard guarantee opens
+    // a gap on the other axis that shows raw footage through the bezel
+    // instead, a worse failure. So this is a slack check, not exact.
+    const SLACK = 40;
+    const heroFits = !!(eb && nb) &&
+      eb.top >= monitor.top - SLACK && nb.bottom <= monitor.bottom + SLACK;
     return {
       pinned: !!document.querySelector(".splash-track"),
-      hero: !!document.querySelector(".splash-hero > *"),
+      hero: !!document.querySelector(".splash-hero-stage > *"),
       overflow: document.documentElement.scrollWidth > innerWidth,
-      previewFits,
+      heroFits,
     };
   });
   await page.screenshot({ path: "qa/frames/mobile.png", fullPage: true });
@@ -210,7 +222,7 @@ const readClip = () => {
   ok("pinned splash used", m.pinned, true);
   ok("slot renders the child hero", m.hero, true);
   ok("no horizontal overflow", m.overflow, false);
-  ok("preview content fits the monitor", m.previewFits, true);
+  ok("hero content roughly fits the monitor", m.heroFits, true);
   await page.close();
 }
 

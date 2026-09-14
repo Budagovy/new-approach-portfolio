@@ -17,11 +17,12 @@ Here the hero is a slot, so the splash does not know what it is showing.
 
 The contract for whatever goes in the slot:
 
-- **It is one full screen.** In the pinned splash its parent is exactly
-  100vw by 100dvh. Fill it with `height: 100%`. A shorter hero leaves a gap as
-  the reader arrives.
-- **It is never scaled.** It is drawn once at full size and revealed through a
-  clip, which is why type stays sharp. Do not add a transform to its root.
+- **It is one full screen.** In the pinned splash its parent (`.splash-hero-stage`)
+  is exactly 100vw by 100dvh. Fill it with `height: 100%`. A shorter hero
+  leaves a gap as the reader arrives.
+- **Its root is never transformed by the hero itself.** `SplashScreen` applies
+  the scale and position that grow it into view; do not add a competing
+  transform to the slot's own root, or the two will fight.
 - **Under reduced motion only** the room sits above and the hero is simply
   the page, at content height. Every other width, including mobile, gets the
   pinned splash. The hero must work in both.
@@ -42,8 +43,6 @@ or the panel will sit off the bezel. `qa/splash.mjs` fails when it does.
 - No em-dash in visible copy.
 - Animate transform and opacity only. No scroll event listeners: Motion
   `useScroll` only.
-- The preview layer has `pointer-events: none`. Without it the faded preview
-  sits over the hero and swallows every click.
 - Video playback starts from the effect, never from an `autoPlay` attribute,
   so reduced motion is honoured before hydration.
 - Timings live in `src/lib/motion.ts`. Tokens live in `src/app/globals.css`.
@@ -67,62 +66,75 @@ exact; a check that needs slack asks for it.
 
 `src/app/icon.svg` is still a placeholder mark.
 
-## The monitor preview
+## The continuous hero
 
-Before the push begins, the monitor shows the hero itself, not separate copy:
-`SplashScreen` renders a second copy of `children` in `.splash-preview-stage`,
-shrunk with a scale transform to fit inside the screen rectangle. It fades
-out as the push starts, handing over to the full-size hero underneath.
+One hero instance, always — not two. Earlier versions of this rendered a
+small scaled-down "preview" copy for rest plus a full-size never-scaled copy
+revealed through a growing clip, and handed off between them (first a fade,
+later an instant swap) at some point in the scroll. Both approaches showed a
+real, confirmed-by-screenshot glitch: two independently-computed layers can
+only ever coincide by coincidence, so any handoff between them — gradual or
+instant — is visibly two different sizes of the same content for at least a
+moment, or a visible jump between them.
 
-`.splash-preview-stage` has no width or height of its own: it shrink-wraps to
-whatever `children` naturally renders at, which is the hero's own content box
-(e.g. `hero-body`), not the full viewport. It used to be pinned to 100vw,
-which measured the wrong box — a `.hero` that stretches to fill its parent
-rather than the narrower content centred inside it — so the scale came out
-far too small, leaving the preview tiny in a sea of empty cream. `vw`-based
-CSS inside the hero (`--wrap`, `--fs-display`) still resolves against the
-true viewport regardless of this box's own width, so nothing downstream
-needed to change.
+`heroTransform` in `SplashScreen.tsx` removes the handoff by removing the
+second layer: the SAME hero is scaled and positioned continuously from "fits
+the monitor" at rest to "is the page" at arrival, computed from the exact
+same `roomScale` and monitor rectangle the clip uses. Hero and window cannot
+mismatch, because they are not two curves hoped into agreement — they are
+the same numbers.
 
-The fit itself is measured, not guessed: a `ResizeObserver` on that stage
-feeds its real width and height into the scale calculation.
+**Two nested elements, not one.** `clip-path` insets are computed in
+viewport-absolute pixels (same `rectAt`-based math as before), which only
+stays correct as long as the clipped element's own local `(0,0)` is the
+viewport's `(0,0)`. Putting the position/scale transform on that same
+element breaks that: its local origin moves away from the viewport's, and
+the clip crops the wrong region — confirmed directly, the hero rendered
+squeezed into one side of the monitor with the raw footage bleeding through
+the rest. So `.splash-hero` does ONLY the clipping (still exactly `inset:
+0`, untouched); `.splash-hero-stage`, one level down, does ONLY the
+transform, and gets cropped by its parent's clip-path like any overflowing
+child would.
 
-The scale is driven by the monitor's WIDTH, at `PREVIEW_MARGIN` (currently
-0.7) rather than 1, so the content reads as a composed hero with breathing
-room rather than text stretched edge to edge. Width, specifically, so the
-proportion stays consistent regardless of the monitor's own aspect ratio —
-a portrait phone's slice is a different shape from a wide desktop one, and
-that shape isn't what should decide how big the text looks. Height is a
-hard ceiling underneath it, not a margin: on a monitor slice too short for
-even the margined width fit, it takes over so nothing clips past the top
-and bottom. Change `PREVIEW_MARGIN` to change how much of the monitor the
-preview fills; don't remove the height ceiling to get there, or portrait
-phones clip again.
+**The scale.** `.splash-hero-stage` is always 100vw by 100dvh (so its
+internal vw/vh-based CSS resolves against the true viewport regardless of
+the scale applied to its box), scaled to COVER the monitor's current window
+— `Math.max(w / vw, h / vh)` — the same "cover" logic the room's own video
+sizing already uses, capped at `Math.min(1, …)` so type is never magnified
+past its own painted resolution. That cap is what makes scale reach exactly
+1 (native, unmagnified) at the exact instant the window has grown to fill
+the viewport, not before and not asymptotically after.
 
-**The handoff is a swap, not a fade.** The full-size hero underneath is never
-scaled or moved: full size, centred in the viewport, always. The preview is
-deliberately smaller (`PREVIEW_MARGIN`, for breathing room) — those are two
-different, fixed scales, and there is no way to gradually crossfade between
-them without both being visible at once, at their different sizes, for the
-length of the fade. Three variants of "make them match before/while fading"
-were tried — interpolating the preview's scale and position to meet the real
-hero, fading at a fixed size while the room grows underneath, fading at a
-fixed size while the room is held — and each one was confirmed broken by
-scrolling to fine-grained steps through the fade and looking at the actual
-frames, not by trusting the motion-value numbers. Every one still showed a
-double image for the width of the fade.
+A third influence, `CONTENT_WEIGHT`, nudges scale down a little further when
+the monitor rectangle is much squarer than the hero's own content — cover-by-
+width alone can crop the bottom of the content (the subtitle, gone below the
+bezel) on some monitor shapes, well before scale reaches 1. Capping it
+outright (content never taller than the window) was tried and produced a
+worse failure: shrinking the WHOLE hero to fit vertically opens a gap on the
+other axis that shows the raw video through the bezel — a visibly broken
+screen instead of one clipped line of copy. `CONTENT_WEIGHT` (0.8) blends
+partway toward that cap instead of committing to it, measured via a
+`ResizeObserver` on `.hero-body` (a real, if narrow, coupling to the hero's
+internal markup — kept to this one class name). It can only ever pull scale
+DOWN from the cover-fit value, never past what covering the window would
+already give, so it cannot cost scale reaching exactly 1 at arrival either.
 
-So `SWAP_AT` (on `pushRaw`, which is linear in scroll distance, unlike the
-eased `push`) is a hard step: the preview is fully visible, then instantly
-gone, never partially either. `DELAY` holds the room at its rest scale for
-that same instant so nothing is growing underneath it either, then remaps
-the rest of `pushRaw` back onto 0-1 so the move still completes by the end
-of the track. There is a visible jump in text size right at the swap — the
-preview's own margin means it was never going to be the same size as the
-real hero, swap or fade — but it is one instant, not a readable overlap held
-for the width of a fade. If a future change wants a gradual crossfade here
-again, it needs a real answer to the different-scale problem above, not
-just a shorter span.
+**The position.** Driven by `push` (0 at rest, 1 at the end of the track),
+NOT by the scale value above: scale starts the walk already partway in (the
+monitor's natural fit ratio at rest is never 0), so an early version that
+reused it for position too pulled the hero visibly off the monitor and
+partway toward centre from the very first frame — at rest, before any
+scrolling had happened. `push` is genuinely 0 at rest and reaches exactly 1
+at the end of the track, so position starts exactly on the monitor and
+finishes exactly at `(vw/2, vh/2)` — the same place an ordinary unscaled,
+centred, full-page hero sits — so nothing jumps when the pin releases and
+ordinary scrolling resumes.
+
+**Blur removed.** The room's blur-while-passing-the-camera effect is gone
+for now, deliberately, while this geometry was the thing being verified —
+reintroduce once continuity itself is confirmed solid, not before, since
+blur previously masked exactly the kind of seam this section exists to
+avoid.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
