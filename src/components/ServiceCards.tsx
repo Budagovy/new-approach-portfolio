@@ -220,11 +220,12 @@ export function ServiceCards({ data }: { data: ServiceCardsData }) {
   };
 
   if (!hasMounted) {
-    return <section className="cards-section" aria-hidden="true" />;
+    return <section id="work" className="cards-section" aria-hidden="true" />;
   }
 
   return (
     <motion.section
+      id="work"
       className="cards-section"
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}

@@ -1,0 +1,9 @@
+{
+  "name": "Yonatan Budagov",
+  "nav": [
+    { "label": "Welcome", "href": "#top", "active": true },
+    { "label": "Projects", "href": "#work" },
+    { "label": "About Me", "href": "#about" }
+  ],
+  "cta": { "label": "Contact", "href": "#contact" }
+}
