@@ -37,6 +37,24 @@ interpolates between the two on the video clock.
 Same video: change nothing. A different video: measure both rectangles again,
 or the panel will sit off the bezel. `qa/splash.mjs` fails when it does.
 
+**A small calibration bias, and how it was found.** A light sliver was
+reported along the monitor's inner-left edge. Sampling rendered pixel
+luminance directly across all four edges — not just the reported one, and at
+both `t0` and `t1`, not just one frame — before touching anything showed top
+and bottom were already correct to a fraction of a pixel, while left was off
+by several pixels and right by under one. That is not what symmetric
+antialiasing looks like (which would show evenly on all four sides); it is
+what a slightly left-biased original measurement of `cx`/`w` looks like. A
+uniform bleed was tried first and reverted for exactly this reason — large
+enough to help the reported edge, it would have started painting hero
+background over bezel that was already exactly right on the other two sides.
+Fixed at the source instead: `cx`/`w` nudged by a few hundredths of a
+percentage point in `content/splash.json`, verified by re-sampling the same
+four edges afterward, not by re-running the app and eyeballing it. `t0` and
+`t1` needed slightly different corrections (re-measured independently,
+not assumed equal) — the interpolation between them is linear, so getting
+both endpoints right is what keeps the mid-zoom frames right too.
+
 ## Rules carried over from the portfolio
 
 - No copy in component files. Strings live in `content/`.

@@ -213,7 +213,21 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
   const roomScale = useTransform(push, (v) => 1 + v * (fill * 1.18 - 1));
 
   /* The clip follows the monitor as the camera dollies AND as the push scales
-     the room, so both motions are accounted for at once. */
+     the room, so both motions are accounted for at once.
+
+     A uniform outward bleed was tried here first, to cover a light sliver
+     reported along the left inner edge. Measuring pixel luminance directly
+     across all four edges (not just the reported one) before committing to
+     that ruled it out: the top and bottom edges land within a fraction of a
+     pixel of the true bezel line already — a uniform bleed large enough to
+     help the left edge would have started painting over bezel that was
+     already exactly right on those two sides. The left/right asymmetry (left
+     needed several pixels of correction, right well under one) is not what
+     symmetric antialiasing looks like; it is what a small left-biased
+     calibration measurement looks like. Fixed in `content/splash.json`
+     instead: `screen.t0`/`t1` nudged (cx slightly left, w slightly wider),
+     the same correction applied to both endpoints since the two frames were
+     measured the same way and showed the same bias. */
   const clip = useTransform([roomScale, vt], ([s, f]: number[]) => {
     const r = rectAt(f);
     if (r.w === 0) return "inset(0px)";
