@@ -36,6 +36,8 @@ const PUSH_DISTANCE = 260;
 const SPREAD = 26;
 const DURATION = 0.5;
 const EASE_CSS = "cubic-bezier(0.22, 1, 0.36, 1)";
+/** One fixed hover ring for every card, regardless of its own colour. */
+const HOVER_RING = "#31302C";
 
 function ArrowUpRight() {
   return (
@@ -173,7 +175,7 @@ export function ServiceCards({ data }: { data: ServiceCardsData }) {
         rotate = 0;
         zIndex = 999;
         scale = 1.035;
-        boxShadow = `0 0 0 3px ${card.text}, 0 24px 48px -22px rgb(40 54 24 / 0.4)`;
+        boxShadow = `0 0 0 3px ${HOVER_RING}, 0 24px 48px -22px rgb(40 54 24 / 0.4)`;
       }
     }
 
