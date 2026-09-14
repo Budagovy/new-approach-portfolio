@@ -154,6 +154,22 @@ reintroduce once continuity itself is confirmed solid, not before, since
 blur previously masked exactly the kind of seam this section exists to
 avoid.
 
+## The site header
+
+`SiteHeader` (`src/components/SiteHeader.tsx`) is rendered as a sibling
+before `<main>`, not inside the splash. It is `position: fixed`, not part
+of document flow, on purpose: giving it real flow height would push the
+splash's pinned track down and change what `100dvh` means relative to it,
+which is exactly the kind of change the geometry above is tuned against.
+Floating it instead costs nothing in that math — the splash never has to
+know it exists — and it stays visible over both the video and the hero via
+`z-index`, the only one set anywhere in the stylesheet.
+
+Anchor links jump via the browser's own hash scroll; `scroll-padding-top`
+on `<html>` (set to `--header-h`) keeps a jump from landing a section under
+the fixed bar. Nav links collapse below 720px, leaving the logo and the
+Contact button.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

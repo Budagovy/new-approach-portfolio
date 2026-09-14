@@ -6,7 +6,15 @@
 import { chromium } from "playwright-core";
 import { mkdirSync } from "node:fs";
 
-const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+/* Local Chrome install, not the Playwright-managed browser (none is
+   bundled here). Path is platform-dependent; override with QA_CHROME if
+   yours lives somewhere else. */
+const CHROME_PATHS = {
+  win32: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  darwin: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  linux: "/usr/bin/google-chrome",
+};
+const CHROME = process.env.QA_CHROME || CHROME_PATHS[process.platform] || CHROME_PATHS.darwin;
 const URL = process.env.QA_URL || "http://localhost:3220/";
 const VW = 1470, VH = 920;
 mkdirSync("qa/frames", { recursive: true });
