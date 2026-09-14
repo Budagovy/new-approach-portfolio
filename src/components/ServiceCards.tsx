@@ -11,7 +11,7 @@ export interface ServiceCard {
   tag: string;
   body: string;
   bg: string;
-  accent: string;
+  text: string;
 }
 
 export interface ServiceCardsData {
@@ -57,9 +57,7 @@ function CardFace({ card, exploreLabel }: { card: ServiceCard; exploreLabel: str
     <>
       <div className="card-top">
         <h3 className="card-tag">{card.tag}</h3>
-        <span className="card-number" style={{ color: card.accent }}>
-          {card.number}
-        </span>
+        <span className="card-number">{card.number}</span>
       </div>
 
       <p className="card-body">{card.body}</p>
@@ -148,6 +146,7 @@ export function ServiceCards({ data }: { data: ServiceCardsData }) {
         zIndex: activeIndex === index ? 999 : card._baseZ,
         transition: "none",
         background: card.bg,
+        color: card.text,
       };
     }
 
@@ -174,7 +173,7 @@ export function ServiceCards({ data }: { data: ServiceCardsData }) {
         rotate = 0;
         zIndex = 999;
         scale = 1.035;
-        boxShadow = `0 0 0 3px ${card.accent}`;
+        boxShadow = `0 0 0 3px ${card.text}`;
       }
     }
 
@@ -190,6 +189,7 @@ export function ServiceCards({ data }: { data: ServiceCardsData }) {
       zIndex,
       transition,
       background: card.bg,
+      color: card.text,
       boxShadow,
     };
   };
@@ -209,7 +209,7 @@ export function ServiceCards({ data }: { data: ServiceCardsData }) {
       {isCompact ? (
         <div className="stack-mobile-list">
           {cards.map((card) => (
-            <div key={card.tag} className="card" style={{ background: card.bg }}>
+            <div key={card.tag} className="card" style={{ background: card.bg, color: card.text }}>
               <CardFace card={card} exploreLabel={data.exploreLabel} />
             </div>
           ))}

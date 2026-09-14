@@ -4,36 +4,36 @@
       "number": "01",
       "tag": "Product Thinking & Strategy",
       "body": "I turn complex problems into clear priorities, connecting user needs, business goals, and what’s worth building.",
-      "bg": "#31302C",
-      "accent": "#F3B44A"
+      "bg": "#E4FF1A",
+      "text": "#1A1A1A"
     },
     {
       "number": "02",
       "tag": "Research & Data",
       "body": "I combine user research, product data, and experimentation to make informed design decisions and measure what improves the experience.",
-      "bg": "#F3B44A",
-      "accent": "#31302C"
+      "bg": "#DD1155",
+      "text": "#FFFFFF"
     },
     {
       "number": "03",
       "tag": "Design Craft & Systems",
       "body": "I shape intuitive experiences, precise interfaces, and scalable design systems, bringing clarity and consistency to every detail.",
-      "bg": "#31302C",
-      "accent": "#F3B44A"
+      "bg": "#FF5714",
+      "text": "#1A1A1A"
     },
     {
       "number": "04",
       "tag": "Ownership & Collaboration",
       "body": "I drive design from the first question to implementation, working with product and engineering to make trade-offs and deliver.",
-      "bg": "#F3B44A",
-      "accent": "#31302C"
+      "bg": "#E980FC",
+      "text": "#1A1A1A"
     },
     {
       "number": "05",
       "tag": "AI & Prototyping",
       "body": "I combine AI tools, design, and code to explore more possibilities, test ideas earlier, and build working experiences faster.",
-      "bg": "#31302C",
-      "accent": "#F3B44A"
+      "bg": "#67D6A3",
+      "text": "#1A1A1A"
     }
   ],
   "exploreLabel": "Explore"

@@ -175,10 +175,10 @@ body {
 
 /* --- Service cards --------------------------------------------------------- */
 /* Ordinary in-flow section below the splash. Each card carries its own
-   background from content/cards.json; text stays a warm off-white on every
-   card (including the orange one) to match the reference design, and each
-   card's own "accent" colours the index number and, on pointer devices, its
-   own hover ring.
+   background and text colour from content/cards.json (the same palette as
+   the reference HoverStack component); every other text/line/icon colour in
+   the card is `currentColor`, so setting `color` once on .card is enough to
+   theme the whole face, including the hover ring.
 
    Pointer devices get a fanned, overlapping stack (.stack-frame /
    .stack-card): hovering a card lifts it and pushes its neighbours apart,
@@ -197,7 +197,6 @@ body {
   flex-direction: column;
   padding: clamp(22px, 2vw, 30px);
   border-radius: 28px;
-  color: #fff9e5;
 }
 
 /* Touch fallback: a plain vertical list. */
@@ -253,12 +252,13 @@ body {
   font-weight: 600;
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
+  opacity: 0.55;
 }
 .card-body {
   margin: 16px 0 0;
   font-size: 15px;
   line-height: 1.55;
-  color: rgb(255 249 229 / 0.82);
+  opacity: 0.82;
 }
 .card-bottom {
   margin-top: auto;
@@ -267,7 +267,8 @@ body {
 .card-divider {
   display: block;
   height: 1px;
-  background: rgb(255 249 229 / 0.22);
+  background: currentcolor;
+  opacity: 0.18;
 }
 .card-explore {
   display: flex;
@@ -280,7 +281,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgb(255 249 229 / 0.82);
+  opacity: 0.82;
 }
 .card-explore-arrow {
   display: inline-flex;
@@ -289,6 +290,5 @@ body {
   width: 30px;
   height: 30px;
   border-radius: 999px;
-  border: 1px solid rgb(255 249 229 / 0.35);
-  color: #fff9e5;
+  border: 1px solid currentcolor;
 }
