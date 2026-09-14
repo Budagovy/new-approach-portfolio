@@ -185,17 +185,7 @@ body {
   translate: -50% -50%;
   color: var(--ink);
   will-change: transform;
-  /* Fine horizontal banding, so the panel reads as a lit screen rather than a
-     flat cream rectangle. */
-  background:
-    repeating-linear-gradient(
-      180deg,
-      rgb(22 20 14 / 0.022) 0px,
-      rgb(22 20 14 / 0.022) 1px,
-      transparent 1px,
-      transparent 3px
-    ),
-    var(--bg);
+  background: var(--bg);
 }
 
 /* Narrow viewports and reduced motion: room above, hero as the page. */

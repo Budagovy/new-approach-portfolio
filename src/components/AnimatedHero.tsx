@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "motion/react";
-import { DotPattern } from "@/components/DotPattern";
 import { useRotatingIndex } from "@/lib/useRotatingIndex";
 
 export interface AnimatedHeroData {
@@ -24,7 +23,6 @@ export function AnimatedHero({ data }: { data: AnimatedHeroData }) {
 
   return (
     <div className="hero">
-      <DotPattern />
       <div className="hero-body">
         <span className="hero-eyebrow">{data.eyebrow}</span>
 
