@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { motion } from "motion/react";
 import { EASE } from "@/lib/motion";
+
+type CSSVars = CSSProperties & Record<string, string | number | undefined>;
 
 export interface ServiceCard {
   number: string;
@@ -16,55 +19,226 @@ export interface ServiceCardsData {
   exploreLabel: string;
 }
 
-/**
- * The row of service cards that follows the hero once the splash releases.
- * Ordinary in-flow content: no pin, no scroll listener. Motion's
- * `whileInView` (IntersectionObserver-backed) staggers each card in as it
- * crosses the viewport.
- */
-export function ServiceCards({ data }: { data: ServiceCardsData }) {
+interface PreparedCard extends ServiceCard {
+  _rotation: number;
+  _baseX: number;
+  _baseZ: number;
+}
+
+/** Small alternating tilt per card, so the resting stack reads as a fanned deck. */
+const PRESET_ROTATIONS = [-6, 3, -4, 5, -3, 4];
+
+const CARD_WIDTH = 320;
+const CARD_HEIGHT = 400;
+const OVERLAP = 180;
+const HOVER_LIFT = 34;
+const PUSH_DISTANCE = 260;
+const SPREAD = 26;
+const DURATION = 0.5;
+const EASE_CSS = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+function ArrowUpRight() {
   return (
-    <section className="cards-section">
-      <div className="cards-row">
-        {data.items.map((card, i) => (
-          <motion.article
-            key={card.tag}
-            className="card"
-            style={{ background: card.bg }}
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: EASE, delay: i * 0.08 }}
-          >
-            <div className="card-top">
-              <h3 className="card-tag">{card.tag}</h3>
-              <span className="card-number" style={{ color: card.accent }}>
-                {card.number}
-              </span>
-            </div>
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path
+        d="M3 11L11 3M11 3H4.5M11 3V9.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
-            <p className="card-body">{card.body}</p>
-
-            <div className="card-bottom">
-              <span className="card-divider" />
-              <div className="card-explore">
-                <span className="card-explore-label">{data.exploreLabel}</span>
-                <span className="card-explore-arrow" aria-hidden="true">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path
-                      d="M3 11L11 3M11 3H4.5M11 3V9.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </div>
-            </div>
-          </motion.article>
-        ))}
+/** Tag + number up top, body copy, then the divider / explore / arrow footer. */
+function CardFace({ card, exploreLabel }: { card: ServiceCard; exploreLabel: string }) {
+  return (
+    <>
+      <div className="card-top">
+        <h3 className="card-tag">{card.tag}</h3>
+        <span className="card-number" style={{ color: card.accent }}>
+          {card.number}
+        </span>
       </div>
-    </section>
+
+      <p className="card-body">{card.body}</p>
+
+      <div className="card-bottom">
+        <span className="card-divider" />
+        <div className="card-explore">
+          <span className="card-explore-label">{exploreLabel}</span>
+          <span className="card-explore-arrow" aria-hidden="true">
+            <ArrowUpRight />
+          </span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/**
+ * The service cards that follow the hero once the splash releases. Ordinary
+ * in-flow content: no pin, no scroll listener.
+ *
+ * Desktop/pointer: a fanned, overlapping stack. Hovering a card lifts it and
+ * pushes its neighbours apart, the same interaction as the reference
+ * "HoverStack" component — reimplemented here with this site's own card
+ * face (tag, body copy, divider, Explore + arrow, side number) instead of
+ * its pull-quote layout.
+ * Touch: the stack has nothing to hover, so it falls back to a plain
+ * vertical list, full width, in reading order.
+ */
+/** Below this, the fanned stack cannot fit without cropping; use the list. */
+const COMPACT_BREAKPOINT = 760;
+
+export function ServiceCards({ data }: { data: ServiceCardsData }) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [isTouch, setIsTouch] = useState(false);
+  const [isNarrow, setIsNarrow] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+    const pointerMq = window.matchMedia("(pointer: coarse)");
+    const updatePointer = () => setIsTouch(pointerMq.matches);
+    updatePointer();
+    pointerMq.addEventListener("change", updatePointer);
+
+    const updateWidth = () => setIsNarrow(window.innerWidth < COMPACT_BREAKPOINT);
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+
+    const motionMq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateMotion = (e: MediaQueryList | MediaQueryListEvent) => {
+      setReduceMotion(e.matches);
+      if (e.matches) setActiveIndex(null);
+    };
+    updateMotion(motionMq);
+    motionMq.addEventListener("change", updateMotion);
+
+    return () => {
+      pointerMq.removeEventListener("change", updatePointer);
+      window.removeEventListener("resize", updateWidth);
+      motionMq.removeEventListener("change", updateMotion);
+    };
+  }, []);
+
+  const isCompact = isTouch || isNarrow;
+
+  const cards: PreparedCard[] = useMemo(
+    () =>
+      data.items.map((card, index) => ({
+        ...card,
+        _rotation: PRESET_ROTATIONS[index % PRESET_ROTATIONS.length],
+        _baseX: index * OVERLAP,
+        _baseZ: index + 1,
+      })),
+    [data.items]
+  );
+
+  const totalWidth =
+    cards.length > 0 ? cards[cards.length - 1]._baseX + CARD_WIDTH : CARD_WIDTH;
+
+  const getCardStyle = (card: PreparedCard, index: number): CSSVars => {
+    if (reduceMotion) {
+      return {
+        transform: `translate3d(${card._baseX}px, 0, 0) rotate(${card._rotation}deg)`,
+        zIndex: activeIndex === index ? 999 : card._baseZ,
+        transition: "none",
+        background: card.bg,
+      };
+    }
+
+    const hasActive = activeIndex !== null;
+    const isActive = activeIndex === index;
+    let x = card._baseX;
+    let y = 0;
+    let rotate = card._rotation;
+    let zIndex = card._baseZ;
+    let scale = 1;
+    let boxShadow: string | undefined;
+
+    if (hasActive) {
+      if (index < (activeIndex as number)) {
+        x -= PUSH_DISTANCE;
+        y -= SPREAD * 0.4;
+      } else if (index > (activeIndex as number)) {
+        x += PUSH_DISTANCE;
+        y += SPREAD * 0.4;
+      }
+      if (isActive) {
+        x = card._baseX;
+        y = -HOVER_LIFT;
+        rotate = 0;
+        zIndex = 999;
+        scale = 1.035;
+        boxShadow = `0 0 0 3px ${card.accent}`;
+      }
+    }
+
+    const ms = DURATION * 1000;
+    const transition = isActive
+      ? `transform ${ms}ms cubic-bezier(0.22, 1.6, 0.32, 1), box-shadow ${ms * 1.3}ms cubic-bezier(0.22, 1.6, 0.32, 1)`
+      : hasActive
+        ? `transform ${ms}ms ${EASE_CSS}, box-shadow ${ms}ms ${EASE_CSS}`
+        : `transform ${ms * 0.7}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+
+    return {
+      transform: `translate3d(${x}px, ${y}px, 0) rotate(${rotate}deg) scale(${scale})`,
+      zIndex,
+      transition,
+      background: card.bg,
+      boxShadow,
+    };
+  };
+
+  if (!hasMounted) {
+    return <section className="cards-section" aria-hidden="true" />;
+  }
+
+  return (
+    <motion.section
+      className="cards-section"
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6, ease: EASE }}
+    >
+      {isCompact ? (
+        <div className="stack-mobile-list">
+          {cards.map((card) => (
+            <div key={card.tag} className="card" style={{ background: card.bg }}>
+              <CardFace card={card} exploreLabel={data.exploreLabel} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="stack-outer">
+          <div
+            className="stack-frame"
+            style={
+              {
+                "--stack-width": `${totalWidth}px`,
+                "--stack-height": `${CARD_HEIGHT + (reduceMotion ? 0 : HOVER_LIFT) + 24}px`,
+              } as CSSVars
+            }
+          >
+            {cards.map((card, index) => (
+              <div
+                key={card.tag}
+                className="card stack-card"
+                style={getCardStyle(card, index)}
+                onMouseEnter={() => setActiveIndex(index)}
+                onMouseLeave={() => setActiveIndex(null)}
+              >
+                <CardFace card={card} exploreLabel={data.exploreLabel} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </motion.section>
   );
 }

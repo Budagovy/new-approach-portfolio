@@ -177,32 +177,62 @@ body {
 /* Ordinary in-flow section below the splash. Each card carries its own
    background from content/cards.json; text stays a warm off-white on every
    card (including the orange one) to match the reference design, and each
-   card's own "accent" colours only the index number. */
+   card's own "accent" colours the index number and, on pointer devices, its
+   own hover ring.
+
+   Pointer devices get a fanned, overlapping stack (.stack-frame /
+   .stack-card): hovering a card lifts it and pushes its neighbours apart,
+   position and motion computed in ServiceCards.tsx and applied as inline
+   transforms, since each card's offset depends on which one is active.
+   Touch devices have nothing to hover, so they get a plain vertical list
+   (.stack-mobile-list) instead — same card face, no absolute positioning. */
 .cards-section {
   background: var(--bg);
-  padding: clamp(48px, 8vw, 96px) 5vw;
+  padding: clamp(64px, 10vw, 120px) 5vw;
+  min-height: 1px;
 }
-.cards-row {
-  width: min(1600px, 94vw);
-  margin: 0 auto;
-  display: flex;
-  gap: clamp(12px, 1.4vw, 20px);
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.cards-row::-webkit-scrollbar { display: none; }
 
 .card {
-  flex: 1 0 260px;
-  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
-  min-height: clamp(360px, 34vw, 460px);
   padding: clamp(22px, 2vw, 30px);
   border-radius: 28px;
   color: #fff9e5;
+}
+
+/* Touch fallback: a plain vertical list. */
+.stack-mobile-list {
+  width: min(560px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 5vw, 32px);
+}
+.stack-mobile-list .card {
+  min-height: clamp(320px, 62vw, 420px);
+}
+
+/* Pointer fallback: the fanned stack. */
+.stack-outer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.stack-frame {
+  position: relative;
+  width: var(--stack-width);
+  height: var(--stack-height);
+  max-width: 100%;
+}
+.stack-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 320px;
+  height: 400px;
+  cursor: pointer;
+  user-select: none;
+  will-change: transform;
 }
 .card-top {
   display: flex;
@@ -261,9 +291,4 @@ body {
   border-radius: 999px;
   border: 1px solid rgb(255 249 229 / 0.35);
   color: #fff9e5;
-}
-
-@media (min-width: 860px) {
-  .cards-row { overflow-x: visible; }
-  .card { flex-basis: 0; }
 }
