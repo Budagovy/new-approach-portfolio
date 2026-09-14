@@ -99,17 +99,30 @@ and bottom. Change `PREVIEW_MARGIN` to change how much of the monitor the
 preview fills; don't remove the height ceiling to get there, or portrait
 phones clip again.
 
-**The handoff.** The full-size hero underneath is never scaled or moved: full
-size, centred in the viewport, always. If the preview faded out without
-matching that first, the two would be visibly different sizes wherever they
-overlapped mid-fade — a small preview crossfading into a much larger
-fragment of the real hero peeking through the growing clip. So the preview's
-scale and position walk from "fit the monitor" to "match the real hero
-exactly", and that walk (`ALIGN_END`) completes well before the opacity fade
-(`FADE_END`) does. Alignment finishes while the real hero underneath is
-barely visible yet; by the time the fade makes it visible, there is nothing
-left to see a seam in. Widening `ALIGN_END` to the same span as the fade
-reintroduces the double-exposure glitch this fixed.
+**The handoff is a swap, not a fade.** The full-size hero underneath is never
+scaled or moved: full size, centred in the viewport, always. The preview is
+deliberately smaller (`PREVIEW_MARGIN`, for breathing room) — those are two
+different, fixed scales, and there is no way to gradually crossfade between
+them without both being visible at once, at their different sizes, for the
+length of the fade. Three variants of "make them match before/while fading"
+were tried — interpolating the preview's scale and position to meet the real
+hero, fading at a fixed size while the room grows underneath, fading at a
+fixed size while the room is held — and each one was confirmed broken by
+scrolling to fine-grained steps through the fade and looking at the actual
+frames, not by trusting the motion-value numbers. Every one still showed a
+double image for the width of the fade.
+
+So `SWAP_AT` (on `pushRaw`, which is linear in scroll distance, unlike the
+eased `push`) is a hard step: the preview is fully visible, then instantly
+gone, never partially either. `DELAY` holds the room at its rest scale for
+that same instant so nothing is growing underneath it either, then remaps
+the rest of `pushRaw` back onto 0-1 so the move still completes by the end
+of the track. There is a visible jump in text size right at the swap — the
+preview's own margin means it was never going to be the same size as the
+real hero, swap or fade — but it is one instant, not a readable overlap held
+for the width of a fade. If a future change wants a gradual crossfade here
+again, it needs a real answer to the different-scale problem above, not
+just a shorter span.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

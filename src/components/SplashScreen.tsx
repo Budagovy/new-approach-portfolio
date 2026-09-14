@@ -196,7 +196,28 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
     t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
   const pushRaw = useTransform(p, [HERO.zoomStart, HERO.zoomEnd], [0, 1], { clamp: true });
-  const push = useTransform(pushRaw, easeInOut);
+
+  /* The monitor preview (below) is shown at a deliberately smaller scale
+     than the real hero underneath (PREVIEW_MARGIN, so it fits the monitor
+     with room to breathe) — the real hero is never scaled at all, by
+     design, to keep its type sharp. Those are two different, fixed scales.
+     Any GRADUAL blend between them — fading opacity while either is
+     mid-transition, or even just fading at a constant scale while the room
+     grows underneath — shows both at once, at their different sizes, for
+     the length of the fade: a double image. Tried three variants of this
+     (interpolating scale and position to match, fading at a fixed size
+     while the room grows, fading at a fixed size while the room is held)
+     and confirmed each one still glitches by scanning the actual fade
+     frame by frame, not just by trusting the numbers.
+     There is no scale at which a gradual blend between them looks right,
+     so this is a swap, not a fade: the preview is fully visible until
+     SWAP_AT, then instantly gone. DELAY holds the room at its rest scale
+     until the same instant, then remaps the rest of pushRaw back onto a
+     full 0-1 range so the move still completes by the end of the track. */
+  const SWAP_AT = 0.02;
+  const DELAY = SWAP_AT;
+  const growRaw = useTransform(pushRaw, (raw) => Math.max(0, (raw - DELAY) / (1 - DELAY)));
+  const push = useTransform(growRaw, easeInOut);
 
   /* A little past fill, so the room is still moving as it leaves rather than
      stopping dead at the moment it hands over. */
@@ -221,34 +242,12 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
    * monitor at full size like the real hero below, the crop would land on an
    * arbitrary slice of it rather than a coherent thumbnail. So this layer
    * holds its own copy of the hero, shrunk with a scale transform to fit the
-   * screen rectangle, sitting on top of the full-size one underneath.
-   *
-   * It fades away once the push starts, handing over to the full-size hero
-   * beneath it. That one is never faded, never scaled and never moved: it
-   * carries the page ground at native size, centred in the viewport, the
-   * whole time. So this layer's scale and position are walked from "fit the
-   * monitor" to "match that exactly", so the two are never a visibly
-   * different size where they overlap during the fade.
-   *
-   * That walk finishes much sooner than the opacity does (ALIGN_END well
-   * before FADE_END): if both ran on the same span, the middle of the fade
-   * would show two still-mismatched copies blended together, a glitch. Snap
-   * to alignment first, while the real hero underneath is barely visible
-   * yet, then let the fade carry on with nothing left to see the seam.
+   * screen rectangle, sitting on top of the full-size one underneath, and
+   * disappears the instant real scrolling begins (see SWAP_AT above).
    */
-  const ALIGN_END = 0.06;
-  const FADE_END = 0.22;
-  const previewOpacity = useTransform(push, [0.02, FADE_END], [1, 0]);
-  const previewX = useTransform([vt, push], ([f, pushV]: number[]) => {
-    const r = rectAt(f);
-    const t = Math.min(1, pushV / ALIGN_END);
-    return r.cx + (vw / 2 - r.cx) * t;
-  });
-  const previewY = useTransform([vt, push], ([f, pushV]: number[]) => {
-    const r = rectAt(f);
-    const t = Math.min(1, pushV / ALIGN_END);
-    return r.cy + (vh / 2 - r.cy) * t;
-  });
+  const previewOpacity = useTransform(pushRaw, (raw) => (raw < SWAP_AT ? 1 : 0));
+  const previewX = useTransform(vt, (f) => rectAt(f).cx);
+  const previewY = useTransform(vt, (f) => rectAt(f).cy);
   /* Filling the monitor rectangle exactly reads as the content stretched to
      the edge of the screen, not a designed hero. Sized against the monitor's
      WIDTH with a margin instead, so the proportion is consistent regardless
@@ -259,15 +258,13 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
      fit, it takes over so nothing clips past the top and bottom. */
   const PREVIEW_MARGIN = 0.7;
   const previewScale = useTransform(
-    [vt, previewW, previewH, push],
-    ([f, w, h, pushV]: number[]) => {
+    [vt, previewW, previewH],
+    ([f, w, h]: number[]) => {
       if (w === 0 || h === 0) return 0;
       const r = rectAt(f);
       const widthFit = (r.w * PREVIEW_MARGIN) / w;
       const heightCeiling = r.h / h;
-      const fit = Math.min(widthFit, heightCeiling);
-      const t = Math.min(1, pushV / ALIGN_END);
-      return fit + (1 - fit) * t;
+      return Math.min(widthFit, heightCeiling);
     }
   );
 
