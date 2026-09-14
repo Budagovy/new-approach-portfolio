@@ -173,7 +173,7 @@ export function ServiceCards({ data }: { data: ServiceCardsData }) {
         rotate = 0;
         zIndex = 999;
         scale = 1.035;
-        boxShadow = `0 0 0 3px ${card.text}`;
+        boxShadow = `0 0 0 3px ${card.text}, 0 24px 48px -22px rgb(40 54 24 / 0.4)`;
       }
     }
 

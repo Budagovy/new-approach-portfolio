@@ -192,11 +192,15 @@ body {
   min-height: 1px;
 }
 
+/* A resting shadow, always on: the palette includes a cream close enough to
+   the page background that a card in it would otherwise vanish into the
+   page with no visible edge. */
 .card {
   display: flex;
   flex-direction: column;
   padding: clamp(22px, 2vw, 30px);
   border-radius: 28px;
+  box-shadow: 0 20px 45px -26px rgb(40 54 24 / 0.35);
 }
 
 /* Touch fallback: a plain vertical list. */
