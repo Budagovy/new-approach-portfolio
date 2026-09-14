@@ -249,12 +249,23 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
     const t = Math.min(1, pushV / ALIGN_END);
     return r.cy + (vh / 2 - r.cy) * t;
   });
+  /* Filling the monitor rectangle exactly reads as the content stretched to
+     the edge of the screen, not a designed hero. Sized against the monitor's
+     WIDTH with a margin instead, so the proportion is consistent regardless
+     of the monitor's own aspect ratio (a portrait phone's slice is a
+     different shape than a wide desktop one, and that shape shouldn't be
+     what decides how big the text looks). Height is still a hard ceiling,
+     not a margin: on a monitor slice too short for even the margined width
+     fit, it takes over so nothing clips past the top and bottom. */
+  const PREVIEW_MARGIN = 0.7;
   const previewScale = useTransform(
     [vt, previewW, previewH, push],
     ([f, w, h, pushV]: number[]) => {
       if (w === 0 || h === 0) return 0;
       const r = rectAt(f);
-      const fit = Math.min(r.w / w, r.h / h);
+      const widthFit = (r.w * PREVIEW_MARGIN) / w;
+      const heightCeiling = r.h / h;
+      const fit = Math.min(widthFit, heightCeiling);
       const t = Math.min(1, pushV / ALIGN_END);
       return fit + (1 - fit) * t;
     }

@@ -85,10 +85,19 @@ true viewport regardless of this box's own width, so nothing downstream
 needed to change.
 
 The fit itself is measured, not guessed: a `ResizeObserver` on that stage
-feeds its real width and height into the scale calculation, so it fits both
-dimensions of the monitor rectangle. Matching width alone breaks on a
-portrait phone, where the monitor slice is a different shape than on desktop
-and content would spill past the top and bottom.
+feeds its real width and height into the scale calculation.
+
+The scale is driven by the monitor's WIDTH, at `PREVIEW_MARGIN` (currently
+0.7) rather than 1, so the content reads as a composed hero with breathing
+room rather than text stretched edge to edge. Width, specifically, so the
+proportion stays consistent regardless of the monitor's own aspect ratio —
+a portrait phone's slice is a different shape from a wide desktop one, and
+that shape isn't what should decide how big the text looks. Height is a
+hard ceiling underneath it, not a margin: on a monitor slice too short for
+even the margined width fit, it takes over so nothing clips past the top
+and bottom. Change `PREVIEW_MARGIN` to change how much of the monitor the
+preview fills; don't remove the height ceiling to get there, or portrait
+phones clip again.
 
 **The handoff.** The full-size hero underneath is never scaled or moved: full
 size, centred in the viewport, always. If the preview faded out without
