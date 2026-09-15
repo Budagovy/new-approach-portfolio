@@ -14,6 +14,7 @@
   --line: rgb(22 20 14 / 0.16);
   --accent: #f3b44a;
   --accent-ink: #16140e;
+  --dot: rgb(22 20 14 / 0.35);
 
   --fs-display: clamp(34px, 4.2vw, 61.7px);
   --fs-lead: clamp(16px, 1.3vw, 19px);
@@ -64,6 +65,17 @@
   padding-inline: var(--content-pad);
 }
 
+/* Fine dot-grid texture over the cream ground. One declaration, reused on
+   every surface that should carry it (currently .hero and .site-header)
+   instead of a fixed full-page overlay, so it scales correctly wherever
+   it's used — including inside the splash's pinned/scaled hero, where a
+   viewport-fixed layer would have stayed the wrong size as the hero grows. */
+.dot-bg {
+  background-color: var(--bg);
+  background-image: radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
 /* --- Site header ------------------------------------------------------ */
 /* Fixed, not in document flow, so it never has to share the splash-stage's
    sticky math (see SplashScreen.tsx) — it just floats above it. Anchor
@@ -74,7 +86,6 @@
   inset: 0 0 auto 0;
   z-index: 50;
   height: var(--header-h);
-  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 .site-header-row {
