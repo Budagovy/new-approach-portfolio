@@ -22,7 +22,7 @@ export function AnimatedHero({ data }: { data: AnimatedHeroData }) {
   const index = useRotatingIndex(data.words.length, WORD_HOLD_MS);
 
   return (
-    <div className="hero dot-bg">
+    <div className="hero">
       <div className="hero-body">
         <span className="hero-eyebrow">{data.eyebrow}</span>
 
