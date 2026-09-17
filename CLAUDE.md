@@ -166,17 +166,21 @@ avoid.
 
 ## The page column
 
-Every section's content sits in one centred column, `.page`: 840px wide
-at most, with gutters that shrink from 300px down to 20px as the
-viewport narrows. The numbers come from the Figma frame — a 1440px
-desktop frame exported at 2x, with the framed content running 300px to
-1140px — not from the exported screenshot's pixel size. Backgrounds and
-the splash video stay outside the column, across the viewport; the column
-carries the frame's side rules (`.page-frame`) and each section draws its
-own top rule on it, so the outer boundaries line up from the nav row
-through the hero and the approach stage to whatever comes next. `--page-pad`
-is a section's inner padding where it wants one (the nav's measures ~48px
-in the frame).
+Every section's content sits in one centred column, `.page`, sized to
+pleurat.com's container as measured on the live site (not assumed):
+edge to edge with a flat 25px inner padding below 962px, then 98vw/40px,
+96vw/52px, and from 1536px a 1524px cap reached via 88vw/68px. So at
+1440 the column is 1382px wide with ~29px outer margins and content 52px
+in from its edge. `--page-max` is the column's width and `--page-pad` the
+inner padding every section's content sits behind (nav row, hero copy,
+approach label/timeline/copy alike). Backgrounds and the splash video
+stay outside the column, across the viewport; the column carries side
+rules (`.page-frame`, only from 962px up, where it has a margin to sit in)
+and each section draws its own top rule on it, so the outer boundaries
+line up from the nav row through the hero and the approach stage to
+whatever comes next. An 840px column with 300px gutters, taken from the
+Figma frame, was tried in between and replaced at the user's request:
+the live reference is the source of truth for spacing.
 
 Pinned sections keep their stage viewport-wide — that's what makes them
 pin, and the splash's zoom geometry depends on its stage being exactly the

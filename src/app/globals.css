@@ -26,14 +26,14 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-1: 200ms;
 
-  /* The page column, from the Figma frame: a 1440px desktop frame (the
-     export is 2x) with the framed content from 300px to 1140px, i.e. an
-     840px column and 300px gutters. The gutter shrinks with the viewport
-     and never drops below 20px; --page-pad is the column's own inner
-     padding where a section needs one (the nav measures ~48px). */
-  --page-max: 840px;
-  --page-gutter: clamp(20px, 5vw, 300px);
-  --page-pad: clamp(16px, 3.4vw, 48px);
+  /* The page column: pleurat.com's container, measured on the live site at
+     a sweep of viewport widths rather than assumed. Below 962px it runs
+     edge to edge with a flat 25px inner padding; above that it steps
+     through three tiers (98vw/40px, 96vw/52px, then a hard 1524px ceiling
+     reached via 88vw/68px). --page-max is the column's width, --page-pad
+     the inner padding every section's content sits behind. */
+  --page-max: 100%;
+  --page-pad: 25px;
 
   --header-h: 64px;
 
@@ -49,6 +49,15 @@
 @media (min-width: 640px) {
   :root { --header-h: 76px; }
 }
+@media (min-width: 962px) {
+  :root { --page-max: 98vw; --page-pad: 40px; }
+}
+@media (min-width: 1186px) {
+  :root { --page-max: 96vw; --page-pad: 52px; }
+}
+@media (min-width: 1536px) {
+  :root { --page-max: min(1524px, 88vw); --page-pad: 68px; }
+}
 
 * { box-sizing: border-box; min-width: 0; }
 
@@ -58,11 +67,15 @@
    outside it, across the viewport; the column carries the frame's vertical
    rules, and each section draws its own top rule on it. */
 .page {
-  width: min(var(--page-max), calc(100% - 2 * var(--page-gutter)));
+  width: 100%;
+  max-width: var(--page-max);
   margin-inline: auto;
 }
-.page-frame {
-  border-inline: 1px solid var(--line);
+/* The frame's side rules, only once the column has a margin to sit in;
+   below 962px it is the full viewport and a rule on the screen edge is
+   just a stray line. */
+@media (min-width: 962px) {
+  .page-frame { border-inline: 1px solid var(--line); }
 }
 
 /* --- Site header ------------------------------------------------------ */
@@ -223,7 +236,7 @@ body {
 .hero-main {
   display: grid;
   place-items: center;
-  padding: calc(var(--strip-h) + 24px) clamp(12px, 1.7vw, 24px) 24px;
+  padding: calc(var(--strip-h) + 24px) var(--page-pad) 24px;
 }
 @media (max-height: 720px) {
   .hero-main { padding-top: 24px; }
@@ -353,7 +366,7 @@ portfolio-city-strip {
    screen — where the Figma has it. */
 .approach-body {
   height: 100%;
-  padding-top: var(--header-h);
+  padding: var(--header-h) var(--page-pad) 0;
   display: grid;
   grid-template-rows: auto 0.9fr auto 1.2fr;
   border-top: 1px solid var(--line);
@@ -365,7 +378,7 @@ portfolio-city-strip {
 .approach-label {
   display: inline-flex;
   gap: 1.4em;
-  padding: 10px 0 0 18px;
+  padding-top: 10px;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 11px;
   font-weight: 500;
@@ -449,10 +462,10 @@ portfolio-city-strip {
   list-style: none;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  column-gap: 12px;
+  column-gap: 24px;
 }
 .approach-step {
-  padding: 0 4px;
+  padding: 0 8px;
   text-align: center;
 }
 .approach-step-title {
@@ -465,7 +478,7 @@ portfolio-city-strip {
 .approach-step-desc {
   margin: 8px auto 0;
   max-width: 30ch;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--muted);
 }
@@ -488,21 +501,19 @@ portfolio-city-strip {
   }
 }
 /* Narrow: a vertical timeline instead of four across, the marker drawn
-   inside each step and joined by a rule down the left, inset from the
-   column's own rule. */
+   inside each step and joined by a rule down the left. */
 @media (max-width: 859px) {
   .approach-track { display: none; }
   .approach-copy {
     position: relative;
     margin-top: 0;
-    padding-inline: var(--page-pad);
     grid-template-columns: 1fr;
     row-gap: 32px;
   }
   .approach-copy::before {
     content: "";
     position: absolute;
-    left: calc(var(--page-pad) + 13px);
+    left: 13px;
     top: 13px;
     bottom: 13px;
     width: 1px;
