@@ -22,3 +22,13 @@ export const HERO = {
   /** Pinned scroll length, in viewport heights. */
   pinVh: 4.5,
 } as const;
+
+/**
+ * The city strip at the foot of the hero. The heading cadence (one every
+ * 1.5s) is fixed inside the approved component itself; only the city's
+ * scroll speed is tunable from outside.
+ */
+export const CITY = {
+  /** CSS px per second. The approved value. */
+  speed: 22,
+} as const;

@@ -35,6 +35,14 @@
   --content-pad: 25px;
 
   --header-h: 64px;
+
+  /* Height of the city strip at the foot of the hero: its heading row plus
+     its scene, as set inside the component's own stylesheet. */
+  --strip-h: calc(68px + 110px);
+}
+
+@media (min-width: 601px) {
+  :root { --strip-h: calc(48px + clamp(110px, 9vw, 160px)); }
 }
 
 @media (min-width: 640px) {
@@ -193,14 +201,54 @@ body {
 .splash-flat-media { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
 
 /* --- Hero ----------------------------------------------------------------- */
-/* Fills its parent: one full screen inside the splash, content height below
-   900px where the parent has no fixed height. */
+/* Fills its parent: one full screen inside the splash, content height under
+   reduced motion where the parent has no fixed height. Two rows: the copy,
+   then the city strip along the foot. */
 .hero {
   position: relative;
   height: 100%;
   display: grid;
+  grid-template-rows: 1fr auto;
+}
+/* The copy is centred on the FULL screen, not on the space left above the
+   strip: the row's top padding equals the strip's height, so the area the
+   copy centres within runs from strip-height down to strip-height-from-the-
+   bottom, whose midpoint is the screen's own. That keeps the headline on
+   the monitor's centre in the pinned splash and matches the Figma frame,
+   while still reserving the strip's row so the two can never overlap. On
+   short viewports there isn't room for that symmetry, so it falls back to
+   centring in whatever is left above the strip. */
+.hero-main {
+  display: grid;
   place-items: center;
-  padding: 48px 5vw;
+  padding: calc(var(--strip-h) + 24px) 5vw 24px;
+}
+@media (max-height: 720px) {
+  .hero-main { padding-top: 24px; }
+}
+/* Under reduced motion the hero is plain page content below the video, at
+   content height, so there is no screen to centre on. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-main { padding-top: 48px; padding-bottom: 48px; }
+}
+.hero-strip {
+  min-width: 0;
+}
+/* The strip is a web component with its own shadow styles. It's rendered
+   as an unknown tag on the server and upgraded on the client, so display
+   and min-height are set from out here to hold its space (and stop a
+   layout shift) before that upgrade; --strip-h mirrors the component's
+   own heading + scene heights. The theme variables map its palette onto
+   this site's tokens, and the outer font-family beats the Arial its :host
+   rule would otherwise apply. */
+portfolio-city-strip {
+  display: block;
+  min-height: var(--strip-h);
+  font-family: inherit;
+  --strip-bg: var(--bg);
+  --strip-ink: var(--ink);
+  --strip-muted: var(--muted);
+  --strip-accent: var(--accent);
 }
 .hero-body {
   position: relative;

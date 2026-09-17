@@ -170,6 +170,43 @@ on `<html>` (set to `--header-h`) keeps a jump from landing a section under
 the fixed bar. Nav links collapse below 720px, leaving the logo and the
 Contact button.
 
+## The city strip
+
+The skyline with the walking figure along the foot of the hero is
+`<portfolio-city-strip>`, a dependency-free web component delivered and
+approved separately, kept as delivered: `src/components/city-strip/
+city-strip.js` (plain JS, described by the sibling `.d.ts` since `allowJs`
+is off). The one adaptation is asset resolution — the original resolved
+`./assets/` against `import.meta.url`, which means nothing once bundled, so
+it defaults to `/city-strip/` under `public/`: `city.svg` (the skyline,
+tiled and mirrored for the loop) and `character-walking.mp4` (the walker;
+the component keys its near-white backdrop out on a canvas at runtime, so
+the video must stay same-origin).
+
+`CityStrip.tsx` is the React wrapper. The component module touches
+`document` at import time, so it is only imported inside an effect; the
+element is server-rendered as an unknown tag, and `globals.css` gives it
+`display: block` and a `min-height` so its space is held before the
+upgrade. The six headings live in `content/experience.json` and are
+assigned as a property once the element is defined (an attribute can't
+carry an array). The component's own micro-copy — "NEXT PROJECTS", "Hey
+there!", the pause labels — stays inside its template: the one exception
+to the strings-in-`content/` rule, accepted to keep the approved file
+intact. City scroll speed is `CITY.speed` in `src/lib/motion.ts`; the
+1.5s heading cadence is fixed inside the component.
+
+Layout: the hero is two grid rows, copy then strip. `.hero-main`'s top
+padding equals `--strip-h`, so the copy centres on the FULL screen rather
+than on the space left above the strip — the pinned splash centres the
+monitor on the hero's centre, and the Figma frame centres the headline in
+the whole viewport. `--strip-h` mirrors the component's own heading + scene
+heights and has to move with them. Viewports 720px tall or shorter drop
+that symmetry and centre in what's left; reduced motion drops it too, the
+hero then being plain content at its own height. Inside the monitor at
+rest, the strip's heading row shows along the bottom edge and the skyline
+is cropped by the bezel: that is the cover-fit doing its job, since the
+strip is part of the one full screen the slot contract asks for.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
