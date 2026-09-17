@@ -12,6 +12,8 @@
   --muted: #57534a;
   --faint: #8b8577;
   --line: rgb(22 20 14 / 0.16);
+  --rule: rgb(22 20 14 / 0.55);
+  --grid: rgb(22 20 14 / 0.035);
   --accent: #f3b44a;
   --accent-ink: #16140e;
 
@@ -314,4 +316,192 @@ portfolio-city-strip {
   font-size: var(--fs-lead);
   line-height: 1.55;
   color: var(--muted);
+}
+
+/* --- Approach (four steps) ------------------------------------------------ */
+/* A pinned track, like the splash: the section is --approach-pin viewports
+   tall and the stage sticks at the top of it, under the fixed header, for
+   the whole scroll. Approach.tsx reads progress through the track and sets
+   each step's state; everything here is layout and the resting look. Grid
+   texture is scoped to this stage only, per the Figma frame. */
+.approach {
+  position: relative;
+  height: calc(var(--approach-pin) * 100dvh);
+}
+.approach-stage {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  padding-top: var(--header-h);
+  border-top: 1px solid var(--line);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+/* Rows: label, heading (centred in its share), the timeline, then a larger
+   empty share below, which puts the line a little above the middle of the
+   screen — where the Figma has it. */
+.approach-body {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 0.9fr auto 1.2fr;
+}
+.approach-label {
+  display: inline-flex;
+  gap: 1.4em;
+  padding-top: 10px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.approach-heading {
+  align-self: center;
+  justify-self: center;
+  margin: 0;
+  font-size: var(--fs-display);
+  font-weight: 500;
+  line-height: var(--lh-display);
+  letter-spacing: var(--tr-display);
+  text-align: center;
+}
+.approach-steps { position: relative; }
+.approach-track {
+  position: relative;
+  height: 26px;
+}
+.approach-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  margin-top: -0.5px;
+  background: var(--rule);
+}
+/* Runs marker 01 to marker 04, i.e. between the centres of the first and
+   last of four equal columns; scaleX from the left is the progress. */
+.approach-fill {
+  position: absolute;
+  left: 12.5%;
+  width: 75%;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--accent);
+  transform-origin: left center;
+  will-change: transform;
+}
+.approach-markers {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.approach-marker-slot {
+  display: flex;
+  justify-content: center;
+}
+.approach-marker {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--bg);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.approach-marker-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.approach-marker-num { position: relative; }
+.approach-marker--inline { display: none; }
+.approach-copy {
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: 24px;
+}
+.approach-step {
+  padding: 0 8px;
+  text-align: center;
+}
+.approach-step-title {
+  margin: 0;
+  font-size: clamp(16px, 1.2vw, 18px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+.approach-step-desc {
+  margin: 8px auto 0;
+  max-width: 30ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* Where the pinned layout can't fit (narrow, short, or reduced motion): no
+   track, no pin, the stage is ordinary content. Must match FLOW_QUERY in
+   Approach.tsx, which switches the activation logic the same way. */
+@media (max-width: 859px), (max-height: 699px), (prefers-reduced-motion: reduce) {
+  .approach { height: auto; }
+  .approach-stage {
+    position: static;
+    height: auto;
+    padding-top: 40px;
+    padding-bottom: 80px;
+  }
+  .approach-body {
+    height: auto;
+    grid-template-rows: auto auto auto;
+    row-gap: 44px;
+  }
+}
+/* Narrow: a vertical timeline instead of four across, the marker drawn
+   inside each step and joined by a rule down the left. */
+@media (max-width: 859px) {
+  .approach-track { display: none; }
+  .approach-copy {
+    position: relative;
+    margin-top: 0;
+    grid-template-columns: 1fr;
+    row-gap: 32px;
+  }
+  .approach-copy::before {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 13px;
+    bottom: 13px;
+    width: 1px;
+    background: var(--rule);
+  }
+  .approach-step {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    column-gap: 16px;
+    padding: 0;
+    text-align: left;
+  }
+  .approach-marker--inline {
+    display: grid;
+    grid-row: 1 / span 2;
+  }
+  .approach-step-desc { margin-left: 0; }
 }

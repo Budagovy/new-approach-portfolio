@@ -207,6 +207,40 @@ rest, the strip's heading row shows along the bottom edge and the skyline
 is cropped by the bezel: that is the cover-fit doing its job, since the
 strip is part of the one full screen the slot contract asks for.
 
+## The approach section
+
+`Approach.tsx`, the pinned four-step timeline after the hero. Same shape
+as the splash: the section is a track `APPROACH.pinVh` viewports tall and
+`.approach-stage` sticks at the top of it (under the fixed header, hence
+its `padding-top: var(--header-h)`). Scroll progress through the track,
+put through a stiff, near-critically-damped spring, is the one source of
+truth: it scales the orange fill directly (`scaleX`, left origin, spanning
+marker 01 to 04 as 12.5% to 87.5% of four equal columns), and each step's
+state — `off`, `current`, `done` — is read off the same value as the fill
+crosses each marker's third, in either direction. Motion variants only
+dress those state changes (a marker pulse, a title then description
+reveal) and every one is short and reversible; nothing queues.
+
+The spring is deliberately stiff (700/55, ~40ms time constant). A softer
+one was tried and took over half a second to catch up after a long scroll
+jump, so the line visibly kept moving after the page had stopped — the
+brief rules that out, and the QA script measures both the lag while
+moving and the settle after stopping.
+
+Two rules worth keeping: the orange on a marker is a disc whose opacity
+fades in over the dark base, so activation stays transform/opacity only;
+and step copy is always in flow at full size, only its opacity/translate
+change, so revealing it never shifts layout (the QA compares title boxes
+hidden vs. revealed).
+
+Where four-across can't fit, the section unpins and flows: `FLOW_QUERY` in
+the component (narrow or short viewport) and the matching media rules in
+`globals.css` must stay in step. Narrow gets a vertical timeline with the
+marker drawn inside each step (the horizontal track is hidden), each step
+lighting as it scrolls into view; short-but-wide keeps four across, just
+unpinned; reduced motion shows all four lit at once. Copy is in
+`content/approach.json`, timings in `APPROACH` in `src/lib/motion.ts`.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

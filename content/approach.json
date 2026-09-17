@@ -1,0 +1,22 @@
+{
+  "label": { "index": "01", "text": "How" },
+  "heading": "My approach",
+  "steps": [
+    {
+      "title": "Understand & focus",
+      "description": "I use research, product data, and business goals to define the problem, priorities, and what success looks like."
+    },
+    {
+      "title": "Explore & design",
+      "description": "I explore different directions, weigh trade-offs, and develop the flows, UI, and interactions."
+    },
+    {
+      "title": "Prototype & refine",
+      "description": "I use AI and code to prototype faster, test with users, and refine the design based on what we learn."
+    },
+    {
+      "title": "Ship & improve",
+      "description": "I work with engineering to ship the design, then use feedback and data to guide improvements."
+    }
+  ]
+}

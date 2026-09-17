@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 3220",
     "typecheck": "tsc --noEmit",
-    "qa": "node qa/splash.mjs"
+    "qa": "node qa/splash.mjs",
+    "qa:approach": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON qa/approach.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

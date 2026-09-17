@@ -24,6 +24,25 @@ export const HERO = {
 } as const;
 
 /**
+ * "My approach": the four-step section pinned after the hero, as scroll
+ * progress 0 to 1 across its track.
+ *
+ *   0    -> fillStart   step 01 already lit; a beat before the line moves
+ *   fillStart -> fillEnd the orange line runs 01 to 04, lighting each step
+ *   fillEnd -> 1        hold on the finished state, so 04 can be read
+ */
+export const APPROACH = {
+  /** Track length in viewport heights: one for the stage, the rest is scroll. */
+  pinVh: 3.2,
+  fillStart: 0.08,
+  fillEnd: 0.78,
+  /** One step's title/description reveal, seconds. */
+  reveal: 0.34,
+  /** Title-to-description stagger within a step, seconds. */
+  stagger: 0.08,
+} as const;
+
+/**
  * The city strip at the foot of the hero. The heading cadence (one every
  * 1.5s) is fixed inside the approved component itself; only the city's
  * scroll speed is tunable from outside.

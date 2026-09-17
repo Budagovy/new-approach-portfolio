@@ -1,11 +1,13 @@
 import { SplashScreen, type SplashData } from "@/components/SplashScreen";
 import { AnimatedHero, type AnimatedHeroData } from "@/components/AnimatedHero";
 import { SiteHeader, type SiteHeaderData } from "@/components/SiteHeader";
+import { Approach, type ApproachData } from "@/components/Approach";
 import type { CityStripExperience } from "@/components/CityStrip";
 import splash from "../../content/splash.json";
 import hero from "../../content/hero.json";
 import header from "../../content/header.json";
 import experience from "../../content/experience.json";
+import approach from "../../content/approach.json";
 
 /* The composition. The splash does not need to know what it is showing. */
 export default function Home() {
@@ -19,6 +21,7 @@ export default function Home() {
             experience={experience.items as CityStripExperience[]}
           />
         </SplashScreen>
+        <Approach data={approach as ApproachData} />
       </main>
     </>
   );
