@@ -67,7 +67,8 @@ const go = async (page, y, wait = 700) => { await page.evaluate((v) => window.sc
   const base = await page.evaluate(probe);
   const { secTop, vh } = base;
   console.log(`section top ${secTop}, track ${base.secH}px (= ${(base.secH / vh).toFixed(2)}vh), doc ${base.docH}`);
-  ok("page ends exactly at the track end (no gap after)", base.docH === secTop + base.secH, `${base.docH} vs ${secTop + base.secH}`);
+  const nextTop = await page.evaluate(() => { const a = document.querySelector(".approach"); const next = a.nextElementSibling; return next ? next.offsetTop : document.documentElement.scrollHeight; });
+  ok("whatever follows starts exactly at the track end (no gap)", nextTop === secTop + base.secH, `${nextTop} vs ${secTop + base.secH}`);
 
   // Before entering: nothing revealed. Sample title boxes for the layout-shift check.
   let s = await go(page, secTop - 1400, 400);

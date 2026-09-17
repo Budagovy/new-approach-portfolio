@@ -1,0 +1,23 @@
+{
+  "label": { "index": "02", "text": "Selected projects" },
+  "items": [
+    {
+      "title": "Second Office",
+      "description": "SecondOffice helps employees choose where to work each day and coordinate with colleagues. My focus was on making hybrid work easier while keeping people connected.",
+      "tag": "App design",
+      "image": null
+    },
+    {
+      "title": "Project two",
+      "description": "Placeholder. Replace this entry in content/projects.json with the second project's title, description, tag and image.",
+      "tag": "Placeholder",
+      "image": null
+    },
+    {
+      "title": "Project three",
+      "description": "Placeholder. Replace this entry in content/projects.json with the third project's title, description, tag and image.",
+      "tag": "Placeholder",
+      "image": null
+    }
+  ]
+}

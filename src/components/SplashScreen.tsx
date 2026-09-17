@@ -120,16 +120,32 @@ function SplashPinned({
   const videoRef = useRef<HTMLVideoElement>(null);
   usePlayWhileVisible(videoRef, true);
 
-  /* Viewport size, recomputed on resize only. The screen rectangle itself is
-     derived per frame from the video clock, so it is not state. */
+  /* The stage's size — the coordinate system everything below works in.
+     Read from the stage's own box, not window.innerWidth/Height: those can
+     lie (mobile Chrome settles its viewport in steps and reports an
+     interim inner size while the CSS viewport is already final, with no
+     resize event to follow), and innerWidth includes a scrollbar the page
+     column doesn't, which would put the hero's column 8px off the other
+     sections' on desktops that show one. The room, the clip and the hero
+     stage are all sized against this same box (100%), so the numbers
+     agree by construction. Re-measured on resize and whenever the box
+     itself changes. The screen rectangle is derived per frame from the
+     video clock, so it is not state. */
+  const stageRef = useRef<HTMLDivElement>(null);
   const [vp, setVp] = useState({ vw: 0, vh: 0 });
   const measure = useCallback(() => {
-    setVp({ vw: window.innerWidth, vh: window.innerHeight });
+    const el = stageRef.current;
+    if (el) setVp({ vw: el.clientWidth, vh: el.clientHeight });
   }, []);
   useEffect(() => {
     measure();
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    const ro = new ResizeObserver(measure);
+    if (stageRef.current) ro.observe(stageRef.current);
+    return () => {
+      window.removeEventListener("resize", measure);
+      ro.disconnect();
+    };
   }, [measure]);
 
   /* Guards the small-scale end of the hero's transform against a mismatch
@@ -353,13 +369,13 @@ function SplashPinned({
   return (
     <section id={id} className="splash">
       <div ref={trackRef} className="splash-track" style={{ height: `${HERO.pinVh * 100}vh` }}>
-        <div className="splash-stage">
+        <div ref={stageRef} className="splash-stage">
           {/* The room. Sized to cover the viewport at the footage aspect. */}
           <motion.div
             className="splash-frame"
             style={{
-              width: `max(100vw, calc(100dvh * ${RATIO}))`,
-              height: `max(100dvh, calc(100vw / ${RATIO}))`,
+              width: `max(100%, calc(100dvh * ${RATIO}))`,
+              height: `max(100%, calc(100vw / ${RATIO}))`,
               scale: roomScale,
               opacity: roomOpacity,
               transformOrigin: origin,

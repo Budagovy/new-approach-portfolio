@@ -49,6 +49,25 @@ export const APPROACH = {
 } as const;
 
 /**
+ * "Selected projects": a vertical drum of cards, pinned, stepped one
+ * project at a time by scroll (the reference steps it per wheel tick on a
+ * fixed page; here native scroll through the track does the stepping).
+ */
+export const PROJECTS = {
+  /** Extra track length per project, in viewport heights, on top of the stage. */
+  pinVhPerItem: 0.6,
+  /** Angle between neighbouring cards on the drum, degrees. */
+  step: 42,
+  /** Drum radius, px: how far neighbours sit above/below and behind. */
+  radius: 420,
+  /** How the drum settles on the next project after a step. */
+  spring: { stiffness: 150, damping: 24, mass: 1 },
+  /** Copy crossfade, seconds. */
+  copyOut: 0.18,
+  copyIn: 0.3,
+} as const;
+
+/**
  * The city strip at the foot of the hero. The heading cadence (one every
  * 1.5s) is fixed inside the approved component itself; only the city's
  * scroll speed is tunable from outside.

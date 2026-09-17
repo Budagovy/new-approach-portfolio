@@ -18,8 +18,9 @@ Here the hero is a slot, so the splash does not know what it is showing.
 The contract for whatever goes in the slot:
 
 - **It is one full screen.** In the pinned splash its parent (`.splash-hero-stage`)
-  is exactly 100vw by 100dvh. Fill it with `height: 100%`. A shorter hero
-  leaves a gap as the reader arrives.
+  is exactly the splash stage's size — the viewport, less any scrollbar.
+  Fill it with `height: 100%`. A shorter hero leaves a gap as the reader
+  arrives.
 - **Its root is never transformed by the hero itself.** `SplashScreen` applies
   the scale and position that grow it into view; do not add a competing
   transform to the slot's own root, or the two will fight.
@@ -64,6 +65,16 @@ both endpoints right is what keeps the mid-zoom frames right too.
 - Video playback starts from the effect, never from an `autoPlay` attribute,
   so reduced motion is honoured before hydration.
 - Timings live in `src/lib/motion.ts`. Tokens live in `src/app/globals.css`.
+- Don't trust `window.innerWidth`/`innerHeight` for geometry; measure the
+  element you're laying out in. `SplashScreen` learned this: mobile Chrome
+  settles its viewport in steps and reports an interim inner size while
+  the CSS viewport is already final, with no `resize` to follow, so a
+  component that hydrated during that step kept a wrong height and put the
+  monitor's clip window in the wrong place (the QA's mobile fit check
+  caught it — and only in dev, where hydration lands earlier). `innerWidth`
+  also includes a scrollbar the page column doesn't. The splash now reads
+  its stage's own `clientWidth/Height` and sizes the room and hero stage
+  against that same box, so the numbers agree by construction.
 - No non-deterministic value (`Date.now()`, `Math.random()`, `window.*`) in a
   render or in `useState`'s initial value. The server renders at a different
   moment than the client hydrates; `useRotatingIndex` learned this by
@@ -87,8 +98,14 @@ that 04 is readable before release, the handoff at the track end, and the
 narrow / short / reduced-motion layouts. It imports its thresholds from
 `src/lib/motion.ts`, so it cannot drift from the component.
 
-Both need a local Chrome (no browser is bundled); the path is keyed by
-platform and can be overridden with `QA_CHROME`.
+`npm run qa:projects` gates the projects drum: pinning, whole-project
+rounding (no half positions), the spring settling flat on the active card
+with its neighbours tilted back at `PROJECTS.step`, reverse and a
+mid-spring reversal, the copy crossfade, and the narrow / reduced-motion
+lists.
+
+All three need a local Chrome (no browser is bundled); the path is keyed
+by platform and can be overridden with `QA_CHROME`.
 
 ## Placeholders
 
@@ -291,6 +308,28 @@ marker drawn inside each step (the horizontal track is hidden), each step
 lighting as it scrolls into view; short-but-wide keeps four across, just
 unpinned; reduced motion shows all four lit at once. Copy is in
 `content/approach.json`, timings in `APPROACH` in `src/lib/motion.ts`.
+
+## The projects section
+
+`Projects.tsx`, after the approach: a pinned drum of project cards, after
+gabrielbeaugonin.com's. There, the page is a fixed 100vh and each wheel
+tick turns the drum one project; here native scroll is kept, so the
+section pins (a track one viewport plus `pinVhPerItem` per project) and
+scroll progress, ROUNDED to a whole project, is the drum's target — one
+project per stretch of scroll, no half-positions — with a spring carrying
+the drum there. Every card's `rotateX`/`translateZ` and fade are read off
+that one sprung value: the active card flat at the front, neighbours
+tilted `step` degrees back above and below at `radius`, which is what
+makes them read as the flattened strips the reference shows. The drum
+sits `translateZ(-radius)` inside a `perspective` viewport so the front
+card lands on the page plane. The copy on the left (title, description,
+tag, from `content/projects.json`) crossfades to the active project via
+`AnimatePresence`; the reference keeps its copy fixed, the Figma ties it
+to the project. Same unpin rules as the approach (`FLOW_QUERY` + the
+media block): a plain card-then-copy list when narrow, short, or under
+reduced motion. The section carries `id="work"`, the nav's Projects
+target. Numbers in `PROJECTS` in `src/lib/motion.ts`; the drum's radius is
+duplicated in `.projects-drum`'s `translateZ` and must move with it.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
