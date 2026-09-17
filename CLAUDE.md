@@ -80,6 +80,16 @@ With the dev server up (`npm run dev`, port 3220): `npm run qa`.
 taking the click, mobile, reduced motion, console errors. Tolerance defaults to
 exact; a check that needs slack asks for it.
 
+`npm run qa:approach` gates the approach section the same way: slow
+scroll, a fast jump, reversing, a direction change mid-transition, how
+fast the line settles after stopping, that revealing copy shifts nothing,
+that 04 is readable before release, the handoff at the track end, and the
+narrow / short / reduced-motion layouts. It imports its thresholds from
+`src/lib/motion.ts`, so it cannot drift from the component.
+
+Both need a local Chrome (no browser is bundled); the path is keyed by
+platform and can be overridden with `QA_CHROME`.
+
 ## Placeholders
 
 `src/app/icon.svg` is still a placeholder mark.
