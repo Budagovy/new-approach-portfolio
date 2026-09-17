@@ -98,11 +98,12 @@ that 04 is readable before release, the handoff at the track end, and the
 narrow / short / reduced-motion layouts. It imports its thresholds from
 `src/lib/motion.ts`, so it cannot drift from the component.
 
-`npm run qa:projects` gates the projects drum: pinning, whole-project
-rounding (no half positions), the spring settling flat on the active card
-with its neighbours tilted back at `PROJECTS.step`, reverse and a
-mid-spring reversal, the copy crossfade, and the narrow / reduced-motion
-lists.
+`npm run qa:projects` gates the projects fan: hidden before it scrolls
+in, the entrance opening into a mirrored fan with the centre card flat
+and on top, the thumbnails actually loading, hover lifting a card and
+pushing its neighbour away, an exact restore on mouse leave, the fan
+staying inside the page column from 1440 down to 390, and the fan simply
+being there under reduced motion.
 
 All three need a local Chrome (no browser is bundled); the path is keyed
 by platform and can be overridden with `QA_CHROME`.
@@ -311,25 +312,35 @@ unpinned; reduced motion shows all four lit at once. Copy is in
 
 ## The projects section
 
-`Projects.tsx`, after the approach: a pinned drum of project cards, after
-gabrielbeaugonin.com's. There, the page is a fixed 100vh and each wheel
-tick turns the drum one project; here native scroll is kept, so the
-section pins (a track one viewport plus `pinVhPerItem` per project) and
-scroll progress, ROUNDED to a whole project, is the drum's target — one
-project per stretch of scroll, no half-positions — with a spring carrying
-the drum there. Every card's `rotateX`/`translateZ` and fade are read off
-that one sprung value: the active card flat at the front, neighbours
-tilted `step` degrees back above and below at `radius`, which is what
-makes them read as the flattened strips the reference shows. The drum
-sits `translateZ(-radius)` inside a `perspective` viewport so the front
-card lands on the page plane. The copy on the left (title, description,
-tag, from `content/projects.json`) crossfades to the active project via
-`AnimatePresence`; the reference keeps its copy fixed, the Figma ties it
-to the project. Same unpin rules as the approach (`FLOW_QUERY` + the
-media block): a plain card-then-copy list when narrow, short, or under
-reduced motion. The section carries `id="work"`, the nav's Projects
-target. Numbers in `PROJECTS` in `src/lib/motion.ts`; the drum's radius is
-duplicated in `.projects-drum`'s `translateZ` and must move with it.
+`Projects.tsx`, after the approach: a fan of project cards, after
+21st.dev's card-fan-carousel (an earlier pinned 3D drum, after
+gabrielbeaugonin.com, was built first and replaced at the user's request).
+An ordinary in-flow section, not pinned. The original component runs on
+GSAP; this is a port to Motion — the project has one animation library
+and the user asked not to add a second — with its numbers kept as
+delivered: the seven resting slots (rotation, scale, x/y in rem), the
+hover layout (lift the hovered card 2.5rem and 8%, push the others aside
+by a strength that falls to nothing at the fan's edges, stagger by
+distance), the entrance (rise from below the centre, open out, 60ms
+apart), and paging with arrows and dots past seven cards. Springs with a
+little bounce stand in for its `elastic.out` eases (`FAN` in
+`src/lib/motion.ts`).
+
+Two deliberate departures. Sizes come from the fan's own box, not
+`window.innerWidth` against fixed breakpoints (see the rule above about
+not trusting the window): `mult` scales x so the outermost card still
+lands inside the fan, `hMult` scales y with the card's width, and one CSS
+variable, `--fan-card-w`, sizes the card, the fan's height and the corner
+radius together. And fewer than seven cards sit half a fan-width apart
+per step rather than stretched edge to edge, which is what the original
+does and which strands three cards 30rem from each other.
+
+Cards are images only, as in the component (`content/projects.json`:
+title for the alt text, image under `public/projects/`, optional `href`).
+The thumbnails came in as chat attachments, so they are re-encoded JPEGs
+with their rounded corners baked in on white; `.fan-card`'s radius is a
+touch larger so those corners are clipped. The section carries
+`id="work"`, the nav's Projects target.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

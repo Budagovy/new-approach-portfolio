@@ -561,27 +561,20 @@ portfolio-city-strip {
   .approach-step-desc { margin-left: 0; }
 }
 
-/* --- Selected projects --------------------------------------------------- */
-/* Same pin as the approach: a track --projects-pin viewports tall, the
-   stage stuck at its top, the page column inside carrying the frame's
-   rules. Copy on the left, the drum of cards on the right; Projects.tsx
-   drives the drum and the copy swap, everything here is layout and the
-   resting look. */
+/* --- Selected projects (the card fan) ------------------------------------ */
+/* Ordinary in-flow section, no pin: label, heading, then the fan. The
+   cards are absolutely positioned at the fan's centre (the flex centring
+   is their static position) and Projects.tsx moves them from there with
+   transforms only; everything here is size and the resting look. One
+   variable sizes it all: the card's width, from which the fan's height,
+   the corner radius and (in the component) the y offsets follow, so the
+   fan scales as one piece from desktop to phone. */
 .projects {
-  position: relative;
-  height: calc(var(--projects-pin) * 100dvh);
-}
-.projects-stage {
-  position: sticky;
-  top: 0;
-  height: 100dvh;
   background: var(--bg);
+  overflow-x: clip;
 }
 .projects-body {
-  height: 100%;
-  padding: var(--header-h) var(--page-pad) 0;
-  display: grid;
-  grid-template-rows: auto 1fr;
+  padding: 0 var(--page-pad) clamp(72px, 9vw, 128px);
   border-top: 1px solid var(--line);
 }
 .projects-label {
@@ -595,111 +588,76 @@ portfolio-city-strip {
   text-transform: uppercase;
   color: var(--faint);
 }
-.projects-grid {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  align-items: center;
-  column-gap: 48px;
-  padding-bottom: var(--header-h);
-}
-.projects-copy {
-  max-width: 38ch;
-  min-height: 12rem;
-}
-.projects-title {
-  margin: 0;
-  font-size: clamp(32px, 3.3vw, 48px);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.025em;
-}
-.projects-desc {
-  margin: 18px 0 0;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--ink);
-}
-.projects-tag {
-  display: block;
-  margin-top: 18px;
-  font-size: 11px;
+.projects-heading {
+  margin: clamp(56px, 8vw, 104px) 0 clamp(16px, 3vw, 40px);
+  font-size: var(--fs-display);
   font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
+  line-height: var(--lh-display);
+  letter-spacing: var(--tr-display);
+  text-align: center;
 }
-/* The drum: a perspective viewport with a 3D-preserving cylinder inside.
-   Each card is rotated about the drum's axis then pushed out to the
-   radius, and the drum itself sits back by that radius so the front card
-   lands flat on the page. */
-.projects-drum-wrap {
-  --card-w: clamp(240px, 22vw, 320px);
-  --card-h: calc(var(--card-w) * 1.25);
-  display: grid;
-  place-items: center;
-  perspective: 1400px;
-  perspective-origin: 50% 50%;
-}
-.projects-drum {
+.fan-layout {
+  --fan-card-w: clamp(8.5rem, 19vw, 17rem);
   position: relative;
-  width: var(--card-w);
-  height: var(--card-h);
-  transform-style: preserve-3d;
-  transform: translateZ(calc(-1px * 420));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  /* The card (630:1122), plus room for the lift on hover above it and the
+     outer cards' drop below. */
+  height: calc(var(--fan-card-w) * 1.781 + 6.5rem);
 }
-.projects-card {
+/* The radius is a little over the one baked into the thumbnails, so their
+   own white corners are clipped away rather than showing. */
+.fan-card {
   position: absolute;
-  inset: 0;
-  border-radius: 22px;
-  background: #e8e8e8;
-  border: 1px solid rgb(22 20 14 / 0.08);
+  display: block;
+  width: var(--fan-card-w);
+  aspect-ratio: 630 / 1122;
+  border-radius: calc(var(--fan-card-w) * 0.085);
   overflow: hidden;
-  backface-visibility: hidden;
+  background: #e8e8e8;
+  box-shadow: 0 24px 50px -28px rgb(22 20 14 / 0.45);
   will-change: transform, opacity;
 }
-.projects-card img {
+.fan-card img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  user-select: none;
 }
-.projects-list { display: none; }
+a.fan-card { cursor: pointer; }
+.fan-paging {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+.fan-arrow {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: rgb(22 20 14 / 0.04);
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+.fan-arrow:hover { border-color: var(--rule); color: var(--ink); }
+.fan-arrow:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.fan-dots { display: flex; align-items: center; gap: 8px; }
+.fan-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(22 20 14 / 0.15);
+  transition: transform var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+}
+.fan-dot.is-active { background: rgb(22 20 14 / 0.7); transform: scale(1.3); }
 
-/* Where two columns can't fit, or under reduced motion: no pin, a plain
-   list, card then copy. Must match FLOW_QUERY in Projects.tsx. */
-@media (max-width: 859px), (max-height: 699px), (prefers-reduced-motion: reduce) {
-  .projects { height: auto; }
-  .projects-stage {
-    position: static;
-    height: auto;
-  }
-  .projects-body {
-    height: auto;
-    padding-top: 40px;
-    padding-bottom: 80px;
-    row-gap: 40px;
-  }
-  .projects-list {
-    display: grid;
-    row-gap: 56px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .projects-item {
-    display: grid;
-    gap: 24px;
-  }
-  .projects-card--flat {
-    position: relative;
-    width: min(100%, 360px);
-    aspect-ratio: 4 / 5;
-  }
-  .projects-copy { min-height: 0; }
-}
-@media (min-width: 860px) and (max-height: 699px) and (prefers-reduced-motion: no-preference) {
-  .projects-item {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: center;
-  }
-}

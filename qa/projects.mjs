@@ -1,14 +1,13 @@
-/* QA gate for the "Selected projects" drum: pinning, one-project-per-step
-   rounding, the spring settling flat on the active card with neighbours
-   tilted back, reverse and mid-spring reversal, the copy crossfade, and
-   the unpinned narrow / reduced-motion lists. Exits non-zero on failure.
-   Screenshots land in qa/frames/.
+/* QA gate for the "Selected projects" fan: the entrance opening into the
+   fan, the resting geometry, hover lift and push, restore on leave, that
+   the thumbnails actually load, and that the fan fits its column from
+   desktop down to phones and under reduced motion. Exits non-zero on
+   failure. Screenshots land in qa/frames/.
 
    Run with the dev server up:  npm run qa:projects
 */
 import { chromium } from "playwright-core";
 import { mkdirSync } from "node:fs";
-import { PROJECTS } from "../src/lib/motion.ts";
 
 const CHROME_PATHS = {
   win32: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
@@ -16,119 +15,117 @@ const CHROME_PATHS = {
   linux: "/usr/bin/google-chrome",
 };
 const CHROME = process.env.QA_CHROME || CHROME_PATHS[process.platform] || CHROME_PATHS.darwin;
+const URL_ = process.env.QA_URL || "http://localhost:3220";
 const OUT = "qa/frames/";
 mkdirSync(OUT, { recursive: true });
-const fails = [];
-const ok = (n, p, d = "") => { console.log(`${p ? "PASS" : "FAIL"}  ${n.padEnd(60)} ${d}`); if (!p) fails.push(n); };
 
+const fails = [];
+const ok = (n, p, d = "") => { console.log(`${p ? "PASS" : "FAIL"}  ${n.padEnd(58)} ${d}`); if (!p) fails.push(n); };
+
+/* Each card's pose, decomposed from its 2D matrix, plus where it sits. */
 const probe = () => {
-  const sec = document.querySelector(".projects"), stage = document.querySelector(".projects-stage");
-  const cards = [...document.querySelectorAll(".projects-drum .projects-card")].map((c) => {
-    const t = getComputedStyle(c).transform; // matrix3d(...)
-    const m = t.startsWith("matrix3d") ? t.slice(t.indexOf("(") + 1).match(/[-\d.e]+/g).map(Number) : null;
-    // rotateX angle from the 3d matrix: m[5] = cos, m[6] = sin (column-major m22, m23)
-    const angle = m ? Math.round(Math.atan2(m[6], m[5]) * 180 / Math.PI) : null;
-    const r = c.getBoundingClientRect();
-    return { angle, opacity: +(+getComputedStyle(c).opacity).toFixed(2), top: Math.round(r.top), h: Math.round(r.height) };
+  const fan = document.querySelector(".fan-layout"), sec = document.querySelector(".projects");
+  const col = document.querySelector(".projects-body").getBoundingClientRect();
+  const cards = [...document.querySelectorAll(".fan-card")].map((c) => {
+    const cs = getComputedStyle(c);
+    const m = cs.transform === "none" ? [1, 0, 0, 1, 0, 0] : cs.transform.slice(cs.transform.indexOf("(") + 1).match(/-?[\d.]+(?:e-?\d+)?/g).map(Number);
+    const r = c.getBoundingClientRect(), img = c.querySelector("img");
+    return {
+      rot: Math.round(Math.atan2(m[1], m[0]) * 180 / Math.PI * 10) / 10, scale: +Math.hypot(m[0], m[1]).toFixed(3),
+      tx: Math.round(m[4]), ty: Math.round(m[5]), opacity: +(+cs.opacity).toFixed(2), z: +cs.zIndex,
+      left: Math.round(r.left), right: Math.round(r.right), loaded: !!img && img.complete && img.naturalWidth > 0,
+    };
   });
-  const title = document.querySelector(".projects-title")?.textContent;
-  const copyOpacity = document.querySelector(".projects-copy > div") ? +(+getComputedStyle(document.querySelector(".projects-copy > div")).opacity).toFixed(2) : null;
   return {
-    secTop: sec.offsetTop, secH: sec.offsetHeight, vh: innerHeight, stageTop: Math.round(stage.getBoundingClientRect().top), stagePos: getComputedStyle(stage).position,
-    title, copyOpacity, cards, list: !!document.querySelector(".projects-list"),
-    labelOpacity: +getComputedStyle(document.querySelector(".projects-label")).opacity,
-    overflow: document.documentElement.scrollWidth - innerWidth, docH: document.documentElement.scrollHeight,
+    secTop: sec.offsetTop, position: getComputedStyle(sec).position, fanTop: Math.round(fan.getBoundingClientRect().top + scrollY), fanH: Math.round(fan.getBoundingClientRect().height),
+    col: { l: Math.round(col.left), r: Math.round(col.right) }, cards,
+    heading: +getComputedStyle(document.querySelector(".projects-heading")).opacity,
+    overflow: document.documentElement.scrollWidth - innerWidth,
   };
 };
 
 const browser = await chromium.launch({ executablePath: CHROME, headless: true });
 
-/* Desktop pinned drum. */
+/* ---------- desktop ---------- */
 {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   const errors = [];
   page.on("console", (m) => { if (m.type() === "error") errors.push(m.text().slice(0, 120)); });
   page.on("pageerror", (e) => errors.push(String(e).slice(0, 120)));
-  await page.goto(process.env.QA_URL || "http://localhost:3220", { waitUntil: "networkidle" });
+  await page.goto(URL_, { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
+
   let s = await page.evaluate(probe);
-  const { secTop, secH, vh } = s;
-  const len = secH - vh;
-  const toP = (f) => Math.round(secTop + f * len);
-  console.log(`projects: top ${secTop}, track ${secH}px = ${(secH / vh).toFixed(2)}vh, page ends at ${s.docH} (section end ${secTop + secH})`);
-  ok("page ends at the section's track end (no gap)", s.docH === secTop + secH, "");
+  ok("before it scrolls in: cards hidden, stacked low at the centre", s.cards.every((c) => c.opacity === 0 && c.tx === 0 && c.ty > 0), JSON.stringify(s.cards.map((c) => [c.opacity, c.tx, c.ty])));
 
-  const go = async (y, w = 900) => { await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(w); return page.evaluate(probe); };
+  await page.evaluate((y) => scrollTo(0, y), s.fanTop - 140);
+  await page.waitForTimeout(2600);
+  s = await page.evaluate(probe);
+  const [a, b, c] = s.cards;
+  ok("entrance played: all three shown, heading revealed", s.cards.every((k) => k.opacity === 1) && s.heading === 1, JSON.stringify(s.cards.map((k) => k.opacity)));
+  ok("centre card flat at full size, on top", b.rot === 0 && b.scale === 1 && b.tx === 0 && b.z > a.z && b.z > c.z, JSON.stringify(b));
+  ok("side cards mirrored: tilted out, smaller, lower, either side", a.rot < 0 && c.rot === -a.rot && a.scale < 1 && a.scale === c.scale && a.tx === -c.tx && a.tx < 0 && a.ty > 0 && a.ty === c.ty, JSON.stringify([a, c].map((k) => [k.rot, k.scale, k.tx, k.ty])));
+  ok("fan sits inside the page column", Math.min(...s.cards.map((k) => k.left)) >= s.col.l && Math.max(...s.cards.map((k) => k.right)) <= s.col.r, `cards ${Math.min(...s.cards.map((k) => k.left))}..${Math.max(...s.cards.map((k) => k.right))} in ${s.col.l}..${s.col.r}`);
+  ok("all thumbnails loaded", s.cards.every((k) => k.loaded), JSON.stringify(s.cards.map((k) => k.loaded)));
+  ok("section is ordinary flow, not pinned", s.position !== "sticky" && s.position !== "fixed", s.position);
+  await page.screenshot({ path: OUT + "projects-rest.png" });
+  const rest = s.cards;
 
-  s = await go(secTop, 1300);
-  ok("pinned at track start; project 1 active, copy shown", s.stageTop === 0 && s.stagePos === "sticky" && s.title === "Second Office" && s.copyOpacity === 1, JSON.stringify({ top: s.stageTop, title: s.title, copy: s.copyOpacity }));
-  ok("front card flat (rotateX 0), neighbour tilted back at 'step' degrees and dimmer", s.cards[0].angle === 0 && s.cards[0].opacity === 1 && Math.abs(Math.abs(s.cards[1].angle) - PROJECTS.step) <= 1 && s.cards[1].opacity < 1, JSON.stringify(s.cards));
-  ok("next card sits below the front card", s.cards[1].top > s.cards[0].top, `card0 top ${s.cards[0].top}, card1 top ${s.cards[1].top}`);
-  await page.screenshot({ path: OUT + "proj-1.png" });
+  // Hover a side card: it lifts and grows, the centre card is pushed away from it.
+  await page.locator(".fan-card").nth(0).hover();
+  await page.waitForTimeout(900);
+  s = await page.evaluate(probe);
+  ok("hover left card: it lifts and grows", s.cards[0].ty < rest[0].ty && s.cards[0].scale > rest[0].scale, `ty ${rest[0].ty}->${s.cards[0].ty}, scale ${rest[0].scale}->${s.cards[0].scale}`);
+  ok("hover left card: centre is pushed right and tilts away", s.cards[1].tx > rest[1].tx && s.cards[1].rot > 0, `tx ${rest[1].tx}->${s.cards[1].tx}, rot ${s.cards[1].rot}`);
+  await page.screenshot({ path: OUT + "projects-hover.png" });
 
-  s = await go(toP(0.5), 1300);
-  ok("mid-track: project 2 active, drum turned one step (card 1 flat, card 0 above)", s.title === "Project two" && s.cards[1].angle === 0 && Math.abs(Math.abs(s.cards[0].angle) - PROJECTS.step) <= 1 && s.cards[0].top < s.cards[1].top, JSON.stringify({ title: s.title, cards: s.cards }));
-  ok("mid-track: copy crossfade finished", s.copyOpacity === 1, `${s.copyOpacity}`);
-  await page.screenshot({ path: OUT + "proj-2.png" });
+  // Hover the centre card: it lifts; the outermost cards hold their ground.
+  // (Leave first, so the pointer goes to where the centre card RESTS, not
+  // to where the previous hover had pushed it.)
+  await page.mouse.move(10, 10);
+  await page.waitForTimeout(1100);
+  await page.locator(".fan-card").nth(1).hover();
+  await page.waitForTimeout(900);
+  s = await page.evaluate(probe);
+  ok("hover centre card: it lifts and grows, back on its axis", s.cards[1].ty < rest[1].ty && s.cards[1].scale > 1 && s.cards[1].tx === 0, JSON.stringify(s.cards[1]));
 
-  s = await go(toP(1), 1300);
-  ok("track end: project 3 active, still pinned", s.title === "Project three" && s.cards[2].angle === 0 && s.stageTop === 0, JSON.stringify({ title: s.title, a: s.cards.map((c) => c.angle) }));
-  await page.screenshot({ path: OUT + "proj-3.png" });
-
-  // Quarter-way: rounding keeps project 1 (no half-positions).
-  s = await go(toP(0.2), 1300);
-  ok("p=0.2 rounds to project 1 (whole steps only)", s.title === "Second Office" && s.cards[0].angle === 0, `${s.title} ${s.cards[0].angle}`);
-
-  // Fast jump end -> start, then a mid-spring reversal.
-  await go(toP(1), 400); s = await go(secTop, 1300);
-  ok("fast reverse to start: project 1, drum back flat", s.title === "Second Office" && s.cards[0].angle === 0, JSON.stringify({ title: s.title, a: s.cards.map((c) => c.angle) }));
-  await page.evaluate((v) => scrollTo(0, v), toP(0.5)); await page.waitForTimeout(150);
-  s = await go(secTop, 1400);
-  ok("reversing mid-spring settles cleanly on project 1", s.title === "Second Office" && s.cards[0].angle === 0 && s.copyOpacity === 1, JSON.stringify({ title: s.title, a: s.cards.map((c) => c.angle), copy: s.copyOpacity }));
-
+  // Leave: everything back exactly where it rested.
+  await page.mouse.move(10, 10);
+  await page.waitForTimeout(1100);
+  s = await page.evaluate(probe);
+  ok("mouse leave: fan restores exactly", s.cards.every((k, i) => k.rot === rest[i].rot && k.scale === rest[i].scale && k.tx === rest[i].tx && k.ty === rest[i].ty), JSON.stringify(s.cards.map((k) => [k.rot, k.scale, k.tx, k.ty])));
   ok("desktop: no overflow, no console errors", s.overflow === 0 && errors.length === 0, `${s.overflow}px ${errors.join(" | ")}`);
   await ctx.close();
 }
 
-/* Mobile list. */
-{
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+/* ---------- fits at every width ---------- */
+for (const [w, h, mobile] of [[1024, 768, false], [768, 1024, true], [390, 844, true]]) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile });
   const page = await ctx.newPage();
-  const errors = [];
-  page.on("console", (m) => { if (m.type() === "error") errors.push(m.text().slice(0, 120)); });
-  await page.goto(process.env.QA_URL || "http://localhost:3220", { waitUntil: "networkidle" });
+  await page.goto(URL_, { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
   let s = await page.evaluate(probe);
-  await page.evaluate((y) => scrollTo(0, y), s.secTop - 100); await page.waitForTimeout(1200);
+  await page.evaluate((y) => scrollTo(0, y), s.fanTop - 120);
+  await page.waitForTimeout(2600);
   s = await page.evaluate(probe);
-  ok("mobile: unpinned list", s.stagePos === "static" && s.list, `${s.stagePos} list=${s.list}`);
-  await page.screenshot({ path: OUT + "proj-mobile.png" });
-  // Scroll through like a reader would (steps), not one jump that skips the middle item.
-  const end = await page.evaluate(() => document.body.scrollHeight);
-  for (let y = s.secTop - 100; y < end; y += 300) { await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(120); }
-  await page.waitForTimeout(1000);
-  const shown = await page.evaluate(() => [...document.querySelectorAll(".projects-item")].map((li) => +getComputedStyle(li).opacity));
-  ok("mobile: every project revealed once scrolled through", shown.every((o) => o === 1), JSON.stringify(shown));
-  s = await page.evaluate(probe);
-  ok("mobile: no overflow, no console errors", s.overflow === 0 && errors.length === 0, `${s.overflow}px ${errors.join(" | ")}`);
+  const l = Math.min(...s.cards.map((k) => k.left)), r = Math.max(...s.cards.map((k) => k.right));
+  ok(`${w}px: fan shown and inside the column, no overflow`, s.cards.every((k) => k.opacity === 1) && l >= s.col.l && r <= s.col.r && s.overflow === 0, `cards ${l}..${r} in ${s.col.l}..${s.col.r}, overflow ${s.overflow}`);
+  await page.screenshot({ path: `${OUT}projects-${w}.png` });
   await ctx.close();
 }
 
-/* Reduced motion. */
+/* ---------- reduced motion ---------- */
 {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
   const page = await ctx.newPage();
-  await page.goto(process.env.QA_URL || "http://localhost:3220", { waitUntil: "networkidle" });
-  await page.waitForTimeout(600);
-  let s = await page.evaluate(probe);
-  await page.evaluate((y) => scrollTo(0, y), s.secTop - 50); await page.waitForTimeout(900);
-  s = await page.evaluate(probe);
-  const shown = await page.evaluate(() => [...document.querySelectorAll(".projects-item")].map((li) => +getComputedStyle(li).opacity));
-  ok("reduced motion: static list, all projects shown", s.stagePos === "static" && s.list && shown.length === 3 && shown.every((o) => o === 1), JSON.stringify(shown));
-  await page.screenshot({ path: OUT + "proj-reduced.png" });
+  await page.goto(URL_, { waitUntil: "networkidle" });
+  await page.waitForTimeout(800);
+  const s = await page.evaluate(probe);
+  ok("reduced motion: fan simply there, no entrance to wait for", s.cards.every((k) => k.opacity === 1) && s.cards[1].rot === 0 && s.cards[0].rot < 0, JSON.stringify(s.cards.map((k) => [k.opacity, k.rot])));
   await ctx.close();
 }
 
 await browser.close();
 console.log(fails.length ? `\nFAILED: ${fails.join("; ")}` : "\nALL PASS");
+process.exit(fails.length ? 1 : 0);
