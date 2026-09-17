@@ -21,6 +21,12 @@ export const HERO = {
   zoomEnd: 0.62,
   /** Pinned scroll length, in viewport heights. */
   pinVh: 4.5,
+  /**
+   * The monitor's resting screen (the greeting) dissolves into the hero
+   * over this slice of the push (0 = push starts, 1 = push ends): gone
+   * well before the monitor fills the view, so the hero is what arrives.
+   */
+  screenOut: [0.05, 0.4],
 } as const;
 
 /**

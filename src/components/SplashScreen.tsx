@@ -48,15 +48,23 @@ export interface SplashData {
 export function SplashScreen({
   data,
   id,
+  screen,
   children,
 }: {
   data: SplashData;
   id?: string;
+  /**
+   * What the monitor shows at rest, before any scrolling: an opaque full
+   * screen laid over the hero inside the same stage, so it shares the
+   * hero's exact clip and transform, and dissolved (opacity only) as the
+   * push begins. Under reduced motion there is no monitor to show it on.
+   */
+  screen?: ReactNode;
   children: ReactNode;
 }) {
   const reduce = useReducedMotion();
   return !reduce ? (
-    <SplashPinned data={data} id={id}>{children}</SplashPinned>
+    <SplashPinned data={data} id={id} screen={screen}>{children}</SplashPinned>
   ) : (
     <SplashFlat data={data} id={id} reduce={!!reduce}>{children}</SplashFlat>
   );
@@ -92,7 +100,19 @@ function usePlayWhileVisible(ref: React.RefObject<HTMLVideoElement | null>, enab
   }, [ref, enabled]);
 }
 
-function SplashPinned({ data, id, children }: { data: SplashData; id?: string; children: ReactNode }) {
+/* The `screen` prop is bound as `resting` in here: `screen` is already the
+   monitor's calibration rectangles (data.video.screen) throughout. */
+function SplashPinned({
+  data,
+  id,
+  screen: resting,
+  children,
+}: {
+  data: SplashData;
+  id?: string;
+  screen?: ReactNode;
+  children: ReactNode;
+}) {
   const { frame, screen } = data.video;
   const RATIO = frame.w / frame.h;
 
@@ -312,6 +332,16 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
 
   /* The room only leaves once the hero already fills most of the view. */
   const roomOpacity = useTransform(push, [0.82, 1], [1, 0]);
+
+  /* The resting screen. NOT a second copy of the hero at a second geometry
+     (the handoff that ghosted, see above): it is a different picture laid
+     over the hero INSIDE the same stage, cropped and scaled by the very
+     same clip and transform, so it can only ever sit exactly where the
+     hero sits. It just fades — opacity, nothing else — early in the push,
+     and stops taking clicks the moment it is no longer visible so the
+     hero beneath is what the reader interacts with from then on. */
+  const screenOpacity = useTransform(push, [HERO.screenOut[0], HERO.screenOut[1]], [1, 0], { clamp: true });
+  const screenPointer = useTransform(screenOpacity, (o) => (o > 0.02 ? "auto" : "none"));
   /* Blur removed for now while the handoff geometry is the thing being
      verified: it previously masked the point where the footage would show
      its own pixels through the reveal, which is a real seam worth checking
@@ -369,6 +399,15 @@ function SplashPinned({ data, id, children }: { data: SplashData; id?: string; c
               style={{ left: heroX, top: heroY, scale: heroScale }}
             >
               {children}
+              {resting && (
+                <motion.div
+                  className="splash-screen"
+                  style={{ opacity: screenOpacity, pointerEvents: screenPointer }}
+                  aria-hidden="true"
+                >
+                  {resting}
+                </motion.div>
+              )}
             </motion.div>
           </motion.div>
         </div>

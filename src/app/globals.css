@@ -205,6 +205,34 @@ body {
   background: var(--bg);
 }
 
+/* The resting screen, laid over the hero inside the same stage: opaque, so
+   at rest the monitor shows only this; SplashScreen fades it out as the
+   push begins. */
+.splash-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  will-change: opacity;
+}
+
+/* --- Greeting (what the monitor shows at rest) ---------------------------- */
+.greeting {
+  padding: 0 var(--page-pad);
+  text-align: center;
+}
+.greeting-line {
+  margin: 0;
+  font-size: var(--fs-display);
+  font-weight: 500;
+  line-height: var(--lh-display);
+  letter-spacing: var(--tr-display);
+  color: var(--ink);
+}
+.greeting-emphasis { font-weight: 700; }
+.greeting-mark { color: var(--accent); font-weight: 700; }
+
 /* Narrow viewports and reduced motion: room above, hero as the page. */
 .splash-flat { display: flex; flex-direction: column; }
 .splash-flat-media { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }

@@ -38,9 +38,12 @@ below it.
 
 ## What shows on the monitor before you scroll
 
-The monitor shows the hero itself, shrunk to fit, not separate placeholder
-copy — the same element that becomes the full page as you scroll, not a
-second copy swapped out partway through.
+Whatever you pass to `SplashScreen`'s `screen` prop — on this site, a
+one-line greeting (`content/greeting.json`, rendered by `MonitorGreeting`).
+It is laid over the hero inside the same stage, so it is cropped and scaled
+by exactly the hero's clip and transform, and it dissolves as you start to
+scroll in, leaving the hero — the same element that then becomes the page.
+Leave `screen` out and the monitor simply shows the hero, shrunk to fit.
 
 ## Using a different video
 

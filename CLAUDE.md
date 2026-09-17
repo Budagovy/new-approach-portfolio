@@ -164,6 +164,19 @@ reintroduce once continuity itself is confirmed solid, not before, since
 blur previously masked exactly the kind of seam this section exists to
 avoid.
 
+**The resting screen.** The monitor at rest shows a greeting rather than
+the hero (`SplashScreen`'s `screen` slot; `MonitorGreeting`,
+`content/greeting.json`). This is not the two-layer preview this section
+warns against coming back: that was the SAME content at a SECOND,
+independently computed geometry, handed off mid-zoom, which is what
+ghosted. The greeting is a different picture laid over the hero INSIDE
+the hero stage — cropped and scaled by the identical clip and transform,
+so it cannot sit anywhere but exactly where the hero sits — and it only
+fades (opacity, `HERO.screenOut`), early in the push, gone before the
+monitor fills the view. It stops taking pointer events the moment it is
+no longer visible, so the hero beneath takes clicks from then on. Under
+reduced motion there is no monitor, so no greeting.
+
 ## The page column
 
 Every section's content sits in one centred column, `.page`, sized to
