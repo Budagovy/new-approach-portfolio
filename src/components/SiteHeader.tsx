@@ -20,7 +20,7 @@ export interface SiteHeaderData {
 export function SiteHeader({ data }: { data: SiteHeaderData }) {
   return (
     <header className="site-header">
-      <div className="container site-header-row">
+      <div className="page site-header-row">
         <a className="site-header-name" href="#top">
           {data.name}
         </a>

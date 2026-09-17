@@ -23,18 +23,17 @@
   --lh-display: 1.04;
   --tr-display: -0.03em;
 
-  --wrap: min(1307px, 90vw);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-1: 200ms;
 
-  /* Content container width and inline padding, measured (not assumed)
-     from pleurat.com's own container at a sweep of viewport widths: below
-     962px it runs edge to edge with a flat 25px gutter; above that it steps
-     through three more tiers (98vw/40px, 96vw/52px, then a hard 1524px
-     ceiling reached via 88vw/68px). Four tiers, not one continuous formula,
-     because that's what the reference actually does. */
-  --content-max: 100%;
-  --content-pad: 25px;
+  /* The page column, from the Figma frame: a 1440px desktop frame (the
+     export is 2x) with the framed content from 300px to 1140px, i.e. an
+     840px column and 300px gutters. The gutter shrinks with the viewport
+     and never drops below 20px; --page-pad is the column's own inner
+     padding where a section needs one (the nav measures ~48px). */
+  --page-max: 840px;
+  --page-gutter: clamp(20px, 5vw, 300px);
+  --page-pad: clamp(16px, 3.4vw, 48px);
 
   --header-h: 64px;
 
@@ -51,27 +50,19 @@
   :root { --header-h: 76px; }
 }
 
-@media (min-width: 962px) {
-  :root { --content-max: 98vw; --content-pad: 40px; }
-}
-@media (min-width: 1186px) {
-  :root { --content-max: 96vw; --content-pad: 52px; }
-}
-@media (min-width: 1536px) {
-  :root { --content-max: min(1524px, 88vw); --content-pad: 68px; }
-}
-
 * { box-sizing: border-box; min-width: 0; }
 
-/* Shared content container: same left/right edges on every section that
-   uses it, at every width. Backgrounds and video stay outside this (full
-   bleed on the section itself); this only wraps the content that needs to
-   line up. */
-.container {
-  width: 100%;
-  max-width: var(--content-max);
+/* The centred page column every section shares, so their outer boundaries
+   line up: the nav row, the hero (inside the viewport-sized splash stage),
+   the approach stage, and whatever follows. Backgrounds and the video stay
+   outside it, across the viewport; the column carries the frame's vertical
+   rules, and each section draws its own top rule on it. */
+.page {
+  width: min(var(--page-max), calc(100% - 2 * var(--page-gutter)));
   margin-inline: auto;
-  padding-inline: var(--content-pad);
+}
+.page-frame {
+  border-inline: 1px solid var(--line);
 }
 
 /* --- Site header ------------------------------------------------------ */
@@ -85,14 +76,17 @@
   z-index: 50;
   height: var(--header-h);
   background: var(--bg);
-  border-bottom: 1px solid var(--line);
 }
+/* The rule under the nav is the top edge of the page frame, so it spans
+   the column, not the viewport. */
 .site-header-row {
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+  padding-inline: var(--page-pad);
+  border-bottom: 1px solid var(--line);
 }
 .site-header-name {
   font-size: 1.15rem;
@@ -209,6 +203,12 @@ body {
 .hero {
   position: relative;
   height: 100%;
+}
+/* The hero's content lives in the page column; the stage around it stays
+   viewport-sized (the splash's geometry depends on that) and just shows
+   the cream ground either side. */
+.hero-page {
+  height: 100%;
   display: grid;
   grid-template-rows: 1fr auto;
 }
@@ -223,7 +223,7 @@ body {
 .hero-main {
   display: grid;
   place-items: center;
-  padding: calc(var(--strip-h) + 24px) 5vw 24px;
+  padding: calc(var(--strip-h) + 24px) clamp(12px, 1.7vw, 24px) 24px;
 }
 @media (max-height: 720px) {
   .hero-main { padding-top: 24px; }
@@ -252,9 +252,12 @@ portfolio-city-strip {
   --strip-muted: var(--muted);
   --strip-accent: var(--accent);
 }
+/* Sized by the column it sits in (not the viewport — an earlier 90vw
+   width here overflowed the column's rules on phones), capped at a
+   reading measure. */
 .hero-body {
   position: relative;
-  width: var(--wrap);
+  width: 100%;
   max-width: 46rem;
   display: flex;
   flex-direction: column;
@@ -265,6 +268,8 @@ portfolio-city-strip {
 .hero-eyebrow {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
+  text-align: center;
   padding: 8px 16px;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -272,6 +277,11 @@ portfolio-city-strip {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
+}
+/* On phones the column leaves the pill a few px short of one line at
+   full tracking; tighten it a touch rather than wrap. */
+@media (max-width: 420px) {
+  .hero-eyebrow { letter-spacing: 0.06em; padding-inline: 12px; }
 }
 .hero-headline {
   margin: 0;
@@ -320,10 +330,14 @@ portfolio-city-strip {
 
 /* --- Approach (four steps) ------------------------------------------------ */
 /* A pinned track, like the splash: the section is --approach-pin viewports
-   tall and the stage sticks at the top of it, under the fixed header, for
-   the whole scroll. Approach.tsx reads progress through the track and sets
-   each step's state; everything here is layout and the resting look. Grid
-   texture is scoped to this stage only, per the Figma frame. */
+   tall and the stage sticks at the top of it for the whole scroll.
+   Approach.tsx reads progress through the track and sets each step's
+   state; everything here is layout and the resting look. The stage is
+   viewport-wide only to pin; the section itself is the page column inside
+   it, which carries the frame's rules and the grid texture per the Figma
+   and starts at the very top of the stage so its side rules run on from
+   the hero's without a break (the header's clearance is padding inside
+   the column, not on the stage). */
 .approach {
   position: relative;
   height: calc(var(--approach-pin) * 100dvh);
@@ -332,26 +346,26 @@ portfolio-city-strip {
   position: sticky;
   top: 0;
   height: 100dvh;
-  padding-top: var(--header-h);
-  border-top: 1px solid var(--line);
   background-color: var(--bg);
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 28px 28px;
 }
 /* Rows: label, heading (centred in its share), the timeline, then a larger
    empty share below, which puts the line a little above the middle of the
    screen — where the Figma has it. */
 .approach-body {
   height: 100%;
+  padding-top: var(--header-h);
   display: grid;
   grid-template-rows: auto 0.9fr auto 1.2fr;
+  border-top: 1px solid var(--line);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 .approach-label {
   display: inline-flex;
   gap: 1.4em;
-  padding-top: 10px;
+  padding: 10px 0 0 18px;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 11px;
   font-weight: 500;
@@ -435,10 +449,10 @@ portfolio-city-strip {
   list-style: none;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  column-gap: 24px;
+  column-gap: 12px;
 }
 .approach-step {
-  padding: 0 8px;
+  padding: 0 4px;
   text-align: center;
 }
 .approach-step-title {
@@ -451,7 +465,7 @@ portfolio-city-strip {
 .approach-step-desc {
   margin: 8px auto 0;
   max-width: 30ch;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--muted);
 }
@@ -464,29 +478,31 @@ portfolio-city-strip {
   .approach-stage {
     position: static;
     height: auto;
-    padding-top: 40px;
-    padding-bottom: 80px;
   }
   .approach-body {
     height: auto;
+    padding-top: 40px;
+    padding-bottom: 80px;
     grid-template-rows: auto auto auto;
     row-gap: 44px;
   }
 }
 /* Narrow: a vertical timeline instead of four across, the marker drawn
-   inside each step and joined by a rule down the left. */
+   inside each step and joined by a rule down the left, inset from the
+   column's own rule. */
 @media (max-width: 859px) {
   .approach-track { display: none; }
   .approach-copy {
     position: relative;
     margin-top: 0;
+    padding-inline: var(--page-pad);
     grid-template-columns: 1fr;
     row-gap: 32px;
   }
   .approach-copy::before {
     content: "";
     position: absolute;
-    left: 13px;
+    left: calc(var(--page-pad) + 13px);
     top: 13px;
     bottom: 13px;
     width: 1px;

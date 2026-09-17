@@ -165,7 +165,7 @@ export function Approach({ data }: { data: ApproachData }) {
     >
       <div ref={stageRef} className="approach-stage">
         <motion.div
-          className="container approach-body"
+          className="page page-frame approach-body"
           variants={entrance}
           initial="hidden"
           animate={entered ? "shown" : "hidden"}

@@ -164,6 +164,30 @@ reintroduce once continuity itself is confirmed solid, not before, since
 blur previously masked exactly the kind of seam this section exists to
 avoid.
 
+## The page column
+
+Every section's content sits in one centred column, `.page`: 840px wide
+at most, with gutters that shrink from 300px down to 20px as the
+viewport narrows. The numbers come from the Figma frame — a 1440px
+desktop frame exported at 2x, with the framed content running 300px to
+1140px — not from the exported screenshot's pixel size. Backgrounds and
+the splash video stay outside the column, across the viewport; the column
+carries the frame's side rules (`.page-frame`) and each section draws its
+own top rule on it, so the outer boundaries line up from the nav row
+through the hero and the approach stage to whatever comes next. `--page-pad`
+is a section's inner padding where it wants one (the nav's measures ~48px
+in the frame).
+
+Pinned sections keep their stage viewport-wide — that's what makes them
+pin, and the splash's zoom geometry depends on its stage being exactly the
+viewport — but the section as the reader sees it is the column inside the
+stage. The hero's column starts at the top of the hero stage and the
+approach column at the top of its stage (with the fixed header's clearance
+as padding inside the column), so the side rules run continuously from
+one into the next. Note the frame's type scale is smaller than this site's
+tokens; the column was sized to the frame and the type left as it was,
+which fits, with the rotating headline checked for wrapping.
+
 ## The site header
 
 `SiteHeader` (`src/components/SiteHeader.tsx`) is rendered as a sibling
