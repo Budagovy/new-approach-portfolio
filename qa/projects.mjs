@@ -33,9 +33,12 @@ const probe = () => {
       loaded: !!img && img.complete && img.naturalWidth > 0, opacity: +(+getComputedStyle(li).opacity).toFixed(2),
     };
   });
+  const body = document.querySelector(".projects-body");
   return {
     label: [...document.querySelectorAll(".projects-label > span")].map((s) => s.textContent.trim()).join(" "),
     heading: !!document.querySelector(".projects-heading"),
+    bodyH: body.offsetHeight, vh: innerHeight,
+    contentBottom: Math.round(Math.max(...[...document.querySelectorAll(".project-tag")].map((t) => t.getBoundingClientRect().bottom)) - body.getBoundingClientRect().top),
     gridTop: Math.round(g.top + scrollY), grid: { l: Math.round(g.left), r: Math.round(g.right), w: Math.round(g.width) }, col: { l: Math.round(col.left), r: Math.round(col.right) },
     cards, overflow: document.documentElement.scrollWidth - innerWidth,
   };
@@ -71,13 +74,14 @@ const browser = await chromium.launch({ executablePath: CHROME, headless: true }
   const centred = Math.abs((s.grid.l - s.col.l) - (s.col.r - s.grid.r)) <= 2;
   ok("grid centred in the column, capped at 1150px", centred && s.grid.w <= 1150 && s.grid.l >= s.col.l && s.grid.r <= s.col.r, `grid ${s.grid.l}..${s.grid.r} (${s.grid.w}) in ${s.col.l}..${s.col.r}`);
   ok("hairline gutter between cards (8px)", s.cards[1].left - (s.cards[0].left + s.cards[0].w) === 8, `${s.cards[1].left - (s.cards[0].left + s.cards[0].w)}px`);
+  ok("section is exactly one screen, content inside it", s.bodyH === s.vh && s.contentBottom <= s.vh, `body ${s.bodyH} of ${s.vh}, content bottom ${s.contentBottom}`);
   ok("desktop: no overflow, no console errors", s.overflow === 0 && errors.length === 0, `${s.overflow}px ${errors.join(" | ")}`);
   await page.screenshot({ path: OUT + "projects-desktop.png" });
   await ctx.close();
 }
 
 /* ---------- widths ---------- */
-for (const [w, h, mobile, cols] of [[1024, 768, false, 3], [768, 1024, true, 3], [390, 844, true, 1]]) {
+for (const [w, h, mobile, cols] of [[1366, 768, false, 3], [1280, 720, false, 3], [1024, 768, false, 3], [768, 1024, true, 3], [390, 844, true, 1]]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile });
   const page = await ctx.newPage();
   await page.goto(URL_, { waitUntil: "networkidle" });
@@ -89,6 +93,7 @@ for (const [w, h, mobile, cols] of [[1024, 768, false, 3], [768, 1024, true, 3],
   const rows = new Set(s.cards.map((c) => c.top)).size;
   const expectRows = cols === 1 ? 3 : 1;
   ok(`${w}px: ${cols} column(s), revealed, inside the column, no overflow`, rows === expectRows && s.cards.every((c) => c.opacity === 1 || cols === 1) && s.grid.l >= s.col.l && s.grid.r <= s.col.r && s.overflow === 0, `rows ${rows}, grid ${s.grid.l}..${s.grid.r} in ${s.col.l}..${s.col.r}, overflow ${s.overflow}`);
+  if (cols === 3) ok(`${w}x${h}: one screen, cards fit under the label`, s.bodyH === s.vh && s.contentBottom <= s.vh, `body ${s.bodyH} of ${s.vh}, content bottom ${s.contentBottom}, card ${s.cards[0].w}px wide`);
   await page.screenshot({ path: `${OUT}projects-${w}.png` });
   await ctx.close();
 }

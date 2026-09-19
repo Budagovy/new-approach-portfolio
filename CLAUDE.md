@@ -93,11 +93,12 @@ With the dev server up (`npm run dev`, port 3220): `npm run qa`.
 taking the click, mobile, reduced motion, console errors. Tolerance defaults to
 exact; a check that needs slack asks for it.
 
-`npm run qa:approach` gates the approach section the same way: slow
-scroll, a fast jump, reversing, a direction change mid-transition, how
-fast the line settles after stopping, that revealing copy shifts nothing,
-that 04 is readable before release, the handoff at the track end, and the
-narrow / short / reduced-motion layouts. It imports its thresholds from
+`npm run qa:approach` gates the approach section the same way: that it
+is exactly one screen at 1440x900 and 1280x720 with the next section
+starting at its end, the entrance, the timed sequence (steps lighting
+1,2,3,4 as the line runs, never backwards, complete and held at the end,
+not replaying on a return), that revealing copy shifts nothing, and the
+narrow / short / reduced-motion layouts. It imports its timings from
 `src/lib/motion.ts`, so it cannot drift from the component.
 
 `npm run qa:projects` gates the projects grid: label and no heading,
@@ -236,7 +237,7 @@ which fits, with the rotating headline checked for wrapping.
 and trackpad input is eased toward its target (`SCROLL.lerp` in
 `src/lib/motion.ts`) so moving between sections glides, the way the
 reference portfolios do. Lenis drives the real window scroll position, so
-the pinned splash and approach (Motion `useScroll`), the in-view reveals
+the pinned splash (Motion `useScroll`), the in-view reveals
 and the QA scripts' `scrollTo` calls all keep working unchanged — Lenis
 syncs to a scroll it didn't cause. Touch is left native (`syncTouch`
 off), keyboard is the browser's, and anchor links glide with an offset
@@ -299,35 +300,38 @@ strip is part of the one full screen the slot contract asks for.
 
 ## Track lengths
 
-The two pinned sections' tracks were shortened at the user's request
-(hero 4.5 to 2.4 screens, approach 3.2 to 2.4) after they found it took
-"a couple of scrolls" to leave the hero: most of the old track was
-holding, not moving. The push now spans 0.08 to 0.72 of the hero's
-track and the fill 0.06 to 0.8 of the approach's, each with a short
-settle at the end; every section is one screen or a pinned run of
-screens, so scrolling reads as moving screen to screen. Numbers in
-`HERO` and `APPROACH` in `src/lib/motion.ts`; both gates read them from
+Only the splash is pinned now. Its track was shortened at the user's
+request (4.5 to 2.4 screens) after they found it took "a couple of
+scrolls" to leave the hero: most of the old track was holding, not
+moving. The push spans 0.08 to 0.72 of the track with a short settle at
+the end. The approach was pinned too (3.2, then 2.4 screens, the line
+scrubbed by scroll) until the user asked for it and the projects to
+"fit the screen perfectly": both are now exactly one screen, in flow, so
+the page after the splash reads as screen, screen, screen. Numbers in
+`HERO` and `APPROACH` in `src/lib/motion.ts`; the gates read them from
 there.
 
 ## The approach section
 
-`Approach.tsx`, the pinned four-step timeline after the hero. Same shape
-as the splash: the section is a track `APPROACH.pinVh` viewports tall and
-`.approach-stage` sticks at the top of it (under the fixed header, hence
-its `padding-top: var(--header-h)`). Scroll progress through the track,
-put through a stiff, near-critically-damped spring, is the one source of
-truth: it scales the orange fill directly (`scaleX`, left origin, spanning
-marker 01 to 04 as 12.5% to 87.5% of four equal columns), and each step's
-state — `off`, `current`, `done` — is read off the same value as the fill
-crosses each marker's third, in either direction. Motion variants only
-dress those state changes (a marker pulse, a title then description
-reveal) and every one is short and reversible; nothing queues.
+`Approach.tsx`, the four-step timeline after the hero: exactly one
+screen tall (`.approach-stage { height: 100dvh }`), in flow, the column
+carrying `padding-top: var(--header-h)` for the fixed header. The
+sequence plays on its own, once, when the section comes 40% into view:
+the entrance cascade (heading, line, markers) lights step 01, then after
+`APPROACH.fillDelay` a single motion value `fill` is animated 0 to 1 over
+`APPROACH.fillDuration`. That value is the one source of truth: it scales
+the orange fill directly (`scaleX`, left origin, spanning marker 01 to 04
+as 12.5% to 87.5% of four equal columns), and each step's state — `off`,
+`current`, `done` — is read off the same value as the fill crosses each
+marker's third. Motion variants only dress those state changes (a marker
+pulse, a title then description reveal), every one short.
 
-The spring is deliberately stiff (700/55, ~40ms time constant). A softer
-one was tried and took over half a second to catch up after a long scroll
-jump, so the line visibly kept moving after the page had stopped — the
-brief rules that out, and the QA script measures both the lag while
-moving and the settle after stopping.
+It used to be pinned (a 2.4-screen track, the line scrubbed by scroll
+through a stiff spring, reversible). The user asked for the section to
+fit the screen exactly, which leaves no scroll to scrub with, so time
+took scroll's place; the state-off-one-value design is unchanged. The
+pinned version is in git before the "one screen" commit if it is ever
+wanted back.
 
 Two rules worth keeping: the orange on a marker is a disc whose opacity
 fades in over the dark base, so activation stays transform/opacity only;
@@ -335,12 +339,13 @@ and step copy is always in flow at full size, only its opacity/translate
 change, so revealing it never shifts layout (the QA compares title boxes
 hidden vs. revealed).
 
-Where four-across can't fit, the section unpins and flows: `FLOW_QUERY` in
-the component (narrow or short viewport) and the matching media rules in
-`globals.css` must stay in step. Narrow gets a vertical timeline with the
-marker drawn inside each step (the horizontal track is hidden), each step
-lighting as it scrolls into view; short-but-wide keeps four across, just
-unpinned; reduced motion shows all four lit at once. Copy is in
+Where four-across can't fit in a screen, the section grows to its
+content and flows: `FLOW_QUERY` in the component (narrow or short
+viewport) and the matching media rules in `globals.css` must stay in
+step. Narrow gets a vertical timeline with the marker drawn inside each
+step (the horizontal track is hidden), each step lighting as it scrolls
+into view; short-but-wide keeps four across, all lit; reduced motion
+shows all four lit at once. Copy is in
 `content/approach.json`, timings in `APPROACH` in `src/lib/motion.ts`.
 
 ## The projects section
@@ -348,11 +353,18 @@ unpinned; reduced motion shows all four lit at once. Copy is in
 `Projects.tsx`, after the approach: a plain grid, per the Figma frame —
 three 2:3 images in a row, square corners, an 8px gutter, a bold title
 and a small uppercase tag under each, under the `02 Selected projects`
-label, no heading. Ordinary in-flow section, one full screen (min-height
-100dvh, the header's height reserved at the top like the pinned
-sections, the grid centred in the rest), so the page reads as a run of
-screens. The grid is capped at 1150px and centred in the column (the
-frame's cards measure ~376px at 1440). The only motion is the cards opening one
+label, no heading. Ordinary in-flow section, exactly one screen (the
+header's height reserved at the top like the splash, the grid centred in
+the rest), so the page reads as a run of screens. The grid is capped
+twice: at the frame's 1150px (its cards measure ~376px at 1440), and by
+the screen's height — `.projects-body` works out the card height that
+fits under the label with the captions and paddings (`--projects-card-h`)
+and the grid's `max-width` is three cards of that height at 2:3 plus two
+gutters. So on a short screen the cards shrink (279px wide at 1366x768,
+254px at 1280x720) and the section never grows past 100dvh; the gate
+checks this at five sizes. The caption allowance (`--projects-caption-h`,
+60px) is the title and tag with their margins; change those and it must
+follow. Phones (one column) are the exception and run past a screen. The only motion is the cards opening one
 after another — a gentle fade with a 12px rise, 180ms apart — the first
 time they scroll into view (a single simultaneous fade was tried and the
 user asked for the sequence); reduced motion shows them outright. One

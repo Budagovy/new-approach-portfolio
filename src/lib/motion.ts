@@ -46,20 +46,18 @@ export const HERO = {
 } as const;
 
 /**
- * "My approach": the four-step section pinned after the hero, as scroll
- * progress 0 to 1 across its track.
- *
- *   0    -> fillStart   step 01 already lit; a beat before the line moves
- *   fillStart -> fillEnd the orange line runs 01 to 04, lighting each step
- *   fillEnd -> 1        hold on the finished state, so 04 can be read
+ * "My approach": one screen, no pin. The sequence plays on its own the
+ * first time the section comes into view: step 01 lights with the
+ * entrance, then the orange line runs 01 to 04 over `fillDuration`,
+ * lighting each step as it passes its marker. (It used to be scrubbed by
+ * scroll across a 2.4-screen track; the user asked for the section to fit
+ * the screen exactly, which leaves no scroll to scrub with.)
  */
 export const APPROACH = {
-  /** Track length in viewport heights: one for the stage, the rest is
-   *  scroll. 2.4 gives each of the three steps a comfortable stretch
-   *  without the section overstaying (it was 3.2). */
-  pinVh: 2.4,
-  fillStart: 0.06,
-  fillEnd: 0.8,
+  /** Beat between the entrance and the line starting to move, seconds. */
+  fillDelay: 0.6,
+  /** The line's run from 01 to 04, seconds. */
+  fillDuration: 2.4,
   /** One step's title/description reveal, seconds. */
   reveal: 0.34,
   /** Title-to-description stagger within a step, seconds. */

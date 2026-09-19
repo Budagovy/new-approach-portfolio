@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  animate,
   motion,
   useInView,
+  useMotionValue,
   useMotionValueEvent,
   useReducedMotion,
-  useScroll,
-  useSpring,
-  useTransform,
   type Variants,
 } from "motion/react";
 import { APPROACH, EASE } from "@/lib/motion";
@@ -26,7 +25,7 @@ export interface ApproachData {
 
 type StepState = "off" | "current" | "done";
 
-/** Where the pinned four-across layout can't fit; mirrors the CSS breakpoint. */
+/** Where the four-across layout can't fit; mirrors the CSS breakpoint. */
 const FLOW_QUERY = "(max-width: 859px), (max-height: 699px)";
 
 /* Entrance, as the section scrolls into view: heading, then line, then the
@@ -48,9 +47,9 @@ const fade: Variants = {
   shown: { opacity: 1, transition: { duration: 0.5, ease: EASE } },
 };
 
-/* Activation. Scroll decides WHICH state a step is in; these only polish
-   the switch, so every one is short and every one reverses cleanly. A step
-   orchestrates its children: marker, then title, then description. */
+/* Activation. The line's position decides WHICH state a step is in; these
+   only polish the switch, so every one is short. A step orchestrates its
+   children: marker, then title, then description. */
 const step: Variants = {
   off: { transition: { staggerChildren: 0.04, staggerDirection: -1 } },
   current: { transition: { staggerChildren: APPROACH.stagger } },
@@ -100,14 +99,15 @@ function Marker({ index, state }: { index: number; state: StepState }) {
 }
 
 /**
- * Pinned four-step timeline. The track is `pinVh` viewports tall and the
- * stage sticks inside it; scroll progress through the track, lightly
- * smoothed, is the single source of truth: it scales the orange fill
+ * The four-step timeline, one screen tall. The first time it scrolls into
+ * view the entrance plays and step 01 lights; then a single motion value,
+ * `fill`, runs 0 to 1 over `fillDuration`. It scales the orange line
  * directly, and each step's state ("off", "current", "done") is read off
- * it as thresholds are crossed, in either direction. Motion variants only
- * dress the state changes. Where the four-across layout can't fit, or under
- * reduced motion, the section unpins and flows (see FLOW_QUERY and the
- * matching media rules in globals.css).
+ * it as the line passes each marker's third — the same one-source design
+ * as when scroll drove it, with time in scroll's place. Motion variants
+ * only dress the state changes. Where four-across can't fit, or under
+ * reduced motion, the section flows (see FLOW_QUERY and the matching media
+ * rules in globals.css).
  */
 export function Approach({ data }: { data: ApproachData }) {
   const reduce = useReducedMotion();
@@ -121,26 +121,23 @@ export function Approach({ data }: { data: ApproachData }) {
   }, []);
   const flowing = !!reduce || compact;
 
-  const trackRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: trackRef,
-    offset: ["start start", "end end"],
-  });
-  /* Light smoothing only: about critically damped with a ~40ms time
-     constant, so wheel steps blend but the line settles on the scroll
-     position within a quarter second of it stopping and never visibly
-     trails it. A softer spring (260/42) was tried first and took over half
-     a second to catch up after a long jump — the line kept moving on its
-     own after the page had stopped, which the brief rules out. */
-  const p = useSpring(scrollYProgress, { stiffness: 700, damping: 55, mass: 1, restDelta: 0.0005 });
-  const fill = useTransform(p, [APPROACH.fillStart, APPROACH.fillEnd], [0, 1], { clamp: true });
+  const entered = useInView(stageRef, { once: true, amount: 0.4 });
 
-  const entered = useInView(stageRef, { once: true, amount: 0.3 });
+  /* The line's progress, 01 to 04. Runs once the entrance has landed. */
+  const fill = useMotionValue(0);
+  useEffect(() => {
+    if (!entered || flowing) return;
+    const controls = animate(fill, 1, {
+      delay: APPROACH.fillDelay,
+      duration: APPROACH.fillDuration,
+      ease: [0.45, 0, 0.35, 1],
+    });
+    return () => controls.stop();
+  }, [entered, flowing, fill]);
 
-  /* Steps 02.. light as the fill reaches their marker. Held in a ref and
-     mirrored to state only when the count actually changes, so scrolling
-     costs no renders between thresholds. */
+  /* Steps 02.. light as the line reaches their marker. Held in a ref and
+     mirrored to state only when the count changes. */
   const last = data.steps.length - 1;
   const [reached, setReached] = useState(0);
   const reachedRef = useRef(0);
@@ -157,12 +154,7 @@ export function Approach({ data }: { data: ApproachData }) {
     flowing ? "current" : i < active - 1 ? "done" : i === active - 1 ? "current" : "off";
 
   return (
-    <section
-      id="approach"
-      ref={trackRef}
-      className="approach"
-      style={{ "--approach-pin": APPROACH.pinVh } as CSSProperties}
-    >
+    <section id="approach" className="approach">
       <div ref={stageRef} className="approach-stage">
         <motion.div
           className="page page-frame approach-body"
@@ -202,8 +194,9 @@ export function Approach({ data }: { data: ApproachData }) {
                   key={s.title}
                   className="approach-step"
                   variants={step}
-                  /* Pinned: scroll sets the state. Flowing: each step lights
-                     as it scrolls into view. Reduced motion: all lit, at once. */
+                  /* One screen: the sequence sets the state. Flowing: each
+                     step lights as it scrolls into view. Reduced motion:
+                     all lit, at once. */
                   initial={flowing && !reduce ? "off" : false}
                   animate={flowing && !reduce ? undefined : stateOf(i)}
                   whileInView={flowing && !reduce ? "current" : undefined}

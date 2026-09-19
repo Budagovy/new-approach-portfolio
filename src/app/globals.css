@@ -370,22 +370,19 @@ portfolio-city-strip {
 }
 
 /* --- Approach (four steps) ------------------------------------------------ */
-/* A pinned track, like the splash: the section is --approach-pin viewports
-   tall and the stage sticks at the top of it for the whole scroll.
-   Approach.tsx reads progress through the track and sets each step's
-   state; everything here is layout and the resting look. The stage is
-   viewport-wide only to pin; the section itself is the page column inside
+/* Exactly one screen, in flow: no track, no pin (it was pinned across 2.4
+   screens and scrubbed by scroll; the user asked for it to fit the screen,
+   so the sequence now plays on its own when the section comes into view,
+   see Approach.tsx). Everything here is layout and the resting look. The
+   stage is viewport-wide; the section itself is the page column inside
    it, which carries the frame's rules and the grid texture per the Figma
    and starts at the very top of the stage so its side rules run on from
    the hero's without a break (the header's clearance is padding inside
    the column, not on the stage). */
 .approach {
   position: relative;
-  height: calc(var(--approach-pin) * 100dvh);
 }
 .approach-stage {
-  position: sticky;
-  top: 0;
   height: 100dvh;
   background-color: var(--bg);
 }
@@ -511,15 +508,11 @@ portfolio-city-strip {
   color: var(--muted);
 }
 
-/* Where the pinned layout can't fit (narrow, short, or reduced motion): no
-   track, no pin, the stage is ordinary content. Must match FLOW_QUERY in
+/* Where one screen can't hold four across (narrow, short, or reduced
+   motion): the stage grows to its content. Must match FLOW_QUERY in
    Approach.tsx, which switches the activation logic the same way. */
 @media (max-width: 859px), (max-height: 699px), (prefers-reduced-motion: reduce) {
-  .approach { height: auto; }
-  .approach-stage {
-    position: static;
-    height: auto;
-  }
+  .approach-stage { height: auto; }
   .approach-body {
     height: auto;
     padding-top: 40px;
@@ -572,10 +565,21 @@ portfolio-city-strip {
 .projects {
   background: var(--bg);
 }
-/* One full screen, like the sections before it: the label at the top,
-   the grid centred in the rest. Grows past a screen only where the
-   content is taller (phones, one column). */
+/* Exactly one screen, like the sections before it: the label at the top,
+   the grid centred in the rest. The grid is capped by the screen's height
+   as well as by the frame's 1150px: three 2:3 cards plus their captions
+   must fit in what is left below the label, so on short screens the cards
+   shrink rather than the section growing. Only phones (one column) run
+   past a screen. */
 .projects-body {
+  --projects-gap: 8px;
+  --projects-pad-top: clamp(40px, 6vw, 80px);
+  --projects-pad-bottom: clamp(56px, 8vw, 110px);
+  /* Label row: its top padding plus one line of the 11px mono. */
+  --projects-label-h: 24px;
+  /* Title and tag under a card, with their margins. */
+  --projects-caption-h: 60px;
+  --projects-card-h: calc(100dvh - var(--header-h) - var(--projects-label-h) - var(--projects-pad-top) - var(--projects-pad-bottom) - var(--projects-caption-h));
   min-height: 100dvh;
   padding: var(--header-h) var(--page-pad) 0;
   border-top: 1px solid var(--line);
@@ -596,13 +600,15 @@ portfolio-city-strip {
 .projects-grid {
   list-style: none;
   width: 100%;
-  max-width: 1150px;
+  /* Three cards of (card height * 2/3) plus two gutters, or the frame's
+     width, whichever is narrower. */
+  max-width: min(1150px, calc(var(--projects-card-h) * 2 + var(--projects-gap) * 2));
   margin: 0 auto;
   align-self: center;
-  padding: clamp(40px, 6vw, 80px) 0 clamp(56px, 8vw, 110px);
+  padding: var(--projects-pad-top) 0 var(--projects-pad-bottom);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--projects-gap);
 }
 .project {
   display: block;
@@ -647,6 +653,7 @@ a.project:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px;
 /* Phones: one card per row. */
 @media (max-width: 699px) {
   .projects-grid {
+    max-width: 1150px;
     grid-template-columns: 1fr;
     gap: 40px;
     margin-top: 56px;
