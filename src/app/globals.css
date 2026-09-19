@@ -572,9 +572,15 @@ portfolio-city-strip {
 .projects {
   background: var(--bg);
 }
+/* One full screen, like the sections before it: the label at the top,
+   the grid centred in the rest. Grows past a screen only where the
+   content is taller (phones, one column). */
 .projects-body {
-  padding: 0 var(--page-pad) clamp(88px, 10vw, 150px);
+  min-height: 100dvh;
+  padding: var(--header-h) var(--page-pad) 0;
   border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-rows: auto 1fr;
 }
 .projects-label {
   display: inline-flex;
@@ -589,9 +595,11 @@ portfolio-city-strip {
 }
 .projects-grid {
   list-style: none;
+  width: 100%;
   max-width: 1150px;
-  margin: clamp(96px, 12vw, 190px) auto 0;
-  padding: 0;
+  margin: 0 auto;
+  align-self: center;
+  padding: clamp(40px, 6vw, 80px) 0 clamp(56px, 8vw, 110px);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;

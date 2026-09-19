@@ -297,6 +297,18 @@ rest, the strip's heading row shows along the bottom edge and the skyline
 is cropped by the bezel: that is the cover-fit doing its job, since the
 strip is part of the one full screen the slot contract asks for.
 
+## Track lengths
+
+The two pinned sections' tracks were shortened at the user's request
+(hero 4.5 to 2.4 screens, approach 3.2 to 2.4) after they found it took
+"a couple of scrolls" to leave the hero: most of the old track was
+holding, not moving. The push now spans 0.08 to 0.72 of the hero's
+track and the fill 0.06 to 0.8 of the approach's, each with a short
+settle at the end; every section is one screen or a pinned run of
+screens, so scrolling reads as moving screen to screen. Numbers in
+`HERO` and `APPROACH` in `src/lib/motion.ts`; both gates read them from
+there.
+
 ## The approach section
 
 `Approach.tsx`, the pinned four-step timeline after the hero. Same shape
@@ -336,10 +348,11 @@ unpinned; reduced motion shows all four lit at once. Copy is in
 `Projects.tsx`, after the approach: a plain grid, per the Figma frame —
 three 2:3 images in a row, square corners, an 8px gutter, a bold title
 and a small uppercase tag under each, under the `02 Selected projects`
-label, no heading. Ordinary in-flow section. The grid is capped at
-1150px and centred in the column (the frame's cards measure ~376px at
-1440); the frame's vertical rhythm is kept too, a deep gap between label
-and grid and a shorter one below. The only motion is the cards opening one
+label, no heading. Ordinary in-flow section, one full screen (min-height
+100dvh, the header's height reserved at the top like the pinned
+sections, the grid centred in the rest), so the page reads as a run of
+screens. The grid is capped at 1150px and centred in the column (the
+frame's cards measure ~376px at 1440). The only motion is the cards opening one
 after another — a gentle fade with a 12px rise, 180ms apart — the first
 time they scroll into view (a single simultaneous fade was tried and the
 user asked for the sequence); reduced motion shows them outright. One
