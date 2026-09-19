@@ -15,24 +15,23 @@ export interface ProjectsData {
   items: Project[];
 }
 
-/* One gentle fade, all three together, the first time the grid scrolls
-   into view: no slide, no stagger, just opacity over a long, decelerating
-   second (the user asked for smooth and quiet, and chose "together" over
-   one-after-another). */
+/* The cards open one after another the first time the grid scrolls into
+   view: a gentle fade with a small rise, each starting 180ms after the
+   last, so the row reads left to right without ever hurrying. */
 const list: Variants = {
   hidden: {},
-  shown: { transition: { delayChildren: 0.1 } },
+  shown: { transition: { delayChildren: 0.1, staggerChildren: 0.18 } },
 };
 const card: Variants = {
-  hidden: { opacity: 0 },
-  shown: { opacity: 1, transition: { duration: 1.1, ease: EASE } },
+  hidden: { opacity: 0, y: 12 },
+  shown: { opacity: 1, y: 0, transition: { duration: 0.9, ease: EASE } },
 };
 
 /**
  * Selected projects: a plain grid of 2:3 images, title and tag under each,
  * per the Figma frame. Ordinary in-flow section. The only motion is the
- * cards fading in together the first time they scroll into view; under
- * reduced motion they are simply there.
+ * cards opening one after another the first time they scroll into view;
+ * under reduced motion they are simply there.
  */
 export function Projects({ data }: { data: ProjectsData }) {
   const reduce = useReducedMotion();

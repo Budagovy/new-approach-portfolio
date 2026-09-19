@@ -339,9 +339,11 @@ and a small uppercase tag under each, under the `02 Selected projects`
 label, no heading. Ordinary in-flow section. The grid is capped at
 1150px and centred in the column (the frame's cards measure ~376px at
 1440); the frame's vertical rhythm is kept too, a deep gap between label
-and grid and a shorter one below. The only motion is the cards rising in
-one after another the first time they scroll into view; reduced motion
-shows them outright. One column under 700px.
+and grid and a shorter one below. The only motion is the cards opening one
+after another — a gentle fade with a 12px rise, 180ms apart — the first
+time they scroll into view (a single simultaneous fade was tried and the
+user asked for the sequence); reduced motion shows them outright. One
+column under 700px.
 
 Two earlier designs sat here and were replaced at the user's request:
 a pinned 3D drum after gabrielbeaugonin.com, then 21st.dev's card-fan

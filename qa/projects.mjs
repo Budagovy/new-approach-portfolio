@@ -58,7 +58,11 @@ const browser = await chromium.launch({ executablePath: CHROME, headless: true }
   ok("before it scrolls in: cards hidden", s.cards.every((c) => c.opacity === 0), JSON.stringify(s.cards.map((c) => c.opacity)));
 
   await page.evaluate((y) => scrollTo(0, y), s.gridTop - 300);
-  await page.waitForTimeout(1600);
+  // Part-way through: the cards open left to right, each a step behind the last.
+  await page.waitForTimeout(450);
+  const mid = await page.evaluate(probe);
+  ok("cards open one after another (left ahead of middle ahead of right)", mid.cards[0].opacity > mid.cards[1].opacity && mid.cards[1].opacity > mid.cards[2].opacity, JSON.stringify(mid.cards.map((c) => c.opacity)));
+  await page.waitForTimeout(1400);
   s = await page.evaluate(probe);
   ok("scrolled in: all three cards revealed", s.cards.length === 3 && s.cards.every((c) => c.opacity === 1), JSON.stringify(s.cards.map((c) => c.opacity)));
   ok("three across, same row, 2:3 images", s.cards.every((c) => c.top === s.cards[0].top) && s.cards.every((c) => Math.abs(c.aspect - 0.667) < 0.01), JSON.stringify(s.cards.map((c) => [c.top, c.aspect])));
