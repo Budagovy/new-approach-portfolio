@@ -15,20 +15,24 @@ export interface ProjectsData {
   items: Project[];
 }
 
+/* One gentle fade, all three together, the first time the grid scrolls
+   into view: no slide, no stagger, just opacity over a long, decelerating
+   second (the user asked for smooth and quiet, and chose "together" over
+   one-after-another). */
 const list: Variants = {
   hidden: {},
-  shown: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+  shown: { transition: { delayChildren: 0.1 } },
 };
 const card: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  shown: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+  hidden: { opacity: 0 },
+  shown: { opacity: 1, transition: { duration: 1.1, ease: EASE } },
 };
 
 /**
  * Selected projects: a plain grid of 2:3 images, title and tag under each,
  * per the Figma frame. Ordinary in-flow section. The only motion is the
- * cards rising in, one after another, the first time they scroll into
- * view; under reduced motion they are simply there.
+ * cards fading in together the first time they scroll into view; under
+ * reduced motion they are simply there.
  */
 export function Projects({ data }: { data: ProjectsData }) {
   const reduce = useReducedMotion();
@@ -52,7 +56,7 @@ export function Projects({ data }: { data: ProjectsData }) {
             const inner = (
               <>
                 <span className="project-media">
-                  <img src={project.image} alt={project.title} width={580} height={870} loading="lazy" />
+                  <img src={project.image} alt={project.title} width={440} height={660} loading="lazy" />
                 </span>
                 <span className="project-title">{project.title}</span>
                 <span className="project-tag">{project.tag}</span>

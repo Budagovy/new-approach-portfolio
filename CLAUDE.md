@@ -61,7 +61,9 @@ both endpoints right is what keeps the mid-zoom frames right too.
 - No copy in component files. Strings live in `content/`.
 - No em-dash in visible copy.
 - Animate transform and opacity only. No scroll event listeners: Motion
-  `useScroll` only.
+  `useScroll` only. (Lenis, in `SmoothScroll.tsx`, is the one thing that
+  handles wheel input — it *drives* the scroll position rather than
+  reading it, and everything else still reads it through `useScroll`.)
 - Video playback starts from the effect, never from an `autoPlay` attribute,
   so reduced motion is honoured before hydration.
 - Timings live in `src/lib/motion.ts`. Tokens live in `src/app/globals.css`.
@@ -104,7 +106,13 @@ at 2:3 with titles and tags and loaded images, the grid centred in the
 column under its 1150px cap with the 8px gutter, three columns down to
 768 and one at 390, and the cards simply there under reduced motion.
 
-All three need a local Chrome (no browser is bundled); the path is keyed
+`npm run qa:scroll` gates page scrolling under Lenis: a wheel tick glides
+through many positions, decelerates and settles on exactly its distance;
+native `scrollTo` still lands exactly (every other gate relies on it); a
+nav anchor glides to its section and lands below the fixed header; and
+under reduced motion Lenis is not started.
+
+All four need a local Chrome (no browser is bundled); the path is keyed
 by platform and can be overridden with `QA_CHROME`.
 
 ## Placeholders
@@ -221,6 +229,20 @@ as padding inside the column), so the side rules run continuously from
 one into the next. Note the frame's type scale is smaller than this site's
 tokens; the column was sized to the frame and the type left as it was,
 which fits, with the rotating headline checked for wrapping.
+
+## Smooth scrolling
+
+`SmoothScroll.tsx`, mounted once in the root layout, runs Lenis: wheel
+and trackpad input is eased toward its target (`SCROLL.lerp` in
+`src/lib/motion.ts`) so moving between sections glides, the way the
+reference portfolios do. Lenis drives the real window scroll position, so
+the pinned splash and approach (Motion `useScroll`), the in-view reveals
+and the QA scripts' `scrollTo` calls all keep working unchanged — Lenis
+syncs to a scroll it didn't cause. Touch is left native (`syncTouch`
+off), keyboard is the browser's, and anchor links glide with an offset
+for the fixed header. Under reduced motion it is not started at all, so
+scrolling is then exactly the browser's own (the skill guidance and WCAG
+both count scroll-jacking as a motion-sensitivity hazard).
 
 ## The site header
 

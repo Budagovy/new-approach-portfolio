@@ -6,6 +6,15 @@
 export const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
+ * Page scrolling (SmoothScroll.tsx / Lenis). `lerp` is how much of the
+ * remaining distance each frame covers: 0.1 is a soft glide that still
+ * arrives promptly; higher is snappier, lower floatier.
+ */
+export const SCROLL = {
+  lerp: 0.1,
+} as const;
+
+/**
  * Splash choreography, as scroll progress 0 to 1 across the pinned range.
  * The push scale is computed per viewport in SplashScreen, not set here.
  *
