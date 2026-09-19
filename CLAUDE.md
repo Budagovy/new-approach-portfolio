@@ -98,12 +98,11 @@ that 04 is readable before release, the handoff at the track end, and the
 narrow / short / reduced-motion layouts. It imports its thresholds from
 `src/lib/motion.ts`, so it cannot drift from the component.
 
-`npm run qa:projects` gates the projects fan: hidden before it scrolls
-in, the entrance opening into a mirrored fan with the centre card flat
-and on top, the thumbnails actually loading, hover lifting a card and
-pushing its neighbour away, an exact restore on mouse leave, the fan
-staying inside the page column from 1440 down to 390, and the fan simply
-being there under reduced motion.
+`npm run qa:projects` gates the projects grid: label and no heading,
+hidden before it scrolls in and all three revealed after, three across
+at 2:3 with titles and tags and loaded images, the grid centred in the
+column under its 1150px cap with the 8px gutter, three columns down to
+768 and one at 390, and the cards simply there under reduced motion.
 
 All three need a local Chrome (no browser is bundled); the path is keyed
 by platform and can be overridden with `QA_CHROME`.
@@ -312,35 +311,26 @@ unpinned; reduced motion shows all four lit at once. Copy is in
 
 ## The projects section
 
-`Projects.tsx`, after the approach: a fan of project cards, after
-21st.dev's card-fan-carousel (an earlier pinned 3D drum, after
-gabrielbeaugonin.com, was built first and replaced at the user's request).
-An ordinary in-flow section, not pinned. The original component runs on
-GSAP; this is a port to Motion — the project has one animation library
-and the user asked not to add a second — with its numbers kept as
-delivered: the seven resting slots (rotation, scale, x/y in rem), the
-hover layout (lift the hovered card 2.5rem and 8%, push the others aside
-by a strength that falls to nothing at the fan's edges, stagger by
-distance), the entrance (rise from below the centre, open out, 60ms
-apart), and paging with arrows and dots past seven cards. Springs with a
-little bounce stand in for its `elastic.out` eases (`FAN` in
-`src/lib/motion.ts`).
+`Projects.tsx`, after the approach: a plain grid, per the Figma frame —
+three 2:3 images in a row, square corners, an 8px gutter, a bold title
+and a small uppercase tag under each, under the `02 Selected projects`
+label, no heading. Ordinary in-flow section. The grid is capped at
+1150px and centred in the column (the frame's cards measure ~376px at
+1440); the frame's vertical rhythm is kept too, a deep gap between label
+and grid and a shorter one below. The only motion is the cards rising in
+one after another the first time they scroll into view; reduced motion
+shows them outright. One column under 700px.
 
-Two deliberate departures. Sizes come from the fan's own box, not
-`window.innerWidth` against fixed breakpoints (see the rule above about
-not trusting the window): `mult` scales x so the outermost card still
-lands inside the fan, `hMult` scales y with the card's width, and one CSS
-variable, `--fan-card-w`, sizes the card, the fan's height and the corner
-radius together. And fewer than seven cards sit half a fan-width apart
-per step rather than stretched edge to edge, which is what the original
-does and which strands three cards 30rem from each other.
-
-Cards are images only, as in the component (`content/projects.json`:
-title for the alt text, image under `public/projects/`, optional `href`).
-The thumbnails came in as chat attachments, so they are re-encoded JPEGs
-with their rounded corners baked in on white; `.fan-card`'s radius is a
-touch larger so those corners are clipped. The section carries
-`id="work"`, the nav's Projects target.
+Two earlier designs sat here and were replaced at the user's request:
+a pinned 3D drum after gabrielbeaugonin.com, then 21st.dev's card-fan
+carousel ported from GSAP to Motion. Both are in git if the idea ever
+returns. Content in `content/projects.json` (title, tag, image under
+`public/projects/`, optional `href`). The current images are cut from the
+Figma frame the user sent — a 1109px-wide capture, so each card is
+~290x435 and soft at desktop size — and the frame's names ("Travelito",
+"Joyn") differ from the thumbnails sent before; the user's own exports
+should replace them under the same filenames. `id="work"` is the nav's
+Projects target.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
