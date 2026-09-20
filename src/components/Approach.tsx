@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  animate,
   motion,
   useInView,
-  useMotionValue,
   useMotionValueEvent,
   useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
   type Variants,
 } from "motion/react";
 import { APPROACH, EASE } from "@/lib/motion";
@@ -25,8 +26,10 @@ export interface ApproachData {
 
 type StepState = "off" | "current" | "done";
 
-/** Where the four-across layout can't fit; mirrors the CSS breakpoint. */
-const FLOW_QUERY = "(max-width: 859px)";
+/** Where the held, four-across layout can't fit; mirrors the CSS breakpoint. */
+const FLOW_QUERY = "(max-width: 859px), (max-height: 599px)";
+
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 /* Entrance, as the section scrolls into view: heading, then line, then the
    markers, in a short cascade. Played once. */
@@ -99,15 +102,25 @@ function Marker({ index, state }: { index: number; state: StepState }) {
 }
 
 /**
- * The four-step timeline, one screen tall. The first time it scrolls into
- * view the entrance plays and step 01 lights; then a single motion value,
- * `fill`, runs 0 to 1 over `fillDuration`. It scales the orange line
- * directly, and each step's state ("off", "current", "done") is read off
- * it as the line passes each marker's third — the same one-source design
- * as when scroll drove it, with time in scroll's place. Motion variants
- * only dress the state changes. Where four-across can't fit, or under
- * reduced motion, the section flows (see FLOW_QUERY and the matching media
- * rules in globals.css).
+ * The four-step timeline: scroll-driven, and held while it plays.
+ *
+ * Layout does the holding, not script. The section is a grid-paper panel
+ * as tall as its content plus a spacer (`APPROACH.holdVh` screens); the
+ * content is `position: sticky` under the fixed header, so it stays put
+ * while the reader scrolls the spacer's distance, and whatever follows
+ * rises from below to meet it exactly as the hold ends. Scroll is never
+ * intercepted: the scrollbar, keyboard, anchors and Lenis all behave as on
+ * any other part of the page.
+ *
+ * Progress through the hold (0 when the panel's top reaches the sticking
+ * point, 1 a spacer later) is the one source of truth: it scales the
+ * orange line directly, and each step's state ("off", "current", "done")
+ * is read off the same value as the line crosses each marker's third.
+ * Motion variants only dress the state changes. Step 01 lights with the
+ * entrance, as the section comes into view; 02 to 04 need scroll. Where
+ * the held layout can't fit, or under reduced motion, there is no hold
+ * and the section flows (see FLOW_QUERY and the matching media rule in
+ * globals.css).
  */
 export function Approach({ data }: { data: ApproachData }) {
   const reduce = useReducedMotion();
@@ -121,20 +134,53 @@ export function Approach({ data }: { data: ApproachData }) {
   }, []);
   const flowing = !!reduce || compact;
 
+  const panelRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const holdRef = useRef<HTMLDivElement>(null);
   const entered = useInView(stageRef, { once: true, amount: 0.4 });
 
-  /* The line's progress, 01 to 04. Runs once the entrance has landed. */
-  const fill = useMotionValue(0);
+  /* Where the stage sticks (the header's height, from CSS) and how long
+     the hold is, in px. Re-read on resize; both are 0 when flowing. */
+  const geometry = useRef({ stickTop: 0, hold: 0 });
   useEffect(() => {
-    if (!entered || flowing) return;
-    const controls = animate(fill, 1, {
-      delay: APPROACH.fillDelay,
-      duration: APPROACH.fillDuration,
-      ease: [0.45, 0, 0.35, 1],
-    });
-    return () => controls.stop();
-  }, [entered, flowing, fill]);
+    const read = () => {
+      const stage = stageRef.current, hold = holdRef.current;
+      if (!stage || !hold) return;
+      geometry.current = {
+        stickTop: parseFloat(getComputedStyle(stage).top) || 0,
+        hold: hold.offsetHeight,
+      };
+    };
+    read();
+    window.addEventListener("resize", read);
+    return () => window.removeEventListener("resize", read);
+  }, [flowing]);
+
+  /* Progress through the hold, read from where the panel actually is
+     rather than from cached document offsets: the splash above changes
+     its own height after hydration, which would leave those stale. */
+  const { scrollY } = useScroll();
+  const raw = useTransform(scrollY, () => {
+    const panel = panelRef.current;
+    const { stickTop, hold } = geometry.current;
+    if (!panel || hold === 0) return 0;
+    /* The stage starts below the panel's top rule (clientTop), so that is
+       the edge that reaches the sticking point. */
+    return clamp01((stickTop - (panel.getBoundingClientRect().top + panel.clientTop)) / hold);
+  });
+  /* Stiff and near-critically damped (~40ms): takes the steps out of wheel
+     input without the line trailing after the page has stopped. */
+  const p = useSpring(raw, { stiffness: 700, damping: 55, mass: 1 });
+
+  /* The line, 01 to 04. Latched (by default) at the furthest point
+     reached, so a revealed milestone stays revealed. */
+  const furthest = useRef(0);
+  const fill = useTransform(p, (v) => {
+    const f = clamp01((v - APPROACH.fillStart) / (APPROACH.fillEnd - APPROACH.fillStart));
+    if (!APPROACH.latch) return f;
+    furthest.current = Math.max(furthest.current, f);
+    return furthest.current;
+  });
 
   /* Steps 02.. light as the line reaches their marker. Held in a ref and
      mirrored to state only when the count changes. */
@@ -155,9 +201,10 @@ export function Approach({ data }: { data: ApproachData }) {
 
   return (
     <section id="approach" className="approach">
+      <div ref={panelRef} className="page page-frame approach-panel">
       <div ref={stageRef} className="approach-stage">
         <motion.div
-          className="page page-frame approach-body"
+          className="approach-body"
           variants={entrance}
           initial="hidden"
           animate={entered ? "shown" : "hidden"}
@@ -194,7 +241,7 @@ export function Approach({ data }: { data: ApproachData }) {
                   key={s.title}
                   className="approach-step"
                   variants={step}
-                  /* One screen: the sequence sets the state. Flowing: each
+                  /* Held: scroll sets the state. Flowing: each
                      step lights as it scrolls into view. Reduced motion:
                      all lit, at once. */
                   initial={flowing && !reduce ? "off" : false}
@@ -217,6 +264,10 @@ export function Approach({ data }: { data: ApproachData }) {
             </ol>
           </div>
         </motion.div>
+      </div>
+      {/* The hold: the distance the stage stays stuck for. Hidden by CSS
+          where the section flows. */}
+      <div ref={holdRef} className="approach-hold" style={{ height: `${APPROACH.holdVh * 100}vh` }} aria-hidden="true" />
       </div>
     </section>
   );

@@ -97,11 +97,14 @@ taking the click, mobile, reduced motion, console errors. Tolerance defaults to
 exact; a check that needs slack asks for it.
 
 `npm run qa:approach` gates the approach section the same way: that it
-is exactly one screen at 1440x900 and 1280x720 with the next section
-starting at its end, the entrance, the timed sequence (steps lighting
-1,2,3,4 as the line runs, never backwards, complete and held at the end,
-not replaying on a return), that revealing copy shifts nothing, and the
-narrow / short / reduced-motion layouts. It imports its timings from
+is held under the header for exactly the hold's distance and then
+releases with the next section meeting it; that nothing advances on a
+clock (3.5s without scrolling changes nothing); that 02, 03, 04 light in
+order only as scroll advances, the line tracking the scroll; that a
+revealed milestone never switches back off, down or back up; that 04
+starts lighting as the line arrives and the projects have not begun
+their own reveal before it; that revealing copy shifts nothing; and the
+flowing narrow / reduced-motion layouts. It imports its numbers from
 `src/lib/motion.ts`, so it cannot drift from the component.
 
 `npm run qa:projects` gates the projects grid: label and no heading,
@@ -348,37 +351,61 @@ entrance transform would otherwise shift the reading.
 
 ## Track lengths
 
-Only the splash is pinned now. Its track was shortened at the user's
-request (4.5 to 2.4 screens) after they found it took "a couple of
-scrolls" to leave the hero: most of the old track was holding, not
-moving. The push spans 0.08 to 0.72 of the track with a short settle at
-the end. The approach was pinned too (3.2, then 2.4 screens, the line
-scrubbed by scroll) until the user asked for it and the projects to
-"fit the screen perfectly"; both are now in flow at content height (see
-"Section rhythm" for how they got there). Numbers in
-`HERO` and `APPROACH` in `src/lib/motion.ts`; the gates read them from
-there.
+Two sections hold the reader: the splash and the approach. The splash's
+track was shortened at the user's request (4.5 to 2.4 screens) after
+they found it took "a couple of scrolls" to leave the hero: most of the
+old track was holding, not moving. The push spans 0.08 to 0.72 of the
+track with a short settle at the end. The approach's hold is 0.9 of a
+screen (about nine wheel ticks, three per milestone), set with that same
+complaint in mind. Numbers in `HERO` and `APPROACH` in
+`src/lib/motion.ts`; the gates read them from there.
 
 ## The approach section
 
 `Approach.tsx`, the four-step timeline after the hero: content-height
-on the shared rhythm (see "Section rhythm"), in flow. The
-sequence plays on its own, once, when the section comes 40% into view:
-the entrance cascade (heading, line, markers) lights step 01, then after
-`APPROACH.fillDelay` a single motion value `fill` is animated 0 to 1 over
-`APPROACH.fillDuration`. That value is the one source of truth: it scales
-the orange fill directly (`scaleX`, left origin, spanning marker 01 to 04
-as 12.5% to 87.5% of four equal columns), and each step's state — `off`,
-`current`, `done` — is read off the same value as the fill crosses each
-marker's third. Motion variants only dress those state changes (a marker
-pulse, a title then description reveal), every one short.
+on the shared rhythm (see "Section rhythm"), scroll-driven, and held
+while it plays. The user's brief: the page should feel "sequential and
+intentional"; milestones reveal one by one, 01 then 02, 03, 04, each
+staying visible, driven by scroll and never by time; the section feels
+"temporarily held" while they reveal and releases once 04 is visible,
+the next scroll moving on into the projects.
 
-It used to be pinned (a 2.4-screen track, the line scrubbed by scroll
-through a stiff spring, reversible). The user asked for the section to
-fit the screen exactly, which leaves no scroll to scrub with, so time
-took scroll's place; the state-off-one-value design is unchanged. The
-pinned version is in git before the "one screen" commit if it is ever
-wanted back.
+The holding is layout, not script. `.approach-panel` is the page column
+(frame rules, grid paper), as tall as the content plus `.approach-hold`,
+a spacer `APPROACH.holdVh` screens tall; `.approach-stage` is
+`position: sticky` under the fixed header, so it stays put for exactly
+the spacer's distance while the panel's bottom edge and the projects
+rise from below and meet it as the hold ends. Scroll is never
+intercepted, so the scrollbar, keyboard, anchors and Lenis behave as
+anywhere else. While held, the grid paper is `background-attachment:
+fixed` (the reference does the same for its ruling), otherwise the grid
+would slide under text that is not moving.
+
+Progress through the hold is the one source of truth, read each scroll
+frame from where the panel actually is against its sticking point (its
+rect, plus `clientTop` for the top rule; cached document offsets would
+go stale when the splash above changes its margin after hydration). Put
+through a stiff spring (700/55, ~40ms: a softer one visibly trailed the
+page), it scales the orange fill directly (`scaleX`, left origin,
+spanning marker 01 to 04 as 12.5% to 87.5% of four equal columns) across
+`fillStart` to `fillEnd`, and each step's state — `off`, `current`,
+`done` — is read off the same value as the fill crosses each marker's
+third. Step 01 lights with the entrance, as the section comes into view.
+Motion variants only dress the state changes. `APPROACH.latch` (on)
+keeps the furthest point reached, so a milestone stays revealed when the
+reader scrolls back up, per the brief; off makes it fully reversible.
+
+`fillEnd` (0.8) and `PROJECTS.inView` (0.35) are a pair: the projects
+rise into view during the hold, and between them these two numbers keep
+the cards from starting before 04 has landed, on screens up to at least
+1920x1080. The gate checks it.
+
+History, for whoever is tempted to change the model again: pinned and
+scrubbed across a 2.4-screen track (the original brief); then one full
+screen with the sequence on a timer, because "fit the screen" left no
+scroll to scrub with; then a 500px box; now content-height and held. The
+timed version is what the user explicitly ruled out ("do not reveal all
+milestones automatically or based only on time").
 
 Two rules worth keeping: the orange on a marker is a disc whose opacity
 fades in over the dark base, so activation stays transform/opacity only;
@@ -386,8 +413,8 @@ and step copy is always in flow at full size, only its opacity/translate
 change, so revealing it never shifts layout (the QA compares title boxes
 hidden vs. revealed).
 
-Where four-across can't fit (under 860px), the section grows to its
-content and flows: `FLOW_QUERY` in the component and the matching media
+Where the held layout can't fit (under 860px wide or 600px tall), or
+under reduced motion, there is no hold and the section flows: `FLOW_QUERY` in the component and the matching media
 rule in `globals.css` must stay in step. Narrow gets a vertical timeline with the marker drawn inside each
 step (the horizontal track is hidden), each step lighting as it scrolls
 into view; reduced motion shows all four lit at once. Copy is in
@@ -401,7 +428,7 @@ and a small uppercase tag under each, under the `02 Selected projects`
 label, no heading. Ordinary in-flow section on the shared rhythm (see
 "Section rhythm"): `--sp` above and below the grid, the label in the
 corner. The grid is capped at 1150px and centred in the column (the
-frame's cards measure ~376px at 1440). The only motion is the cards opening one
+frame's cards measure ~376px at 1440). The label fades in as the section enters; the only other motion is the cards opening one
 after another — a gentle fade with a 12px rise, 180ms apart — the first
 time they scroll into view (a single simultaneous fade was tried and the
 user asked for the sequence); reduced motion shows them outright. One

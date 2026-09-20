@@ -52,22 +52,54 @@ export const HERO = {
 } as const;
 
 /**
- * "My approach": one screen, no pin. The sequence plays on its own the
- * first time the section comes into view: step 01 lights with the
- * entrance, then the orange line runs 01 to 04 over `fillDuration`,
- * lighting each step as it passes its marker. (It used to be scrubbed by
- * scroll across a 2.4-screen track; the user asked for the section to fit
- * the screen exactly, which leaves no scroll to scrub with.)
+ * "My approach": scroll-driven and held. The section is content-height
+ * and sticks under the header while the reader scrolls through `holdVh`
+ * more screens; progress through that hold, 0 to 1, is the only thing
+ * that moves the line:
+ *
+ *   0         -> fillStart  step 01 (lit by the entrance); a beat
+ *   fillStart -> fillEnd    the line runs 01 to 04, lighting each step
+ *   fillEnd   -> 1          04 finishes revealing, then the hold releases
+ *
+ * Nothing here runs on a clock: stop scrolling and the line stops.
  */
 export const APPROACH = {
-  /** Beat between the entrance and the line starting to move, seconds. */
-  fillDelay: 0.6,
-  /** The line's run from 01 to 04, seconds. */
-  fillDuration: 2.4,
+  /** Length of the hold, in viewport heights. ~0.3 of a screen per
+   *  milestone: enough that each reveal is a deliberate scroll, short
+   *  enough not to overstay (the user disliked long holds on the hero). */
+  holdVh: 0.9,
+  fillStart: 0.04,
+  /** Leaves the tail of the hold for 04's reveal to finish, and keeps the
+   *  projects (which rise from below during the hold) from starting their
+   *  own reveal before 04 has landed. */
+  fillEnd: 0.8,
+  /** A milestone stays revealed once it has appeared, even if the reader
+   *  scrolls back up ("each milestone should stay visible after it
+   *  appears"). false makes the whole sequence reversible with scroll. */
+  latch: true,
   /** One step's title/description reveal, seconds. */
   reveal: 0.34,
   /** Title-to-description stagger within a step, seconds. */
   stagger: 0.08,
+} as const;
+
+/**
+ * "Selected projects": the label fades in as the section enters, then the
+ * cards open one after another, left to right. Deliberately quiet: a fade
+ * with a small rise, nothing else.
+ */
+export const PROJECTS = {
+  /** How much of the grid must be on screen before the cards start. The
+   *  section rises from below during the approach's hold, so this is set
+   *  high enough that the cards cannot begin before milestone 04 has
+   *  landed (the sequence gate checks exactly that). */
+  inView: 0.35,
+  /** Seconds between one card starting and the next. */
+  stagger: 0.18,
+  /** One card's fade, seconds. */
+  duration: 0.9,
+  /** How far a card rises as it fades in, px. */
+  rise: 12,
 } as const;
 
 /**

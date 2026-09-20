@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion, type Variants } from "motion/react";
-import { EASE } from "@/lib/motion";
+import { EASE, PROJECTS } from "@/lib/motion";
 
 export interface Project {
   title: string;
@@ -15,16 +15,21 @@ export interface ProjectsData {
   items: Project[];
 }
 
-/* The cards open one after another the first time the grid scrolls into
-   view: a gentle fade with a small rise, each starting 180ms after the
-   last, so the row reads left to right without ever hurrying. */
+/* The label fades in as the section enters; the cards then open one after
+   another the first time enough of the grid is on screen: a gentle fade
+   with a small rise, each starting a beat after the last, so the row
+   reads left to right without ever hurrying. Timings in PROJECTS. */
+const label: Variants = {
+  hidden: { opacity: 0 },
+  shown: { opacity: 1, transition: { duration: 0.6, ease: EASE } },
+};
 const list: Variants = {
   hidden: {},
-  shown: { transition: { delayChildren: 0.1, staggerChildren: 0.18 } },
+  shown: { transition: { delayChildren: 0.1, staggerChildren: PROJECTS.stagger } },
 };
 const card: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  shown: { opacity: 1, y: 0, transition: { duration: 0.9, ease: EASE } },
+  hidden: { opacity: 0, y: PROJECTS.rise },
+  shown: { opacity: 1, y: 0, transition: { duration: PROJECTS.duration, ease: EASE } },
 };
 
 /**
@@ -39,17 +44,23 @@ export function Projects({ data }: { data: ProjectsData }) {
   return (
     <section id="work" className="projects">
       <div className="page page-frame projects-body">
-        <span className="projects-label">
+        <motion.span
+          className="projects-label"
+          variants={label}
+          initial={reduce ? "shown" : "hidden"}
+          whileInView="shown"
+          viewport={{ once: true, amount: 1 }}
+        >
           <span>{data.label.index}</span>
           <span>{data.label.text}</span>
-        </span>
+        </motion.span>
 
         <motion.ol
           className="projects-grid"
           variants={list}
           initial={reduce ? "shown" : "hidden"}
           whileInView="shown"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: PROJECTS.inView }}
         >
           {data.items.map((project) => {
             const inner = (
