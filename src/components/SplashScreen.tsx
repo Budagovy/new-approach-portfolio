@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
-import { HERO } from "@/lib/motion";
+import { HERO, SNAP } from "@/lib/motion";
 
 /** Where the monitor screen sits in the frame, as percentages of it. */
 export interface ScreenRect {
@@ -376,22 +376,26 @@ function SplashPinned({
   const heroY = useTransform(heroTransform, (v) => v.cy);
   const heroScale = useTransform(heroTransform, (v) => v.scale);
 
-  /* The room only leaves once the hero already fills most of the view. */
-  const roomOpacity = useTransform(push, [0.82, 1], [1, 0]);
+  /* The room only leaves once the monitor already fills the view. */
+  const roomOpacity = useTransform(push, [HERO.roomOut[0], HERO.roomOut[1]], [1, 0], { clamp: true });
 
   /* The cover: the cream that stands between the reader and everything
      behind a short hero. Two layers share it, the stage's ground (behind
      the room) and the hero stage's foot (the area under the hero block).
-     It is STRICTLY SEQUENCED after the push: it only starts to clear once
-     progress has passed zoomEnd, where push is clamped at exactly 1 and
-     the room's opacity is therefore exactly 0. So the order is always
-     room out (behind opaque cream, unseen), then cream out (onto the held
-     next section, itself on cream: all the reader sees is that section
-     fading in). An earlier version faded the foot WITH the room, and a
-     slow scroll parked the page half-way through both, the room showing
-     through the foot under the hero. Reversed, it is the same in reverse:
-     the cream is whole again before the room returns. */
-  const coverOpacity = useTransform(p, [HERO.zoomEnd, HERO.revealEnd], [1, 0], { clamp: true });
+     It is STRICTLY SEQUENCED after the room: both are read off the same
+     value, push, over ranges that do not overlap (HERO.roomOut then
+     HERO.coverOut), so the room's opacity is exactly 0 before the cream
+     starts to clear. The order is always room out (behind opaque cream,
+     unseen), then cream out (onto the held next section, itself on cream:
+     all the reader sees is that section fading in). An earlier version
+     faded the foot WITH the room, and a slow scroll parked the page
+     half-way through both, the room showing through under the hero. The
+     one after that waited for the push to END before clearing, and the
+     push's eased tail is a quarter of the scroll: the hero looked arrived
+     over blank cream all that way. So it clears DURING the tail and is
+     gone as the hero settles. Reversed, it is the same in reverse: the
+     cream is whole again before the room returns. */
+  const coverOpacity = useTransform(push, [HERO.coverOut[0], HERO.coverOut[1]], [1, 0], { clamp: true });
 
   /* The resting screen. NOT a second copy of the hero at a second geometry
      (the handoff that ghosted, see above): it is a different picture laid
@@ -419,6 +423,7 @@ function SplashPinned({
         ref={trackRef}
         className="splash-track"
         data-snap="end"
+        data-snap-reach={SNAP.arrival}
         style={{
           height: `${HERO.pinVh * 100}vh`,
           /* Pulls `next` all the way up to the hero's foot at the top of

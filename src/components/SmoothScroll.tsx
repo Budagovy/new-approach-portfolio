@@ -35,18 +35,21 @@ const scrollPad = () => parseFloat(getComputedStyle(document.documentElement).sc
  * marked `data-snap`. "start" lands the element's top under the fixed
  * header (a section arriving); "end" lands its bottom on the screen's
  * bottom (the splash: the point its pin lets go, hero arrived and the
- * page about to move). Read fresh each time: they depend on layout that
- * settles after hydration and changes on resize.
+ * page about to move). `data-snap-reach` overrides how far ahead (as a
+ * share of the screen) that landing is offered from; the default is
+ * SNAP.ahead. Read fresh each time: they depend on layout that settles
+ * after hydration and changes on resize.
  */
-function landings(): number[] {
+function landings(): { at: number; reach: number }[] {
   const max = document.documentElement.scrollHeight - window.innerHeight;
   const pad = scrollPad();
-  const points = [0];
+  const points: { at: number; reach: number }[] = [{ at: 0, reach: SNAP.ahead }];
   document.querySelectorAll<HTMLElement>("[data-snap]").forEach((el) => {
     const top = restingTop(el);
-    points.push(el.dataset.snap === "end" ? top + el.offsetHeight - window.innerHeight : top - pad);
+    const at = el.dataset.snap === "end" ? top + el.offsetHeight - window.innerHeight : top - pad;
+    points.push({ at: Math.round(Math.max(0, Math.min(max, at))), reach: parseFloat(el.dataset.snapReach ?? "") || SNAP.ahead });
   });
-  return [...new Set(points.map((v) => Math.round(Math.max(0, Math.min(max, v)))))].sort((a, b) => a - b);
+  return points;
 }
 
 /**
@@ -95,12 +98,11 @@ export function SmoothScroll() {
          is this frame: redirecting the glide is one continuous movement;
          waiting for it to stop and then moving again would be two. */
       const rest = lenis.targetScroll;
-      const reach = SNAP.ahead * window.innerHeight;
       let landing: number | null = null;
-      for (const point of landings()) {
-        const gap = (point - rest) * direction; // > 0: ahead of the reader
-        if (gap >= -SNAP.behind && gap <= reach && (landing === null || Math.abs(point - rest) < Math.abs(landing - rest))) {
-          landing = point;
+      for (const { at, reach } of landings()) {
+        const gap = (at - rest) * direction; // > 0: ahead of the reader
+        if (gap >= -SNAP.behind && gap <= reach * window.innerHeight && (landing === null || Math.abs(at - rest) < Math.abs(landing - rest))) {
+          landing = at;
         }
       }
       if (landing !== null && Math.abs(landing - rest) > 1) lenis.scrollTo(landing, { lerp: SNAP.lerp });

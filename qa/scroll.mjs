@@ -44,13 +44,16 @@ const trace = async (page, dy, ms = 1200) => page.evaluate(async ({ dy, ms }) =>
   ok("Lenis is on the document", await page.evaluate(() => document.documentElement.classList.contains("lenis")), "");
 
   await page.mouse.move(720, 500);
-  const t = await trace(page, 600, 2000);
+  /* 300px: far enough from every landing that the guide (SmoothScroll) leaves it alone, so this
+     measures Lenis's glide by itself. 600px used to be too, until the splash's arrival landing
+     was given a longer reach. The guide has its own gate, qa/flow.mjs. */
+  const t = await trace(page, 300, 2000);
   const distinct = [...new Set(t)];
   const final = t[t.length - 1];
   ok("one wheel tick glides: many intermediate positions, not a jump", distinct.length >= 8 && final > 0, `${distinct.length} distinct positions over ${t.length} frames, ends at ${final}`);
   const steps = t.slice(1).map((v, i) => v - t[i]).filter((d) => d > 0);
   ok("glide decelerates (later frames move less than earlier ones)", steps.length > 3 && steps[0] > steps[steps.length - 1], `first step ${steps[0]}px, last ${steps[steps.length - 1]}px`);
-  ok("glide settles on the tick's distance (600px), no overshoot or drift", final === 600 && Math.max(...t) === 600, `max ${Math.max(...t)}`);
+  ok("glide settles on the tick's distance (300px), no overshoot or drift", final === 300 && Math.max(...t) === 300, `max ${Math.max(...t)}`);
 
   // Programmatic scrollTo still lands exactly (what the QA gates rely on).
   // A position inside the page: the document is short now that sections are 500px.

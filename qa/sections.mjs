@@ -24,6 +24,8 @@ const URL_ = process.env.QA_URL || "http://localhost:3220";
 const OUT = "qa/frames/";
 mkdirSync(OUT, { recursive: true });
 
+/* Scroll progress at which the eased push reaches a given value (the inverse of SplashScreen's easeInOut). */
+const progressAtPush = (v) => { const t = v < 0.5 ? Math.cbrt(v / 4) : 1 - Math.cbrt((1 - v) * 2) / 2; return HERO.zoomStart + t * (HERO.zoomEnd - HERO.zoomStart); };
 const clamp = (lo, v, hi) => Math.max(lo, Math.min(hi, v));
 const sp = (w, h) => (w <= 961 ? clamp(64, 0.08 * h, 96) : clamp(96, 0.12 * h, 152));
 const spHead = (w, h) => (w <= 961 ? clamp(32, 0.046 * h, 48) : clamp(46, 0.06 * h, 78));
@@ -66,29 +68,31 @@ for (const [w, h] of [[1440, 900], [1366, 768], [1920, 1080], [1024, 768]]) {
   const pinEnd = s.trackTop + s.trackH - s.vh;
 
   // From the first frame the approach is already in place under the hero, behind the room and
-  // the cream cover. At the end of the push the room is gone and the cover still whole (they
-  // must never both be part-way: see qa/flow.mjs); by revealEnd the cover has cleared and the
+  // the cream cover. Where the room has just gone the cover is still whole (they must never
+  // both be part-way: see qa/flow.mjs); by the end of the push the cover has cleared and the
   // approach is in view, with the pin still holding: no scroll past the hero is needed for it.
   const heroFoot = await page.evaluate(() => document.querySelector(".hero").offsetHeight);
   ok(`${tag} approach under the hero before any scrolling (behind the room)`, near(s.approach.top, heroFoot, 1), `approach top ${s.approach.top} vs hero foot ${heroFoot}`);
   const layers = () => page.evaluate(() => { const o = (sel) => +getComputedStyle(document.querySelector(sel)).opacity; return { room: o(".splash-frame"), foot: o(".splash-foot"), ground: o(".splash-ground") }; });
-  await page.evaluate((y) => scrollTo(0, y), Math.round(pinEnd * HERO.zoomEnd));
+  await page.evaluate((y) => scrollTo(0, y), Math.round(pinEnd * progressAtPush(HERO.roomOut[1])));
   await page.waitForTimeout(1800);
-  const atZoomEnd = await layers();
-  ok(`${tag} push over: room fully gone while the cream is still whole`, atZoomEnd.room <= 0.001 && atZoomEnd.foot >= 0.97 && atZoomEnd.ground >= 0.97, JSON.stringify(atZoomEnd));
-  await page.evaluate((y) => scrollTo(0, y), Math.round(pinEnd * HERO.revealEnd) + 2);
+  const atRoomOut = await layers();
+  ok(`${tag} room just gone: the cream is still whole`, atRoomOut.room <= 0.01 && atRoomOut.foot >= 0.95 && atRoomOut.ground >= 0.95, JSON.stringify(atRoomOut));
+  await page.evaluate((y) => scrollTo(0, y), Math.round(pinEnd * HERO.zoomEnd) + 2);
   await page.waitForTimeout(1800);
   s = await page.evaluate(probe);
   const cleared = await layers();
   const roomGone = cleared.room <= 0.001 && cleared.foot < 0.02 && cleared.ground < 0.02 && s.stage.top === 0;
-  ok(`${tag} hero arrived: room gone, approach in view under it, no scroll needed`, roomGone && near(s.approach.top, s.hero.bottom, 1) && s.approach.top < s.vh - 60, `approach top ${s.approach.top}, hero bottom ${s.hero.bottom}, screen ${s.vh}`);
+  ok(`${tag} hero settled: room gone, cream cleared, approach in view, pin still holding`, roomGone && near(s.approach.top, s.hero.bottom, 1) && s.approach.top < s.vh - 60, `approach top ${s.approach.top}, hero bottom ${s.hero.bottom}, screen ${s.vh}`);
   await page.screenshot({ path: `${OUT}sections-${w}-arrived.png` });
 
   // Pin release: the hero block is the page, the approach directly under it.
   await page.evaluate((y) => scrollTo(0, y), pinEnd);
   await page.waitForTimeout(1800);
   s = await page.evaluate(probe);
-  ok(`${tag} hero at the top, native scale, shorter than the screen`, s.hero.top === 0 && near(s.stageScale, 1, 0.01) && s.hero.h < s.vh, `hero ${s.hero.h}px of ${s.vh} (${(s.hero.h / s.vh).toFixed(2)} screens)`);
+  /* Sub-pixel: the track is pinVh screens tall, which need not be a whole number of px (2.2 x 768),
+     and the browser rounds the scroll position. */
+  ok(`${tag} hero at the top, native scale, shorter than the screen`, near(s.hero.top, 0, 1) && near(s.stageScale, 1, 0.01) && s.hero.h < s.vh, `hero ${s.hero.h}px of ${s.vh} (${(s.hero.h / s.vh).toFixed(2)} screens)`);
   ok(`${tag} hero copy starts header + 120px down`, near(s.heroBody.top, s.header.bottom + 120), `copy top ${s.heroBody.top}, header ${s.header.bottom}`);
   ok(`${tag} strip a head gap (${HEAD.toFixed(0)}px) under the copy, closing the hero`, near(s.strip.top - s.heroBody.bottom, HEAD) && near(s.strip.bottom, s.hero.bottom), `gap ${(s.strip.top - s.heroBody.bottom).toFixed(1)}, strip bottom ${s.strip.bottom} vs hero ${s.hero.bottom}`);
   ok(`${tag} approach sits directly under the hero at release`, near(s.approach.top, s.hero.bottom, 1), `approach top ${s.approach.top} vs hero bottom ${s.hero.bottom}`);

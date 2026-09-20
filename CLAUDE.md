@@ -375,18 +375,32 @@ it uncovers is the approach, already there, already revealed (its
 entrance fires at load, behind the room; `useInView` threshold 0.15 for
 that reason).
 
-**The cover is strictly sequenced after the room, and this is a rule.**
-It starts to clear only once progress has passed `HERO.zoomEnd`, where
-the push is clamped at exactly 1 and the room's opacity is exactly 0,
-and is gone by `HERO.revealEnd`. Room out behind opaque cream, THEN
-cream out onto the approach (cream on cream: all the reader sees is the
-approach fading in). The first version faded the foot WITH the room; a
-slow scroll parked the page half-way through both and the room showed
-through under the hero, which the user reported as a bug, rightly.
-`qa:flow` checks the invariant (cover less than whole implies room at 0)
-on every step of real slow and fast wheel scrolls, and reads the actual
-screen pixels in that band. `.hero` carries its own cream ground
-now, and `.splash-frame` too, for the moment before the footage paints.
+**The cover's timing has two rules, each from a bug the user reported.**
+Room and cover are both read off `push`, over `HERO.roomOut` then
+`HERO.coverOut`, ranges that must not overlap.
+
+1. *The cream may not start to clear while any room is left.* The first
+   version faded the foot WITH the room; a slow scroll parked the page
+   half-way through both and the room showed through under the hero.
+2. *The cream may not wait for the push to END.* The fix for (1) cleared
+   it after `zoomEnd`. But the push is eased, its last tenth is about a
+   quarter of the scroll, and the hero LOOKS arrived by push ~0.8: the
+   reader sat on an arrived hero over blank cream, the approach nowhere
+   ("i see only the hero section and not my approach"). So the room now
+   fades the moment the monitor fills the screen (0.78 to 0.9) and the
+   cream clears through the tail (0.9 to 1): the approach starts to show
+   within 82px of the hero looking arrived and is fully in as it settles.
+
+And so the reader never RESTS on a half-made picture, the splash's
+landing has a longer reach than the others (`SNAP.arrival`,
+`data-snap-reach`): pause anywhere after the hero looks arrived and the
+guide finishes the arrival, carrying the page to the release point.
+
+`qa:flow` checks (1) on every step of real slow and fast wheel scrolls,
+by state and by reading the screen's pixels in that band, and (2) by
+parking across the tail and by replaying the user's report (scroll in,
+pause as the hero arrives, expect the approach in view).
+
 With a full-height hero the sticky top is one screen down, so `next`
 just waits below the screen, as it always did.
 
@@ -455,7 +469,8 @@ has arrived, the next pause carries the page to the release point.
 `HERO.spring` belongs to this story: the splash's progress spring was
 soft (90/26) from before Lenis existed, so scroll was smoothed twice and
 a fast flick released the page with the hero still mid-zoom, 120px short
-of the section below it. Now 320/38.
+of the section below it. Now 600/50 (320/38 still trailed the hardest
+flick by 15px at 1920x1080).
 
 `npm run qa:flow` gates all of it with REAL wheel input, which the other
 gates never exercise: exposure (above), seams (sections meet exactly
@@ -469,8 +484,8 @@ header, input mid-glide takes over, a flick is not caught).
 Two sections hold the reader: the splash and the approach. The splash's
 track was shortened at the user's request (4.5 to 2.4 screens) after
 they found it took "a couple of scrolls" to leave the hero: most of the
-old track was holding, not moving. The push spans 0.08 to 0.74 of the
-track, the cover clears by 0.86, then a short settle. The approach's hold is 0.9 of a
+old track was holding, not moving. Now 2.2 screens: the push spans 0.08 to 0.86
+of the track (the same length it was), then a settle of about one tick. The approach's hold is 0.9 of a
 screen (about nine wheel ticks, three per milestone), set with that same
 complaint in mind. Numbers in `HERO` and `APPROACH` in
 `src/lib/motion.ts`; the gates read them from there.
