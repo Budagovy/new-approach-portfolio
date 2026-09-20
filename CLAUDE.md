@@ -20,9 +20,10 @@ The contract for whatever goes in the slot:
 - **It is one full screen.** In the pinned splash its parent (`.splash-hero-stage`)
   is exactly the splash stage's size — the viewport, less any scrollbar.
   Fill it with `height: 100%`. A shorter hero leaves a gap as the reader
-  arrives — which is now used on purpose from 860px up: the hero is a
-  `--section-h` (500px) block at the top of the stage and the next section
-  is pulled up to fill the gap. See "Section heights".
+  arrives — unless that gap is filled, which is what happens on desktop:
+  the hero is a content-height block at the top of the stage and
+  `SplashScreen` pulls the next section up to meet it. See "Section
+  rhythm".
 - **Its root is never transformed by the hero itself.** `SplashScreen` applies
   the scale and position that grow it into view; do not add a competing
   transform to the slot's own root, or the two will fight.
@@ -300,37 +301,50 @@ rest, the strip's heading row shows along the bottom edge and the skyline
 is cropped by the bezel: that is the cover-fit doing its job, since the
 strip is part of the one full screen the slot contract asks for.
 
-## Section heights
+## Section rhythm
 
-From 860px up, the hero block, "My approach" and "Selected projects" are
-each exactly `--section-h` (500px, in `globals.css`) tall, at the user's
-explicit request; they were each one full screen before. Below 860px the
-stacked layouts cannot fit a fixed box and run at content height (the
-hero stays a full screen there).
+The sections' structure and dimensions are pleurat.com's, at the user's
+request ("match the sections structure and dimension like in the website
+reference"), read from that site's own stylesheet with Playwright rather
+than estimated. Two earlier attempts were rejected: every section one
+full screen, then every section a fixed 500px box ("i dont like the
+500px height"). The reference does neither. Its sections are
+content-height, and what makes them feel consistent is shared vertical
+padding that scales with the screen's height:
 
-Approach and projects are plain in-flow boxes. The hero is the awkward
-one: the splash stage must stay a full screen (the zoom lands on it), so
-the hero is a 500px block at the top of the stage — the fixed header's
-76px included, so the copy is set a step smaller inside it
-(`--fs-display` capped at 40px, tighter gaps) to fit header clearance,
-copy and city strip — with cream below. `.splash-track` carries
-`margin-bottom: min(0px, calc(var(--section-h) - 100dvh))`, which pulls
-the approach up so that at the instant the pin releases its top is
-exactly 500px down the screen; during the settle after the push it slides
-up over the stage's empty foot. `HERO.zoomEnd` (0.6) is chosen so the
-push is over before it enters on screens up to ~1080px tall; the formula
-is in `motion.ts`. None of the splash maths changed: the stage is still
-the full screen, it just has content only in its top 500px, so on the
-monitor it reads as a page with its content at the top.
+- `--sp: clamp(96px, 12vh, 152px)` above and below every section's
+  content; `clamp(64px, 8vh, 96px)` up to 961px wide.
+- `--sp-head: clamp(46px, 6vh, 78px)` between a section's head and its
+  body; `clamp(32px, 4.6vh, 48px)` up to 961px.
+- The hero: header height + 120px above the copy, the street strip a head
+  gap below it, no bottom padding (the strip closes the section).
+- A 1px rule on top of each section, its label sitting in the top-left
+  corner under that rule, out of the flow.
 
-Because the page is now short (2,760px at 1440x900) and Projects is the
-last section, the `#work` anchor cannot bring it up to the header: the
-page bottoms out first. That resolves itself when About/Contact exist.
+Both tokens are in `globals.css`; approach and projects are plain
+`padding: var(--sp) var(--page-pad)` boxes. Measured at 1440x900: hero
+694px, approach 496px, projects 841px (the reference's own run 558 to
+899). Project cards are back at the Figma's ~376px.
 
-`npm run qa:sections` gates all of this at four sizes: the three
-heights, content inside each box, hero copy clear of header and strip,
-the approach at exactly 500px on release and off screen when the push
-ends, no gaps between sections.
+The hero is the awkward one: the splash stage must stay a full screen
+(the zoom lands on it), so from 860px wide and 740px tall the hero is a
+content-height block at the top of the stage with cream below.
+`SplashScreen` measures that block (`offsetHeight` of the slot's root,
+by ResizeObserver) and gives the track a negative bottom margin of
+exactly stage height minus hero height, so the approach sits directly
+under the hero at the instant the pin releases and slides up over the
+stage's empty foot during the settle. A full-height hero measures equal
+to the stage and the margin is 0, which is what phones and short screens
+get. `HERO.zoomEnd` must leave the push finished before the approach
+enters; the bound is in `motion.ts`. None of the splash maths changed:
+on the monitor the stage reads as a page with its content at the top.
+
+`npm run qa:sections` gates all of this against the reference's
+formulas at four desktop sizes and a phone: the paddings and head gaps,
+the hero's header + 120px and its strip, the approach exactly under the
+hero on release and off screen when the push ends, no gaps between
+sections. It measures layout offsets, not client rects, where an
+entrance transform would otherwise shift the reading.
 
 ## Track lengths
 
@@ -340,15 +354,15 @@ scrolls" to leave the hero: most of the old track was holding, not
 moving. The push spans 0.08 to 0.72 of the track with a short settle at
 the end. The approach was pinned too (3.2, then 2.4 screens, the line
 scrubbed by scroll) until the user asked for it and the projects to
-"fit the screen perfectly": both are now exactly one screen, in flow, so
-the page after the splash reads as screen, screen, screen. Numbers in
+"fit the screen perfectly"; both are now in flow at content height (see
+"Section rhythm" for how they got there). Numbers in
 `HERO` and `APPROACH` in `src/lib/motion.ts`; the gates read them from
 there.
 
 ## The approach section
 
-`Approach.tsx`, the four-step timeline after the hero: exactly
-`--section-h` tall (see "Section heights"), in flow. The
+`Approach.tsx`, the four-step timeline after the hero: content-height
+on the shared rhythm (see "Section rhythm"), in flow. The
 sequence plays on its own, once, when the section comes 40% into view:
 the entrance cascade (heading, line, markers) lights step 01, then after
 `APPROACH.fillDelay` a single motion value `fill` is animated 0 to 1 over
@@ -384,18 +398,10 @@ into view; reduced motion shows all four lit at once. Copy is in
 `Projects.tsx`, after the approach: a plain grid, per the Figma frame —
 three 2:3 images in a row, square corners, an 8px gutter, a bold title
 and a small uppercase tag under each, under the `02 Selected projects`
-label, no heading. Ordinary in-flow section, exactly `--section-h` tall
-(see "Section heights"), the grid centred under the label. The grid is
-capped twice: at the frame's 1150px (its cards measure ~376px at 1440),
-and by the box's height — `.projects-body` works out the card height that
-fits under the label with the captions and paddings (`--projects-card-h`)
-and the grid's `max-width` is three cards of that height at 2:3 plus two
-gutters. At 500px that makes the cards 237px wide, well under the
-frame's 376px: the price of the fixed height, and the first thing to
-revisit if the user finds them small. The gate checks the fit at five
-sizes. The caption allowance (`--projects-caption-h`,
-60px) is the title and tag with their margins; change those and it must
-follow. Phones (one column) are the exception and run past a screen. The only motion is the cards opening one
+label, no heading. Ordinary in-flow section on the shared rhythm (see
+"Section rhythm"): `--sp` above and below the grid, the label in the
+corner. The grid is capped at 1150px and centred in the column (the
+frame's cards measure ~376px at 1440). The only motion is the cards opening one
 after another — a gentle fade with a 12px rise, 180ms apart — the first
 time they scroll into view (a single simultaneous fade was tried and the
 user asked for the sequence); reduced motion shows them outright. One

@@ -161,13 +161,25 @@ function SplashPinned({
      class name. */
   const heroStageRef = useRef<HTMLDivElement>(null);
   const heroContentH = useMotionValue(0);
+  /* The slot's own height. The stage is always one full screen, but the
+     hero in it may be shorter (content-height, on the reference's rhythm:
+     see "Section rhythm" in CLAUDE.md), leaving cream below it. The track
+     is then given a negative bottom margin of exactly that difference, so
+     the next section sits directly under the hero at the instant the pin
+     releases and slides up over the stage's empty foot during the settle.
+     A full-height hero measures equal to the stage and the margin is 0.
+     offsetHeight, not a client rect: the stage is scaled mid-push. */
+  const [heroBlockH, setHeroBlockH] = useState(0);
   useEffect(() => {
     const stage = heroStageRef.current;
     if (!stage) return;
     const target = stage.querySelector<HTMLElement>(".hero-body") ?? stage;
     const ro = new ResizeObserver(([entry]) => heroContentH.set(entry.contentRect.height));
     ro.observe(target);
-    return () => ro.disconnect();
+    const block = stage.firstElementChild as HTMLElement | null;
+    const blockRo = new ResizeObserver(() => { if (block) setHeroBlockH(block.offsetHeight); });
+    if (block) blockRo.observe(block);
+    return () => { ro.disconnect(); blockRo.disconnect(); };
   }, [heroContentH]);
 
   /* Video progress, 0 to 1. Driven by rAF rather than React state so tracking
@@ -368,7 +380,14 @@ function SplashPinned({
 
   return (
     <section id={id} className="splash">
-      <div ref={trackRef} className="splash-track" style={{ height: `${HERO.pinVh * 100}vh` }}>
+      <div
+        ref={trackRef}
+        className="splash-track"
+        style={{
+          height: `${HERO.pinVh * 100}vh`,
+          marginBottom: heroBlockH > 0 && vp.vh > 0 ? Math.min(0, heroBlockH - vp.vh) : 0,
+        }}
+      >
         <div ref={stageRef} className="splash-stage">
           {/* The room. Sized to cover the viewport at the footage aspect. */}
           <motion.div

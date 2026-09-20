@@ -37,11 +37,14 @@
 
   --header-h: 64px;
 
-  /* Every section's height from 860px up: the hero block, "My approach"
-     and "Selected projects" are each exactly this tall, at the user's
-     request (they were one full screen each before). Below 860px the
-     stacked layouts cannot fit a fixed box and run at content height. */
-  --section-h: 500px;
+  /* Vertical rhythm, taken from pleurat.com as authored there (read from
+     its stylesheet, not estimated): every section is content-height with
+     --sp above and below its content, and --sp-head between a section's
+     head and its body. Both scale with the screen's height. The narrower
+     pair below applies up to 961px, where the page column goes edge to
+     edge (the reference switches at the same point). */
+  --sp: clamp(96px, 12vh, 152px);
+  --sp-head: clamp(46px, 6vh, 78px);
 
   /* Height of the city strip at the foot of the hero: its heading row plus
      its scene, as set inside the component's own stylesheet. */
@@ -54,6 +57,9 @@
 
 @media (min-width: 640px) {
   :root { --header-h: 76px; }
+}
+@media (max-width: 961px) {
+  :root { --sp: clamp(64px, 8vh, 96px); --sp-head: clamp(32px, 4.6vh, 48px); }
 }
 @media (min-width: 962px) {
   :root { --page-max: 98vw; --page-pad: 40px; }
@@ -169,15 +175,6 @@ body {
 /* --- Splash ------------------------------------------------------------- */
 .splash { background: var(--bg); color: var(--ink); }
 .splash-track { position: relative; }
-/* The stage stays one full screen (the zoom lands on it), but the hero
-   inside it is only --section-h tall, at the stage's top. Pulling the next
-   section up by the difference puts it directly under the hero: at the
-   instant the pin releases its top sits exactly --section-h down the
-   screen, and it slides there over the stage's empty cream foot during
-   the settle after the push (HERO.zoomEnd leaves room for that). */
-@media (min-width: 860px) {
-  .splash-track { margin-bottom: min(0px, calc(var(--section-h) - 100dvh)); }
-}
 .splash-stage {
   position: sticky; top: 0;
   height: 100dvh;
@@ -289,21 +286,19 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .hero-main { padding-top: 48px; padding-bottom: 48px; }
 }
-/* From 860px up the hero is a --section-h block at the top of the stage,
-   the fixed header's height included, with cream below it for the next
-   section to slide over. The copy is set a step smaller in here so that
-   header clearance, copy and city strip all fit the box; the greeting on
-   the monitor is outside .hero and keeps the full display size. */
-@media (min-width: 860px) {
-  .splash-hero-stage .hero {
-    height: min(var(--section-h), 100%);
-    --fs-display: clamp(30px, 3vw, 40px);
-    --fs-lead: 16px;
-  }
-  .splash-hero-stage .hero-main {
-    padding: calc(var(--header-h) + 8px) var(--page-pad) 8px;
-  }
-  .splash-hero-stage .hero-body { gap: 12px; }
+/* The reference's hero, from 860px up on screens tall enough to hold it:
+   content-height, the header's height plus 120px above the copy, the
+   strip closing it a head-gap below, no bottom padding. The stage around
+   it is still one full screen (the zoom lands on it); the hero is a block
+   at its top with cream below, and SplashScreen pulls the next section up
+   by the difference so it sits directly under the hero when the pin
+   releases. On short or narrow screens the hero stays one full screen, as
+   the slot contract describes. */
+@media (min-width: 860px) and (min-height: 740px) {
+  .splash-hero-stage .hero { height: auto; }
+  .splash-hero-stage .hero-page { height: auto; grid-template-rows: auto auto; }
+  .splash-hero-stage .hero-main { padding: calc(var(--header-h) + 120px) var(--page-pad) 0; }
+  .splash-hero-stage .hero-strip { margin-top: var(--sp-head); }
 }
 .hero-strip {
   min-width: 0;
@@ -401,30 +396,25 @@ portfolio-city-strip {
 }
 
 /* --- Approach (four steps) ------------------------------------------------ */
-/* Exactly --section-h tall, in flow: no track, no pin (it was pinned
-   across 2.4 screens and scrubbed by scroll, then one full screen; the
-   user asked for fixed-height sections, so the sequence plays on its own
-   when the section comes into view, see Approach.tsx). Everything here is layout and the resting look. The
-   stage is viewport-wide; the section itself is the page column inside
-   it, which carries the frame's rules and the grid texture per the Figma
-   and starts at the very top of the stage so its side rules run on from
-   the hero's without a break (the header's clearance is padding inside
-   the column, not on the stage). */
+/* Content-height, in flow, on the reference's rhythm: --sp above and
+   below, --sp-head between the heading and the timeline, the label
+   tucked into the top-left corner under the section's top rule rather
+   than taking a row. (It was pinned across 2.4 screens and scrubbed by
+   scroll, then one full screen, then a 500px box; the sequence plays on
+   its own when the section comes into view, see Approach.tsx.) The
+   section itself is the page column, which carries the frame's rules and
+   the grid texture per the Figma. */
 .approach {
   position: relative;
 }
 .approach-stage {
-  height: var(--section-h);
   background-color: var(--bg);
 }
-/* Rows: label, heading (centred in its share), the timeline, then a larger
-   empty share below, which puts the line a little above the middle of the
-   screen — where the Figma has it. */
 .approach-body {
-  height: 100%;
-  padding: 0 var(--page-pad);
+  position: relative;
+  padding: var(--sp) var(--page-pad);
   display: grid;
-  grid-template-rows: auto 1fr auto 0.9fr;
+  row-gap: var(--sp-head);
   border-top: 1px solid var(--line);
   background-image:
     linear-gradient(var(--grid) 1px, transparent 1px),
@@ -432,9 +422,11 @@ portfolio-city-strip {
   background-size: 28px 28px;
 }
 .approach-label {
+  position: absolute;
+  top: 16px;
+  left: var(--page-pad);
   display: inline-flex;
   gap: 1.4em;
-  padding-top: 10px;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 11px;
   font-weight: 500;
@@ -539,19 +531,6 @@ portfolio-city-strip {
   color: var(--muted);
 }
 
-/* Where the box can't hold four across (narrow): the stage grows to its
-   content. Must match FLOW_QUERY in Approach.tsx, which switches the
-   activation logic the same way. */
-@media (max-width: 859px) {
-  .approach-stage { height: auto; }
-  .approach-body {
-    height: auto;
-    padding-top: 40px;
-    padding-bottom: 80px;
-    grid-template-rows: auto auto auto;
-    row-gap: 44px;
-  }
-}
 /* Narrow: a vertical timeline instead of four across, the marker drawn
    inside each step and joined by a rule down the left. */
 @media (max-width: 859px) {
@@ -596,31 +575,21 @@ portfolio-city-strip {
 .projects {
   background: var(--bg);
 }
-/* Exactly --section-h tall, like the sections before it: the label at the
-   top, the grid centred in the rest. The grid is capped by that height as
-   well as by the frame's 1150px: three 2:3 cards plus their captions must
-   fit in what is left below the label, so the cards are sized from the
-   box rather than the box from the cards. Only phones (one column) run
-   past it. */
+/* Same rhythm as the approach: content-height, --sp above and below, the
+   label in the top-left corner. No heading (per the Figma), so the grid
+   is the section's whole body. Cards are back at the frame's size: the
+   grid is capped at 1150px (cards ~376px at 1440) and nothing else. */
 .projects-body {
-  --projects-gap: 8px;
-  --projects-pad-top: 28px;
-  --projects-pad-bottom: 28px;
-  /* Label row: its top padding plus one line of the 11px mono. */
-  --projects-label-h: 24px;
-  /* Title and tag under a card, with their margins. */
-  --projects-caption-h: 60px;
-  --projects-card-h: calc(var(--section-h) - var(--projects-label-h) - var(--projects-pad-top) - var(--projects-pad-bottom) - var(--projects-caption-h) - 4px);
-  min-height: var(--section-h);
-  padding: 0 var(--page-pad);
+  position: relative;
+  padding: var(--sp) var(--page-pad);
   border-top: 1px solid var(--line);
-  display: grid;
-  grid-template-rows: auto 1fr;
 }
 .projects-label {
+  position: absolute;
+  top: 16px;
+  left: var(--page-pad);
   display: inline-flex;
   gap: 1.4em;
-  padding-top: 10px;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 11px;
   font-weight: 500;
@@ -631,15 +600,12 @@ portfolio-city-strip {
 .projects-grid {
   list-style: none;
   width: 100%;
-  /* Three cards of (card height * 2/3) plus two gutters, or the frame's
-     width, whichever is narrower. */
-  max-width: min(1150px, calc(var(--projects-card-h) * 2 + var(--projects-gap) * 2));
+  max-width: 1150px;
   margin: 0 auto;
-  align-self: center;
-  padding: var(--projects-pad-top) 0 var(--projects-pad-bottom);
+  padding: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--projects-gap);
+  gap: 8px;
 }
 .project {
   display: block;
@@ -684,9 +650,7 @@ a.project:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px;
 /* Phones: one card per row. */
 @media (max-width: 699px) {
   .projects-grid {
-    max-width: 1150px;
     grid-template-columns: 1fr;
     gap: 40px;
-    margin-top: 56px;
   }
 }
