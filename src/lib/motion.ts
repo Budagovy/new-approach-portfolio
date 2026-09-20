@@ -15,26 +15,65 @@ export const SCROLL = {
 } as const;
 
 /**
+ * Guided scrolling: a gentle assist that settles a wheel or trackpad
+ * scroll onto the next section's landing, never a lock. The rules that
+ * keep it from feeling rigid:
+ *
+ * - forward only: it helps toward a landing that lies AHEAD in the
+ *   direction the reader is moving and is already close; it never pulls
+ *   back against them (the stock proximity snap does, and a reader
+ *   nudging one tick at a time could not get past a landing);
+ * - close only: beyond `ahead` of a screen it does nothing, so a short
+ *   deliberate scroll stays exactly where the reader put it;
+ * - interruptible: any new input takes over at once.
+ */
+export const SNAP = {
+  /** How near (as a share of the screen's height) a landing ahead must be
+   *  to where the scroll would come to rest before it is offered. */
+  ahead: 0.3,
+  /** A landing just passed, within this many px, is settled back onto:
+   *  a few px of overshoot tidied, not a pull. Under one wheel tick. */
+  behind: 56,
+  /** Input must be quiet this long (ms) before the guide acts, so it
+   *  never competes with a scroll still in progress. */
+  quiet: 120,
+  /** The glide onto a landing: a little softer than ordinary scrolling. */
+  lerp: 0.075,
+} as const;
+
+/**
  * Splash choreography, as scroll progress 0 to 1 across the pinned range.
  * The push scale is computed per viewport in SplashScreen, not set here.
  *
  *   0    -> 0.08   a beat on the room, so it registers as a place
- *   0.08 -> 0.72   the push, greeting handing over to the hero
- *   0.72 -> 1      the settle, during which the next section slides up
- *                  under the hero
+ *   0.08 -> 0.74   the push, greeting handing over to the hero; the room
+ *                  fades out over its last stretch, behind opaque cream
+ *   0.74 -> 0.86   the cream under the hero clears, uncovering the next
+ *                  section, which has been held there all along
+ *   0.86 -> 1      a short settle on the finished picture
  *
- * On desktop the hero is a content-height block at the top of the
- * full-screen stage and the next section is pulled up beneath it
- * (SplashScreen's measured margin), so that section enters the screen
- * (stage height - hero height) before the pin ends: ~210px at 1440x900,
- * ~350px at 1920x1080. The push must be over by then:
- * zoomEnd <= 1 - (vh - heroH) / ((pinVh - 1) * vh), which is 0.83 and
- * 0.77 at those sizes, so 0.72 clears both with room. The sections gate
- * checks it.
+ * The middle two must never overlap: the cream may only start to clear
+ * once the push is complete and the room is fully gone, or a slow scroll
+ * shows the room through it (a real bug, since fixed). revealEnd > zoomEnd
+ * is the whole rule; the flow gate checks the invariant on every frame of
+ * a slow and a fast scroll.
  */
 export const HERO = {
+  /**
+   * The spring that smooths scroll progress before the splash reads it.
+   * It used to be soft (90/26, ~0.5s behind): right when raw wheel input
+   * was all there was, but Lenis now smooths the scroll itself, so this
+   * was smoothing it twice, and on a fast flick the page released with
+   * the hero still mid-zoom, 120px short of where the next section
+   * expected it. Stiffer and just over critically damped (no overshoot,
+   * ~0.1s behind): it keeps up with a flick and still takes the steps out
+   * of native touch and trackpad input where Lenis is not running.
+   */
+  spring: { stiffness: 320, damping: 38, restDelta: 0.0005 },
   zoomStart: 0.08,
-  zoomEnd: 0.72,
+  zoomEnd: 0.74,
+  /** Where the cover has fully cleared. */
+  revealEnd: 0.86,
   /**
    * Pinned scroll length, in viewport heights. Was 4.5 with the push
    * spanning 0.18 to 0.62 — a long hold at each end. The user found it

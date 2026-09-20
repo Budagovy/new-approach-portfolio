@@ -256,8 +256,9 @@ function SplashPinned({
    */
 
   /* Scroll is smoothed before anything reads it. Raw wheel and trackpad input
-     is stepped, and every value downstream inherits that judder. */
-  const p = useSpring(scrollYProgress, { stiffness: 90, damping: 26, restDelta: 0.0005 });
+     is stepped, and every value downstream inherits that judder. How
+     stiff, and why: HERO.spring. */
+  const p = useSpring(scrollYProgress, HERO.spring);
 
   /* Scale at which the monitor exactly fills the viewport. */
   const { vw, vh } = vp;
@@ -378,6 +379,20 @@ function SplashPinned({
   /* The room only leaves once the hero already fills most of the view. */
   const roomOpacity = useTransform(push, [0.82, 1], [1, 0]);
 
+  /* The cover: the cream that stands between the reader and everything
+     behind a short hero. Two layers share it, the stage's ground (behind
+     the room) and the hero stage's foot (the area under the hero block).
+     It is STRICTLY SEQUENCED after the push: it only starts to clear once
+     progress has passed zoomEnd, where push is clamped at exactly 1 and
+     the room's opacity is therefore exactly 0. So the order is always
+     room out (behind opaque cream, unseen), then cream out (onto the held
+     next section, itself on cream: all the reader sees is that section
+     fading in). An earlier version faded the foot WITH the room, and a
+     slow scroll parked the page half-way through both, the room showing
+     through the foot under the hero. Reversed, it is the same in reverse:
+     the cream is whole again before the room returns. */
+  const coverOpacity = useTransform(p, [HERO.zoomEnd, HERO.revealEnd], [1, 0], { clamp: true });
+
   /* The resting screen. NOT a second copy of the hero at a second geometry
      (the handoff that ghosted, see above): it is a different picture laid
      over the hero INSIDE the same stage, cropped and scaled by the very
@@ -403,6 +418,7 @@ function SplashPinned({
       <div
         ref={trackRef}
         className="splash-track"
+        data-snap="end"
         style={{
           height: `${HERO.pinVh * 100}vh`,
           /* Pulls `next` all the way up to the hero's foot at the top of
@@ -411,6 +427,9 @@ function SplashPinned({
         }}
       >
         <div ref={stageRef} className="splash-stage">
+          {/* The stage's ground, behind the room: what the room fades to. */}
+          <motion.div className="splash-ground" style={{ opacity: coverOpacity }} aria-hidden="true" />
+
           {/* The room. Sized to cover the viewport at the footage aspect. */}
           <motion.div
             className="splash-frame"
@@ -457,9 +476,10 @@ function SplashPinned({
             >
               {/* The stage under a short hero: cream while the monitor is
                   still a monitor (it would otherwise show raw footage
-                  below the hero), leaving with the room so that what is
-                  held beneath, `next`, is what the reader arrives at. */}
-              <motion.div className="splash-foot" style={{ opacity: roomOpacity }} aria-hidden="true" />
+                  below the hero), clearing only after the room has gone
+                  (see coverOpacity) to uncover what is held beneath,
+                  `next`. */}
+              <motion.div className="splash-foot" style={{ opacity: coverOpacity }} aria-hidden="true" />
               {children}
               {resting && (
                 <motion.div

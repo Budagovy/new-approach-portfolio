@@ -65,14 +65,22 @@ for (const [w, h] of [[1440, 900], [1366, 768], [1920, 1080], [1024, 768]]) {
   let s = await page.evaluate(probe);
   const pinEnd = s.trackTop + s.trackH - s.vh;
 
-  // From the first frame, and at the moment the push is over, the approach is already in place
-  // under the hero: the reader never has to scroll for it to appear.
+  // From the first frame the approach is already in place under the hero, behind the room and
+  // the cream cover. At the end of the push the room is gone and the cover still whole (they
+  // must never both be part-way: see qa/flow.mjs); by revealEnd the cover has cleared and the
+  // approach is in view, with the pin still holding: no scroll past the hero is needed for it.
   const heroFoot = await page.evaluate(() => document.querySelector(".hero").offsetHeight);
   ok(`${tag} approach under the hero before any scrolling (behind the room)`, near(s.approach.top, heroFoot, 1), `approach top ${s.approach.top} vs hero foot ${heroFoot}`);
+  const layers = () => page.evaluate(() => { const o = (sel) => +getComputedStyle(document.querySelector(sel)).opacity; return { room: o(".splash-frame"), foot: o(".splash-foot"), ground: o(".splash-ground") }; });
   await page.evaluate((y) => scrollTo(0, y), Math.round(pinEnd * HERO.zoomEnd));
   await page.waitForTimeout(1800);
+  const atZoomEnd = await layers();
+  ok(`${tag} push over: room fully gone while the cream is still whole`, atZoomEnd.room <= 0.001 && atZoomEnd.foot >= 0.97 && atZoomEnd.ground >= 0.97, JSON.stringify(atZoomEnd));
+  await page.evaluate((y) => scrollTo(0, y), Math.round(pinEnd * HERO.revealEnd) + 2);
+  await page.waitForTimeout(1800);
   s = await page.evaluate(probe);
-  const roomGone = await page.evaluate(() => +getComputedStyle(document.querySelector(".splash-frame")).opacity < 0.02 && +getComputedStyle(document.querySelector(".splash-foot")).opacity < 0.02);
+  const cleared = await layers();
+  const roomGone = cleared.room <= 0.001 && cleared.foot < 0.02 && cleared.ground < 0.02 && s.stage.top === 0;
   ok(`${tag} hero arrived: room gone, approach in view under it, no scroll needed`, roomGone && near(s.approach.top, s.hero.bottom, 1) && s.approach.top < s.vh - 60, `approach top ${s.approach.top}, hero bottom ${s.hero.bottom}, screen ${s.vh}`);
   await page.screenshot({ path: `${OUT}sections-${w}-arrived.png` });
 

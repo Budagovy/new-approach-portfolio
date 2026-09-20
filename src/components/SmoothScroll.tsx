@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
-import { SCROLL } from "@/lib/motion";
+import { SCROLL, SNAP } from "@/lib/motion";
 
 /**
  * Where an element comes to rest in the document, in px from the top.
@@ -28,6 +28,27 @@ function restingTop(el: Element): number {
   return y;
 }
 
+const scrollPad = () => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+
+/**
+ * The page's landings, as scroll positions: the top, plus one per element
+ * marked `data-snap`. "start" lands the element's top under the fixed
+ * header (a section arriving); "end" lands its bottom on the screen's
+ * bottom (the splash: the point its pin lets go, hero arrived and the
+ * page about to move). Read fresh each time: they depend on layout that
+ * settles after hydration and changes on resize.
+ */
+function landings(): number[] {
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const pad = scrollPad();
+  const points = [0];
+  document.querySelectorAll<HTMLElement>("[data-snap]").forEach((el) => {
+    const top = restingTop(el);
+    points.push(el.dataset.snap === "end" ? top + el.offsetHeight - window.innerHeight : top - pad);
+  });
+  return [...new Set(points.map((v) => Math.round(Math.max(0, Math.min(max, v)))))].sort((a, b) => a - b);
+}
+
 /**
  * Inertia scrolling for the whole page: wheel and trackpad input is eased
  * toward its target instead of stepping, so moving between sections
@@ -35,6 +56,16 @@ function restingTop(el: Element): number {
  * that reads it (the pinned splash and approach via Motion's useScroll,
  * the in-view reveals) keeps working untouched. Touch stays native
  * (syncTouch off) and keyboard scrolling is the browser's.
+ *
+ * Guided scrolling sits on top of that: when wheel input goes quiet, if
+ * the glide would come to rest just short of a landing in the direction
+ * of travel, it is extended onto the landing. Forward only, close only,
+ * interruptible; the rules and numbers are SNAP in motion.ts. It is
+ * written here rather than taken from `lenis/snap`, whose proximity mode
+ * snaps to the NEAREST point whichever way the reader was going: nudge
+ * one tick past a landing, pause, and it drags you back, every time.
+ * Touch is left alone (native momentum should not be fought), as are the
+ * keyboard, the scrollbar and programmatic scrolls.
  *
  * Anchor links glide too, landing below the fixed header (the page's
  * scroll-padding-top). They are handled here rather than by Lenis's own
@@ -55,6 +86,34 @@ export function SmoothScroll() {
       autoRaf: true,
     });
 
+    /* --- guided scrolling --- */
+    let direction = 0;
+    let quiet = 0;
+    const guide = () => {
+      if (direction === 0) return;
+      /* Where the glide in progress will come to rest, not where the page
+         is this frame: redirecting the glide is one continuous movement;
+         waiting for it to stop and then moving again would be two. */
+      const rest = lenis.targetScroll;
+      const reach = SNAP.ahead * window.innerHeight;
+      let landing: number | null = null;
+      for (const point of landings()) {
+        const gap = (point - rest) * direction; // > 0: ahead of the reader
+        if (gap >= -SNAP.behind && gap <= reach && (landing === null || Math.abs(point - rest) < Math.abs(landing - rest))) {
+          landing = point;
+        }
+      }
+      if (landing !== null && Math.abs(landing - rest) > 1) lenis.scrollTo(landing, { lerp: SNAP.lerp });
+    };
+    const onInput = ({ deltaY, event }: { deltaY: number; event: Event }) => {
+      if (event.type.startsWith("touch")) return;
+      if (deltaY !== 0) direction = Math.sign(deltaY);
+      window.clearTimeout(quiet);
+      quiet = window.setTimeout(guide, SNAP.quiet);
+    };
+    lenis.on("virtual-scroll", onInput);
+
+    /* --- anchor links --- */
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const link = (e.target as Element | null)?.closest?.('a[href^="#"]');
@@ -63,13 +122,14 @@ export function SmoothScroll() {
       const target = id ? document.getElementById(id) : document.documentElement;
       if (!target) return; // a section that doesn't exist yet: leave it to the browser
       e.preventDefault();
-      const pad = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-      lenis.scrollTo(Math.max(0, Math.round(restingTop(target) - pad)));
+      window.clearTimeout(quiet);
+      lenis.scrollTo(Math.max(0, Math.round(restingTop(target) - scrollPad())));
       history.pushState(null, "", id ? `#${id}` : window.location.pathname);
     };
     document.addEventListener("click", onClick);
 
     return () => {
+      window.clearTimeout(quiet);
       document.removeEventListener("click", onClick);
       lenis.destroy();
     };

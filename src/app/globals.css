@@ -222,8 +222,12 @@ body {
   color: var(--ink);
   will-change: transform;
 }
-/* The stage's ground, as its own layer so it can leave with the room
-   (opacity only) and uncover what is held under a short hero. */
+/* The cover, in two layers that clear together (opacity only) AFTER the
+   room has fully gone, to uncover what is held under a short hero: the
+   stage's ground behind the room, and the hero stage's foot under the
+   hero block. See coverOpacity in SplashScreen for why the order is
+   strict. */
+.splash-ground,
 .splash-foot {
   position: absolute;
   inset: 0;

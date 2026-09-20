@@ -123,7 +123,10 @@ native `scrollTo` still lands exactly (every other gate relies on it); a
 nav anchor glides to its section and lands below the fixed header; and
 under reduced motion Lenis is not started.
 
-All four need a local Chrome (no browser is bundled); the path is keyed
+`npm run qa:sections` and `npm run qa:flow` are described under "Section
+rhythm" and "Guided scrolling".
+
+All six need a local Chrome (no browser is bundled); the path is keyed
 by platform and can be overridden with `QA_CHROME`.
 
 ## Placeholders
@@ -365,12 +368,24 @@ bottom margin is hero height minus track height) inside
 `.splash-next-stick`, sticky at `top: <hero height>` and followed by a
 spacer as long as the pin. It sits BELOW the track in the stacking order
 (`.splash-track { z-index: 1 }`), so the room covers it for the whole
-push. The stage has no ground of its own any more: the cream under a
-short hero is `.splash-foot`, a layer inside the hero stage whose
-opacity is the room's, so foot and room leave together at the end of the
-push and what they uncover is the approach, already there, already
-revealed (its entrance fires at load, behind the room; `useInView`
-threshold 0.15 for that reason). `.hero` carries its own cream ground
+push. The stage has no ground of its own any more: the cream is a cover
+in two layers sharing one opacity, `.splash-ground` (behind the room)
+and `.splash-foot` (inside the hero stage, under the hero block). What
+it uncovers is the approach, already there, already revealed (its
+entrance fires at load, behind the room; `useInView` threshold 0.15 for
+that reason).
+
+**The cover is strictly sequenced after the room, and this is a rule.**
+It starts to clear only once progress has passed `HERO.zoomEnd`, where
+the push is clamped at exactly 1 and the room's opacity is exactly 0,
+and is gone by `HERO.revealEnd`. Room out behind opaque cream, THEN
+cream out onto the approach (cream on cream: all the reader sees is the
+approach fading in). The first version faded the foot WITH the room; a
+slow scroll parked the page half-way through both and the room showed
+through under the hero, which the user reported as a bug, rightly.
+`qa:flow` checks the invariant (cover less than whole implies room at 0)
+on every step of real slow and fast wheel scrolls, and reads the actual
+screen pixels in that band. `.hero` carries its own cream ground
 now, and `.splash-frame` too, for the moment before the footage paints.
 With a full-height hero the sticky top is one screen down, so `next`
 just waits below the screen, as it always did.
@@ -399,13 +414,63 @@ Two things make this work that are easy to break:
   `data-hold`. The QA probes use the same sum wherever they need a
   resting position.
 
+## Guided scrolling
+
+The user asked for "a subtle scroll-snapping / guided-scroll behavior so
+each scroll naturally settles into the next section", "NOT aggressive or
+rigid — the user should still feel in control". `SmoothScroll.tsx` does
+it on top of Lenis; numbers in `SNAP` in `motion.ts`.
+
+Landings are scroll positions: the top, plus every `data-snap` element.
+`"start"` lands the element's top under the header (`.approach-panel`,
+`.projects`); `"end"` lands its bottom on the screen's bottom
+(`.splash-track`: the point the pin lets go). They are computed with
+`restingTop()`, fresh each time. The approach's marker is on the PANEL,
+not the section: the section sits inside its own hold, so its resting
+top is where it ends up AFTER holding, 0.9 screens late; the panel is
+outside that hold and rests where the section first meets the header.
+
+When wheel input has been quiet for `SNAP.quiet` ms, the guide looks at
+where the glide in progress will come to rest (`lenis.targetScroll`) and,
+if a landing lies AHEAD in the direction of travel within `SNAP.ahead`
+of a screen (or was just overshot by under `SNAP.behind` px), redirects
+the glide onto it, a touch softer than ordinary scrolling. One movement,
+not stop-then-move. That is all it does:
+
+- **Forward only.** `lenis/snap` exists and was read before writing
+  this: its proximity mode snaps to the NEAREST point whichever way the
+  reader was going, so nudging one tick past a landing and pausing drags
+  you back, every time. That is the rigid feel the user ruled out.
+- **Close only.** A short deliberate scroll far from a landing stays
+  where the reader put it; a hard flick flies past landings.
+- **Interruptible.** It is an ordinary unlocked `scrollTo`; new input
+  takes over at once.
+- Wheel and trackpad only. Touch keeps its native momentum; keyboard,
+  scrollbar and programmatic scrolls (so every QA gate that scripts
+  `scrollTo`) are untouched.
+
+It also removes the dead zone at the end of the splash: once the hero
+has arrived, the next pause carries the page to the release point.
+
+`HERO.spring` belongs to this story: the splash's progress spring was
+soft (90/26) from before Lenis existed, so scroll was smoothed twice and
+a fast flick released the page with the hero still mid-zoom, 120px short
+of the section below it. Now 320/38.
+
+`npm run qa:flow` gates all of it with REAL wheel input, which the other
+gates never exercise: exposure (above), seams (sections meet exactly
+through slow and fast scrolls, both directions), and the guide (carries
+a near-miss onto the landing, leaves a short scroll alone, one slow tick
+at a time never goes backwards, each section lands exactly under the
+header, input mid-glide takes over, a flick is not caught).
+
 ## Track lengths
 
 Two sections hold the reader: the splash and the approach. The splash's
 track was shortened at the user's request (4.5 to 2.4 screens) after
 they found it took "a couple of scrolls" to leave the hero: most of the
-old track was holding, not moving. The push spans 0.08 to 0.72 of the
-track with a short settle at the end. The approach's hold is 0.9 of a
+old track was holding, not moving. The push spans 0.08 to 0.74 of the
+track, the cover clears by 0.86, then a short settle. The approach's hold is 0.9 of a
 screen (about nine wheel ticks, three per milestone), set with that same
 complaint in mind. Numbers in `HERO` and `APPROACH` in
 `src/lib/motion.ts`; the gates read them from there.

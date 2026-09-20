@@ -206,7 +206,7 @@ export function Approach({ data, next }: { data: ApproachData; next?: ReactNode 
     flowing ? "current" : i < active - 1 ? "done" : i === active - 1 ? "current" : "off";
 
   return (
-    <div ref={panelRef} className="approach-panel">
+    <div ref={panelRef} className="approach-panel" data-snap="start">
       <div ref={stageRef} className="approach-stage" data-hold>
       <section id="approach" className="approach">
         <motion.div

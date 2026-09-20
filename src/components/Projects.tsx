@@ -42,7 +42,7 @@ export function Projects({ data }: { data: ProjectsData }) {
   const reduce = useReducedMotion();
 
   return (
-    <section id="work" className="projects">
+    <section id="work" className="projects" data-snap="start">
       <div className="page page-frame projects-body">
         <motion.span
           className="projects-label"
