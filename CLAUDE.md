@@ -10,10 +10,14 @@ Here the hero is a slot, so the splash does not know what it is showing.
 `src/app/page.tsx` is the composition:
 
 ```tsx
-<SplashScreen data={splash} id="top">
+<SplashScreen data={splash} id="top" screen={<MonitorGreeting />}
+  next={<Approach next={<Projects />} />}>
   <AnimatedHero data={hero} />
 </SplashScreen>
 ```
+
+Sections that hold the reader take what follows them as a `next` slot:
+see "Next section always in view".
 
 The contract for whatever goes in the slot:
 
@@ -22,8 +26,8 @@ The contract for whatever goes in the slot:
   Fill it with `height: 100%`. A shorter hero leaves a gap as the reader
   arrives — unless that gap is filled, which is what happens on desktop:
   the hero is a content-height block at the top of the stage and
-  `SplashScreen` pulls the next section up to meet it. See "Section
-  rhythm".
+  `SplashScreen` holds the next section directly under it. See "Next
+  section always in view".
 - **Its root is never transformed by the hero itself.** `SplashScreen` applies
   the scale and position that grow it into view; do not add a competing
   transform to the slot's own root, or the two will fight.
@@ -97,15 +101,15 @@ taking the click, mobile, reduced motion, console errors. Tolerance defaults to
 exact; a check that needs slack asks for it.
 
 `npm run qa:approach` gates the approach section the same way: that it
-is held under the header for exactly the hold's distance and then
-releases with the next section meeting it; that nothing advances on a
-clock (3.5s without scrolling changes nothing); that 02, 03, 04 light in
-order only as scroll advances, the line tracking the scroll; that a
-revealed milestone never switches back off, down or back up; that 04
-starts lighting as the line arrives and the projects have not begun
-their own reveal before it; that revealing copy shifts nothing; and the
-flowing narrow / reduced-motion layouts. It imports its numbers from
-`src/lib/motion.ts`, so it cannot drift from the component.
+is already revealed under the hero before any scrolling; that it is held
+under the header for exactly the hold's distance; that nothing advances
+on a clock (3.5s without scrolling changes nothing); that 02, 03, 04
+light in order only as scroll advances, the line tracking the scroll;
+that a revealed milestone never switches back off, down or back up; that
+the next section is in view beneath it, motionless, for the whole hold
+and the two release together with no gap; that revealing copy shifts
+nothing; and the flowing narrow / reduced-motion layouts. It imports its
+numbers from `src/lib/motion.ts`, so it cannot drift from the component.
 
 `npm run qa:projects` gates the projects grid: label and no heading,
 hidden before it scrolls in and all three revealed after, three across
@@ -331,23 +335,69 @@ Both tokens are in `globals.css`; approach and projects are plain
 
 The hero is the awkward one: the splash stage must stay a full screen
 (the zoom lands on it), so from 860px wide and 740px tall the hero is a
-content-height block at the top of the stage with cream below.
-`SplashScreen` measures that block (`offsetHeight` of the slot's root,
-by ResizeObserver) and gives the track a negative bottom margin of
-exactly stage height minus hero height, so the approach sits directly
-under the hero at the instant the pin releases and slides up over the
-stage's empty foot during the settle. A full-height hero measures equal
-to the stage and the margin is 0, which is what phones and short screens
-get. `HERO.zoomEnd` must leave the push finished before the approach
-enters; the bound is in `motion.ts`. None of the splash maths changed:
-on the monitor the stage reads as a page with its content at the top.
+content-height block at the top of the stage, and what is under it is
+the next section, held there: see "Next section always in view". On
+phones and short screens the hero is a full screen, as the slot contract
+describes. None of the splash maths changed: on the monitor the stage
+reads as a page with its content at the top.
 
 `npm run qa:sections` gates all of this against the reference's
 formulas at four desktop sizes and a phone: the paddings and head gaps,
 the hero's header + 120px and its strip, the approach exactly under the
-hero on release and off screen when the push ends, no gaps between
-sections. It measures layout offsets, not client rects, where an
+hero before any scrolling, when the hero arrives (room gone, no scroll
+needed) and on release, no gaps between sections. It measures layout offsets, not client rects, where an
 entrance transform would otherwise shift the reading.
+
+## Next section always in view
+
+The user's words: "when im in the hero section i want to be able to see
+the next section, i dont want to see it just when i scroll; same for the
+selected project when im on my approach section". Both the splash and
+the approach hold the reader, and both are shorter than the screen, so
+while they held there was an empty band under them that the next section
+only slid into at the end of the hold. Now whatever follows a holding
+section is held with it, in place, from the start. Each takes it as a
+`next` slot (`page.tsx` nests them; DOM reading order is unchanged).
+
+**Splash.** `SplashScreen` measures the hero block and renders `next` in
+`.splash-next`, pulled all the way up to the hero's foot (the track's
+bottom margin is hero height minus track height) inside
+`.splash-next-stick`, sticky at `top: <hero height>` and followed by a
+spacer as long as the pin. It sits BELOW the track in the stacking order
+(`.splash-track { z-index: 1 }`), so the room covers it for the whole
+push. The stage has no ground of its own any more: the cream under a
+short hero is `.splash-foot`, a layer inside the hero stage whose
+opacity is the room's, so foot and room leave together at the end of the
+push and what they uncover is the approach, already there, already
+revealed (its entrance fires at load, behind the room; `useInView`
+threshold 0.15 for that reason). `.hero` carries its own cream ground
+now, and `.splash-frame` too, for the moment before the footage paints.
+With a full-height hero the sticky top is one screen down, so `next`
+just waits below the screen, as it always did.
+
+**Approach.** `.approach-stage`, the sticky box, holds the approach
+section AND its `next` as one unit; `.approach-panel` is that unit plus
+the hold spacer. So the projects sit motionless under the approach for
+the whole hold and the two release together. The cards therefore open
+as they come into view, near the start of the hold, not after milestone
+04 (`PROJECTS.inView` is low, 0.12, because on a short screen only the
+top of the grid shows).
+
+Two things make this work that are easy to break:
+
+- A sticky box ends up at the BOTTOM of its container once it lets go,
+  so the spacer after it never shows as a gap: after the hold the held
+  content is simply next on the page. Keep each sticky box followed in
+  its container by nothing but its spacer.
+- A held element's rectangle is not where it rests. Lenis's own
+  `anchors` option aims at the current rectangle and would land the
+  "Projects" link over a thousand px short from the top of the page. So
+  `SmoothScroll` handles `a[href^="#"]` clicks itself with
+  `restingTop()`: for every `data-hold` sticky ancestor, add the gap
+  between its bottom and its container's bottom (the distance it still
+  has to travel, by the rule above). Any new holding wrapper must carry
+  `data-hold`. The QA probes use the same sum wherever they need a
+  resting position.
 
 ## Track lengths
 
@@ -374,17 +424,15 @@ The holding is layout, not script. `.approach-panel` is the page column
 (frame rules, grid paper), as tall as the content plus `.approach-hold`,
 a spacer `APPROACH.holdVh` screens tall; `.approach-stage` is
 `position: sticky` under the fixed header, so it stays put for exactly
-the spacer's distance while the panel's bottom edge and the projects
-rise from below and meet it as the hold ends. Scroll is never
+the spacer's distance. It holds the projects too, in view beneath the
+approach (see "Next section always in view"). Scroll is never
 intercepted, so the scrollbar, keyboard, anchors and Lenis behave as
-anywhere else. While held, the grid paper is `background-attachment:
-fixed` (the reference does the same for its ruling), otherwise the grid
-would slide under text that is not moving.
+anywhere else.
 
 Progress through the hold is the one source of truth, read each scroll
 frame from where the panel actually is against its sticking point (its
-rect, plus `clientTop` for the top rule; cached document offsets would
-go stale when the splash above changes its margin after hydration). Put
+rect; cached document offsets would be wrong twice over: the splash
+above changes its margin after hydration, and holds displace things). Put
 through a stiff spring (700/55, ~40ms: a softer one visibly trailed the
 page), it scales the orange fill directly (`scaleX`, left origin,
 spanning marker 01 to 04 as 12.5% to 87.5% of four equal columns) across
@@ -395,10 +443,8 @@ Motion variants only dress the state changes. `APPROACH.latch` (on)
 keeps the furthest point reached, so a milestone stays revealed when the
 reader scrolls back up, per the brief; off makes it fully reversible.
 
-`fillEnd` (0.8) and `PROJECTS.inView` (0.35) are a pair: the projects
-rise into view during the hold, and between them these two numbers keep
-the cards from starting before 04 has landed, on screens up to at least
-1920x1080. The gate checks it.
+`fillEnd` (0.8) leaves the tail of the hold for 04's reveal to finish
+before the section lets go.
 
 History, for whoever is tempted to change the model again: pinned and
 scrubbed across a 2.4-screen track (the original brief); then one full

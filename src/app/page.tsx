@@ -15,7 +15,10 @@ import projects from "../../content/projects.json";
 
 /* The composition. The splash does not need to know what it is showing:
    the greeting is what the monitor shows at rest, the hero is what the
-   scroll arrives at. */
+   scroll arrives at. Sections that hold the reader (the splash, the
+   approach) take what follows them as a `next` slot, because they keep
+   it in view beneath themselves while they hold: the reader always sees
+   where the page goes next. Reading order in the DOM is unchanged. */
 export default function Home() {
   return (
     <>
@@ -25,14 +28,18 @@ export default function Home() {
           data={splash as SplashData}
           id="top"
           screen={<MonitorGreeting data={greeting as MonitorGreetingData} />}
+          next={
+            <Approach
+              data={approach as ApproachData}
+              next={<Projects data={projects as ProjectsData} />}
+            />
+          }
         >
           <AnimatedHero
             data={hero as AnimatedHeroData}
             experience={experience.items as CityStripExperience[]}
           />
         </SplashScreen>
-        <Approach data={approach as ApproachData} />
-        <Projects data={projects as ProjectsData} />
       </main>
     </>
   );

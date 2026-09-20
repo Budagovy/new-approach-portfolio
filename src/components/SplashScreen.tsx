@@ -49,6 +49,7 @@ export function SplashScreen({
   data,
   id,
   screen,
+  next,
   children,
 }: {
   data: SplashData;
@@ -60,13 +61,27 @@ export function SplashScreen({
    * push begins. Under reduced motion there is no monitor to show it on.
    */
   screen?: ReactNode;
+  /**
+   * Whatever follows the splash on the page. It is a slot, not a sibling,
+   * because a hero shorter than the screen leaves room under it, and the
+   * reader should see what comes next sitting there the moment the hero
+   * arrives, not watch it slide in on the next scroll. So the splash holds
+   * it directly under the hero for the whole pin, beneath the room: the
+   * room's own fade at the end of the push is what reveals it. After the
+   * pin it scrolls on with the page like anything else. With a
+   * full-height hero it simply waits below the screen, as before.
+   */
+  next?: ReactNode;
   children: ReactNode;
 }) {
   const reduce = useReducedMotion();
   return !reduce ? (
-    <SplashPinned data={data} id={id} screen={screen}>{children}</SplashPinned>
+    <SplashPinned data={data} id={id} screen={screen} next={next}>{children}</SplashPinned>
   ) : (
-    <SplashFlat data={data} id={id} reduce={!!reduce}>{children}</SplashFlat>
+    <>
+      <SplashFlat data={data} id={id} reduce={!!reduce}>{children}</SplashFlat>
+      {next}
+    </>
   );
 }
 
@@ -106,11 +121,13 @@ function SplashPinned({
   data,
   id,
   screen: resting,
+  next,
   children,
 }: {
   data: SplashData;
   id?: string;
   screen?: ReactNode;
+  next?: ReactNode;
   children: ReactNode;
 }) {
   const { frame, screen } = data.video;
@@ -163,11 +180,9 @@ function SplashPinned({
   const heroContentH = useMotionValue(0);
   /* The slot's own height. The stage is always one full screen, but the
      hero in it may be shorter (content-height, on the reference's rhythm:
-     see "Section rhythm" in CLAUDE.md), leaving cream below it. The track
-     is then given a negative bottom margin of exactly that difference, so
-     the next section sits directly under the hero at the instant the pin
-     releases and slides up over the stage's empty foot during the settle.
-     A full-height hero measures equal to the stage and the margin is 0.
+     see "Section rhythm" in CLAUDE.md), leaving room below it, which the
+     `next` slot fills: see the markup at the bottom. A full-height hero
+     measures equal to the stage and `next` waits below the screen.
      offsetHeight, not a client rect: the stage is scaled mid-push. */
   const [heroBlockH, setHeroBlockH] = useState(0);
   useEffect(() => {
@@ -176,7 +191,9 @@ function SplashPinned({
     const target = stage.querySelector<HTMLElement>(".hero-body") ?? stage;
     const ro = new ResizeObserver(([entry]) => heroContentH.set(entry.contentRect.height));
     ro.observe(target);
-    const block = stage.firstElementChild as HTMLElement | null;
+    /* The slot's root: the stage's child that is neither the foot layer
+       nor the resting screen. */
+    const block = stage.querySelector<HTMLElement>(":scope > :not(.splash-foot):not(.splash-screen)");
     const blockRo = new ResizeObserver(() => { if (block) setHeroBlockH(block.offsetHeight); });
     if (block) blockRo.observe(block);
     return () => { ro.disconnect(); blockRo.disconnect(); };
@@ -378,6 +395,9 @@ function SplashPinned({
 
   const origin = `${(screen.t0.cx + screen.t1.cx) / 2}% ${(screen.t0.cy + screen.t1.cy) / 2}%`;
 
+  /* Geometry known: `next` can be placed under the hero. */
+  const held = heroBlockH > 0 && vp.vh > 0;
+
   return (
     <section id={id} className="splash">
       <div
@@ -385,7 +405,9 @@ function SplashPinned({
         className="splash-track"
         style={{
           height: `${HERO.pinVh * 100}vh`,
-          marginBottom: heroBlockH > 0 && vp.vh > 0 ? Math.min(0, heroBlockH - vp.vh) : 0,
+          /* Pulls `next` all the way up to the hero's foot at the top of
+             the page: it then starts life exactly where it will be seen. */
+          marginBottom: held ? `calc(${heroBlockH}px - ${HERO.pinVh * 100}vh)` : 0,
         }}
       >
         <div ref={stageRef} className="splash-stage">
@@ -433,6 +455,11 @@ function SplashPinned({
               className="splash-hero-stage"
               style={{ left: heroX, top: heroY, scale: heroScale }}
             >
+              {/* The stage under a short hero: cream while the monitor is
+                  still a monitor (it would otherwise show raw footage
+                  below the hero), leaving with the room so that what is
+                  held beneath, `next`, is what the reader arrives at. */}
+              <motion.div className="splash-foot" style={{ opacity: roomOpacity }} aria-hidden="true" />
               {children}
               {resting && (
                 <motion.div
@@ -447,6 +474,22 @@ function SplashPinned({
           </motion.div>
         </div>
       </div>
+      {/* `next`, held under the hero. It sits below the track in the
+          stacking order, so the room covers it until it fades. The sticky
+          wrapper keeps it at the hero's foot for the pin's whole length
+          (the spacer after it is that length); a sticky box ends up at the
+          bottom of its container once it lets go, so afterwards `next`
+          is simply the next thing on the page, directly under the hero,
+          with no gap. data-hold marks it for the anchor maths in
+          SmoothScroll. */}
+      {next && (
+        <div className="splash-next">
+          <div className="splash-next-stick" data-hold style={{ top: held ? heroBlockH : "100dvh" }}>
+            {next}
+          </div>
+          <div aria-hidden="true" style={{ height: held ? `calc(${HERO.pinVh * 100}vh - ${vp.vh}px)` : 0 }} />
+        </div>
+      )}
     </section>
   );
 }

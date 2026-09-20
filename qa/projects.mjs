@@ -23,6 +23,7 @@ const fails = [];
 const ok = (n, p, d = "") => { console.log(`${p ? "PASS" : "FAIL"}  ${n.padEnd(58)} ${d}`); if (!p) fails.push(n); };
 
 const probe = () => {
+  const resting = (el) => { let y = el.getBoundingClientRect().top + scrollY; for (let h = el.closest("[data-hold]"); h; h = h.parentElement ? h.parentElement.closest("[data-hold]") : null) { if (getComputedStyle(h).position !== "sticky") continue; y += h.parentElement.getBoundingClientRect().bottom - h.getBoundingClientRect().bottom; } return Math.round(y); };
   const grid = document.querySelector(".projects-grid"), col = document.querySelector(".projects-body").getBoundingClientRect();
   const g = grid.getBoundingClientRect();
   const cards = [...document.querySelectorAll(".project-item")].map((li) => {
@@ -39,7 +40,8 @@ const probe = () => {
     heading: !!document.querySelector(".projects-heading"),
     bodyH: body.offsetHeight, vh: innerHeight,
     contentBottom: Math.round(Math.max(...[...document.querySelectorAll(".project-tag")].map((t) => t.getBoundingClientRect().bottom)) - body.getBoundingClientRect().top),
-    gridTop: Math.round(g.top + scrollY), grid: { l: Math.round(g.left), r: Math.round(g.right), w: Math.round(g.width) }, col: { l: Math.round(col.left), r: Math.round(col.right) },
+    /* Where the grid rests once the holds above it have let go. */
+    gridTop: resting(grid), grid: { l: Math.round(g.left), r: Math.round(g.right), w: Math.round(g.width) }, col: { l: Math.round(col.left), r: Math.round(col.right) },
     cards, overflow: document.documentElement.scrollWidth - innerWidth,
   };
 };

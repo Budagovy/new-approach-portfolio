@@ -3,9 +3,9 @@
    below (clamp(64px, 8vh, 96px) up to 961px), --sp-head =
    clamp(46px, 6vh, 78px) between head and body (clamp(32px, 4.6vh, 48px)
    up to 961px), and a hero of header + 120px, copy, head gap, strip, no
-   bottom padding. Also: the approach lands directly under the hero when
-   the splash pin releases and is not on screen before the push is over,
-   and sections follow each other with no gaps. Exits non-zero on failure.
+   bottom padding. Also: the approach sits directly under the hero for the
+   whole splash (behind the room until it fades), so it is simply there
+   when the hero arrives, and sections follow each other with no gaps. Exits non-zero on failure.
    Screenshots land in qa/frames/.
 
    Run with the dev server up:  npm run qa:sections
@@ -65,11 +65,16 @@ for (const [w, h] of [[1440, 900], [1366, 768], [1920, 1080], [1024, 768]]) {
   let s = await page.evaluate(probe);
   const pinEnd = s.trackTop + s.trackH - s.vh;
 
-  // The moment the push is over: the approach must not be on screen yet.
+  // From the first frame, and at the moment the push is over, the approach is already in place
+  // under the hero: the reader never has to scroll for it to appear.
+  const heroFoot = await page.evaluate(() => document.querySelector(".hero").offsetHeight);
+  ok(`${tag} approach under the hero before any scrolling (behind the room)`, near(s.approach.top, heroFoot, 1), `approach top ${s.approach.top} vs hero foot ${heroFoot}`);
   await page.evaluate((y) => scrollTo(0, y), Math.round(pinEnd * HERO.zoomEnd));
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(1800);
   s = await page.evaluate(probe);
-  ok(`${tag} approach still off screen when the push ends`, s.approach.top >= s.vh - 1, `approach top ${s.approach.top} of ${s.vh}`);
+  const roomGone = await page.evaluate(() => +getComputedStyle(document.querySelector(".splash-frame")).opacity < 0.02 && +getComputedStyle(document.querySelector(".splash-foot")).opacity < 0.02);
+  ok(`${tag} hero arrived: room gone, approach in view under it, no scroll needed`, roomGone && near(s.approach.top, s.hero.bottom, 1) && s.approach.top < s.vh - 60, `approach top ${s.approach.top}, hero bottom ${s.hero.bottom}, screen ${s.vh}`);
+  await page.screenshot({ path: `${OUT}sections-${w}-arrived.png` });
 
   // Pin release: the hero block is the page, the approach directly under it.
   await page.evaluate((y) => scrollTo(0, y), pinEnd);
@@ -103,7 +108,7 @@ for (const [w, h] of [[1440, 900], [1366, 768], [1920, 1080], [1024, 768]]) {
   await page.goto(URL_, { waitUntil: "networkidle" });
   await page.waitForTimeout(800);
   const s = await page.evaluate(probe), SP = sp(w, s.vh);
-  ok(`${w}px: hero is the full stage, next section right after the track`, near(s.heroLayH, s.stageLayH, 1) && near(s.approach.top, s.trackTop + s.trackH, 1), `hero ${s.heroLayH} of ${s.stageLayH}`);
+  ok(`${w}px: hero is the full stage, next section waits below the screen`, near(s.heroLayH, s.stageLayH, 1) && s.approach.top >= s.vh - 1, `hero ${s.heroLayH} of ${s.stageLayH}, approach top ${s.approach.top}`);
   ok(`${w}px: sections use the narrow rhythm (${SP.toFixed(0)}px)`, near(s.approachPad.t, SP) && near(s.projectsPad.b, SP), `approach ${s.approachPad.t}, projects ${s.projectsPad.b}`);
   ok(`${w}px: no overflow`, s.overflow === 0, `${s.overflow}px`);
   await ctx.close();

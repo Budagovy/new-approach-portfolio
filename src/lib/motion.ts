@@ -69,9 +69,8 @@ export const APPROACH = {
    *  enough not to overstay (the user disliked long holds on the hero). */
   holdVh: 0.9,
   fillStart: 0.04,
-  /** Leaves the tail of the hold for 04's reveal to finish, and keeps the
-   *  projects (which rise from below during the hold) from starting their
-   *  own reveal before 04 has landed. */
+  /** Leaves the tail of the hold for 04's reveal to finish before the
+   *  section lets go. */
   fillEnd: 0.8,
   /** A milestone stays revealed once it has appeared, even if the reader
    *  scrolls back up ("each milestone should stay visible after it
@@ -89,11 +88,12 @@ export const APPROACH = {
  * with a small rise, nothing else.
  */
 export const PROJECTS = {
-  /** How much of the grid must be on screen before the cards start. The
-   *  section rises from below during the approach's hold, so this is set
-   *  high enough that the cards cannot begin before milestone 04 has
-   *  landed (the sequence gate checks exactly that). */
-  inView: 0.35,
+  /** How much of the grid must be on screen before the cards start. Low,
+   *  because the projects sit in view under the approach while it holds
+   *  (the user asked to see the next section without scrolling for it),
+   *  showing only the top of the grid on a short screen: that much has
+   *  to be enough to open the cards. */
+  inView: 0.12,
   /** Seconds between one card starting and the next. */
   stagger: 0.18,
   /** One card's fade, seconds. */

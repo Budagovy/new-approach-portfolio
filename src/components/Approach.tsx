@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   motion,
   useInView,
@@ -104,13 +104,17 @@ function Marker({ index, state }: { index: number; state: StepState }) {
 /**
  * The four-step timeline: scroll-driven, and held while it plays.
  *
- * Layout does the holding, not script. The section is a grid-paper panel
- * as tall as its content plus a spacer (`APPROACH.holdVh` screens); the
- * content is `position: sticky` under the fixed header, so it stays put
- * while the reader scrolls the spacer's distance, and whatever follows
- * rises from below to meet it exactly as the hold ends. Scroll is never
- * intercepted: the scrollbar, keyboard, anchors and Lenis all behave as on
- * any other part of the page.
+ * Layout does the holding, not script. `.approach-panel` is as tall as
+ * what it holds plus a spacer (`APPROACH.holdVh` screens);
+ * `.approach-stage` inside it is `position: sticky` under the fixed
+ * header, so it stays put while the reader scrolls the spacer's distance.
+ * What it holds is this section AND whatever follows it (the `next`
+ * slot): the reader should see the next section sitting under this one
+ * while the milestones reveal, not an empty gap that it later slides
+ * into. The two hold as one and release as one. Scroll is never
+ * intercepted: the scrollbar, keyboard and Lenis all behave as on any
+ * other part of the page (anchor jumps account for the hold, see
+ * SmoothScroll).
  *
  * Progress through the hold (0 when the panel's top reaches the sticking
  * point, 1 a spacer later) is the one source of truth: it scales the
@@ -122,7 +126,7 @@ function Marker({ index, state }: { index: number; state: StepState }) {
  * and the section flows (see FLOW_QUERY and the matching media rule in
  * globals.css).
  */
-export function Approach({ data }: { data: ApproachData }) {
+export function Approach({ data, next }: { data: ApproachData; next?: ReactNode }) {
   const reduce = useReducedMotion();
   const [compact, setCompact] = useState(false);
   useEffect(() => {
@@ -137,7 +141,11 @@ export function Approach({ data }: { data: ApproachData }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const holdRef = useRef<HTMLDivElement>(null);
-  const entered = useInView(stageRef, { once: true, amount: 0.4 });
+  /* Low threshold on purpose: on desktop the section sits under the hero
+     from the start, showing only its top strip, and that strip should be
+     the heading and step 01, not blank paper waiting for a scroll. */
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const entered = useInView(bodyRef, { once: true, amount: 0.15 });
 
   /* Where the stage sticks (the header's height, from CSS) and how long
      the hold is, in px. Re-read on resize; both are 0 when flowing. */
@@ -164,9 +172,7 @@ export function Approach({ data }: { data: ApproachData }) {
     const panel = panelRef.current;
     const { stickTop, hold } = geometry.current;
     if (!panel || hold === 0) return 0;
-    /* The stage starts below the panel's top rule (clientTop), so that is
-       the edge that reaches the sticking point. */
-    return clamp01((stickTop - (panel.getBoundingClientRect().top + panel.clientTop)) / hold);
+    return clamp01((stickTop - panel.getBoundingClientRect().top) / hold);
   });
   /* Stiff and near-critically damped (~40ms): takes the steps out of wheel
      input without the line trailing after the page has stopped. */
@@ -200,11 +206,12 @@ export function Approach({ data }: { data: ApproachData }) {
     flowing ? "current" : i < active - 1 ? "done" : i === active - 1 ? "current" : "off";
 
   return (
-    <section id="approach" className="approach">
-      <div ref={panelRef} className="page page-frame approach-panel">
-      <div ref={stageRef} className="approach-stage">
+    <div ref={panelRef} className="approach-panel">
+      <div ref={stageRef} className="approach-stage" data-hold>
+      <section id="approach" className="approach">
         <motion.div
-          className="approach-body"
+          ref={bodyRef}
+          className="page page-frame approach-body"
           variants={entrance}
           initial="hidden"
           animate={entered ? "shown" : "hidden"}
@@ -264,11 +271,13 @@ export function Approach({ data }: { data: ApproachData }) {
             </ol>
           </div>
         </motion.div>
+      </section>
+      {next}
       </div>
-      {/* The hold: the distance the stage stays stuck for. Hidden by CSS
-          where the section flows. */}
+      {/* The hold: the distance the stage stays stuck for. A sticky box
+          ends up at the bottom of its container once it lets go, so this
+          never shows as a gap. Hidden by CSS where the section flows. */}
       <div ref={holdRef} className="approach-hold" style={{ height: `${APPROACH.holdVh * 100}vh` }} aria-hidden="true" />
-      </div>
-    </section>
+    </div>
   );
 }

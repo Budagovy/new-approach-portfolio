@@ -6,8 +6,10 @@
      advances, never on a clock (sit still and nothing moves);
    - the line tracks the scroll position;
    - a revealed milestone stays revealed when scrolling back up;
-   - 04 has landed before the hold releases, and the projects have not
-     started their own reveal before 04;
+   - 04 has landed before the hold releases;
+   - the next section is in view beneath this one for the whole hold, not
+     moving, and the two release together with no gap;
+   - the section is already revealed under the hero before any scrolling;
    - revealing copy shifts no layout;
    - the flowing narrow and reduced-motion layouts.
 
@@ -46,10 +48,14 @@ const probe = () => {
   const titles = [...document.querySelectorAll(".approach-step-title")].map((t) => ({ o: num(getComputedStyle(t).opacity), y: mat(t).ty, r: t.getBoundingClientRect() }));
   const descs = [...document.querySelectorAll(".approach-step-desc")].map((t) => num(getComputedStyle(t).opacity));
   const next = document.querySelector(".approach").nextElementSibling;
+  const resting = (el) => { let y = el.getBoundingClientRect().top + scrollY; for (let h = el.closest("[data-hold]"); h; h = h.parentElement ? h.parentElement.closest("[data-hold]") : null) { if (getComputedStyle(h).position !== "sticky") continue; y += h.parentElement.getBoundingClientRect().bottom - h.getBoundingClientRect().bottom; } return Math.round(y); };
+  const section = document.querySelector(".approach");
   return {
+    approachBottom: Math.round(section.getBoundingClientRect().bottom), approachRestTop: resting(section), approachH: section.offsetHeight,
     scrollY: window.scrollY, vh: window.innerHeight,
     /* The panel is never transformed, so its rect plus the scroll position is its document top. */
-    panelTop: Math.round(panel.getBoundingClientRect().top + window.scrollY), panelBorder: panel.clientTop, panelH: panel.offsetHeight, stageH: stage.offsetHeight, holdH: hold.offsetHeight,
+    /* Where the panel rests once the splash above has let go of it. */
+    panelTop: resting(panel), panelBorder: panel.clientTop, panelH: panel.offsetHeight, stageH: stage.offsetHeight, holdH: hold.offsetHeight,
     headerH: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")),
     stageTop: Math.round(stage.getBoundingClientRect().top), stageBottom: Math.round(stage.getBoundingClientRect().bottom), stagePos: getComputedStyle(stage).position,
     nextTop: next ? Math.round(next.getBoundingClientRect().top) : null,
@@ -89,10 +95,11 @@ for (const [w, h] of [[1440, 900], [1920, 1080]]) {
   ok(`${tag} hold is ${HOLD_VH} screens; panel = content + hold`, Math.abs(holdH - HOLD_VH * vh) <= 1 && base.panelH === base.stageH + holdH + base.panelBorder, `hold ${holdH}, panel ${base.panelH} vs ${base.stageH + holdH}`);
   ok(`${tag} sticky under the header`, base.stagePos === "sticky", base.stagePos);
 
-  // Before entering: nothing revealed. Sample title boxes for the layout-shift check.
-  let s = await go(page, holdStart - 1500, 400);
+  // Before any scrolling: the section sits under the hero (behind the room) already revealed,
+  // so it is simply there when the hero arrives. Title sizes are sampled for the layout-shift check.
+  let s = base;
   const boxesBefore = s.titles.map((t) => [t.x, t.w, t.h].join("x"));
-  ok(`${tag} hidden before entrance`, s.heading === 0 && s.titles.every((t) => t.o === 0) && s.fill < 0.01, `heading ${s.heading} fill ${s.fill}`);
+  ok(`${tag} revealed under the hero before any scrolling (heading, 01; 02-04 waiting)`, s.heading >= 0.98 && s.discs[0] === 1 && s.titles.slice(1).every((t) => t.o === 0) && s.fill < 0.01, JSON.stringify({ heading: s.heading, discs: s.discs }));
 
   // Entrance, before the hold: heading in, 01 lit, 02-04 off.
   s = await go(page, holdStart - vh * 0.35, 1300);
@@ -107,7 +114,7 @@ for (const [w, h] of [[1440, 900], [1920, 1080]]) {
   ok(`${tag} not time-based: 3.5s without scrolling, still only 01`, s.discs.join(",") === "1,0,0,0" && s.fill < 0.01, JSON.stringify({ discs: s.discs, fill: s.fill }));
 
   // Slow scroll through the hold, 30px at a time.
-  const order = [1]; const seen = new Set([0]); let reversals = 0, lastFill = 0, maxLag = 0, unstuck = 0, cardsEarly = false, first04 = null, wentOff = 0; let prevDiscs = [1, 0, 0, 0];
+  const order = [1]; const seen = new Set([0]); let reversals = 0, lastFill = 0, maxLag = 0, unstuck = 0, first04 = null, wentOff = 0, nextMoved = 0; let prevDiscs = [1, 0, 0, 0]; const nextAt = s.nextTop, approachFoot = s.approachBottom;
   for (let y = at(0); y <= at(1); y += 30) {
     await page.evaluate((v) => window.scrollTo(0, v), Math.round(y));
     await page.waitForTimeout(50);
@@ -121,7 +128,7 @@ for (const [w, h] of [[1440, 900], [1920, 1080]]) {
        the script's speed, not the design. */
     r.discs.forEach((d, i) => { if (d > 0.02 && !seen.has(i)) { seen.add(i); order.push(i + 1); if (i === 3) first04 = (r.scrollY - holdStart) / holdH; } if (d < prevDiscs[i] - 0.02) wentOff++; });
     prevDiscs = r.discs;
-    if (!seen.has(3) && r.cards.some((c) => c > 0)) cardsEarly = true;
+    if (r.nextTop !== nextAt) nextMoved++;
   }
   ok(`${tag} milestones reveal in order 01,02,03,04 as scroll advances`, order.join(",") === "1,2,3,4", order.join(","));
   ok(`${tag} the line never runs backwards on the way down`, reversals === 0, `${reversals} reversals`);
@@ -129,18 +136,18 @@ for (const [w, h] of [[1440, 900], [1920, 1080]]) {
   ok(`${tag} held for the whole hold (stage never left the header)`, unstuck === 0, `${unstuck} samples unstuck`);
   ok(`${tag} 04 starts lighting as the line arrives (~${FILL_END}), well before release`, first04 !== null && first04 >= FILL_END - 0.02 && first04 < FILL_END + 0.08, `04 starts at ${first04 === null ? "never" : first04.toFixed(2)} of the hold`);
   ok(`${tag} no milestone ever switches back off on the way down`, wentOff === 0, `${wentOff} drops`);
-  ok(`${tag} projects do not start revealing before 04`, !cardsEarly, cardsEarly ? "a card was already fading in" : "");
+  ok(`${tag} next section in view beneath, not moving, for the whole hold`, nextMoved === 0 && nextAt < vh - 100 && nextAt === approachFoot, `next at ${nextAt} of ${vh} (approach foot ${approachFoot}), moved in ${nextMoved} samples`);
 
   s = await go(page, at(1), 900);
   ok(`${tag} end of hold: line complete, all four lit, 04 current and readable`, s.fill > 0.995 && s.discs.every((d) => d === 1) && s.titles[3].o === 1 && s.descs[3] === 1, JSON.stringify({ fill: +s.fill.toFixed(3), discs: s.discs, t4: s.titles[3].o }));
   ok(`${tag} each milestone stays visible (earlier ones dimmed, not hidden)`, s.titles.slice(0, 3).every((t) => t.o > 0.6) && s.descs.slice(0, 3).every((d) => d > 0.5), JSON.stringify({ titles: s.titles.map((t) => t.o), descs: s.descs }));
   ok(`${tag} no layout shift: title boxes identical hidden vs revealed`, s.titles.map((t) => [t.x, t.w, t.h].join("x")).join("|") === boxesBefore.join("|"), "");
   ok(`${tag} revealed text sits at y=0 (no residual offset)`, s.titles.every((t) => t.y === 0), JSON.stringify(s.titles.map((t) => t.y)));
-  ok(`${tag} release: the next section meets the held one, no gap, no jump`, s.stageTop === Math.round(headerH) && Math.abs(s.nextTop - s.stageBottom) <= 1, `stage ${s.stageTop}..${s.stageBottom}, next at ${s.nextTop}`);
+  ok(`${tag} release: the next section meets the held one, no gap, no jump`, s.stageTop === Math.round(headerH) && Math.abs(s.nextTop - s.approachBottom) <= 1, `approach ${s.stageTop}..${s.approachBottom}, next at ${s.nextTop}`);
   await page.screenshot({ path: `${OUT}approach-${w}-complete.png` });
 
   s = await go(page, at(1) + 200, 600);
-  ok(`${tag} released: the section scrolls on with the page (200px past)`, s.stageTop === Math.round(headerH) - 200 && Math.abs(s.nextTop - s.stageBottom) <= 1, `stage top ${s.stageTop}, next ${s.nextTop} vs ${s.stageBottom}`);
+  ok(`${tag} released: the section scrolls on with the page (200px past)`, s.stageTop === Math.round(headerH) - 200 && Math.abs(s.nextTop - s.approachBottom) <= 1, `stage top ${s.stageTop}, next ${s.nextTop} vs ${s.approachBottom}`);
 
   // Back up into the hold: what has been revealed stays revealed.
   s = await go(page, at(0.1), 900);
@@ -178,7 +185,7 @@ for (const [w, h] of [[1440, 900], [1920, 1080]]) {
   let s = await go(page, b.panelTop - 200, 900);
   ok("mobile: no hold, vertical layout (track hidden)", s.stagePos === "static" && s.holdH === 0 && !s.trackShown, `${s.stagePos} hold ${s.holdH} trackShown=${s.trackShown}`);
   await page.screenshot({ path: OUT + "approach-mobile-top.png" });
-  s = await go(page, b.panelTop + b.panelH - 844, 1400);
+  s = await go(page, b.approachRestTop + b.approachH - 844, 1400);
   ok("mobile: every step revealed once scrolled through", s.titles.every((t) => t.o === 1) && s.descs.every((d) => d === 1), JSON.stringify(s.titles.map((t) => t.o)));
   ok("mobile: no horizontal overflow", s.overflow === 0, `${s.overflow}px`);
   await page.screenshot({ path: OUT + "approach-mobile-end.png" });

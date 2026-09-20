@@ -174,14 +174,21 @@ body {
 
 /* --- Splash ------------------------------------------------------------- */
 .splash { background: var(--bg); color: var(--ink); }
-.splash-track { position: relative; }
+/* The track sits above what follows it (.splash-next), which is held
+   under the hero, beneath the room, for the whole pin. */
+.splash-track { position: relative; z-index: 1; }
+.splash-next { position: relative; }
+.splash-next-stick { position: sticky; }
 .splash-stage {
   position: sticky; top: 0;
   height: 100dvh;
   overflow: hidden;
-  background: var(--bg);
+  /* No ground of its own: under a short hero the stage is a window onto
+     whatever is held beneath it once the room has faded. The room carries
+     the cream instead, for the moment before its footage paints. */
 }
 .splash-frame {
+  background: var(--bg);
   position: absolute;
   top: 50%; left: 50%;
   translate: -50% -50%;
@@ -214,7 +221,14 @@ body {
   translate: -50% -50%;
   color: var(--ink);
   will-change: transform;
+}
+/* The stage's ground, as its own layer so it can leave with the room
+   (opacity only) and uncover what is held under a short hero. */
+.splash-foot {
+  position: absolute;
+  inset: 0;
   background: var(--bg);
+  will-change: opacity;
 }
 
 /* The resting screen, laid over the hero inside the same stage: opaque, so
@@ -256,6 +270,7 @@ body {
 .hero {
   position: relative;
   height: 100%;
+  background: var(--bg);
 }
 /* The hero's content lives in the page column; the stage around it stays
    viewport-sized (the splash's geometry depends on that) and just shows
@@ -399,43 +414,38 @@ portfolio-city-strip {
 /* Content-height on the reference's rhythm (--sp above and below,
    --sp-head between the heading and the timeline, the label tucked into
    the top-left corner under the section's top rule), and HELD while its
-   steps reveal. The holding is layout, not script: .approach-panel is the
-   page column, as tall as the content plus .approach-hold (a spacer,
-   APPROACH.holdVh screens); .approach-stage is sticky under the fixed
-   header, so it stays put for exactly the spacer's distance while the
-   panel's bottom edge, and the section after it, rise to meet it.
+   steps reveal. The holding is layout, not script: .approach-panel is as
+   tall as what it holds plus .approach-hold (a spacer, APPROACH.holdVh
+   screens); .approach-stage is sticky under the fixed header, so it stays
+   put for exactly the spacer's distance. What it holds is this section
+   AND the one after it, as one unit, so the next section is in view
+   beneath this one throughout the hold instead of arriving afterwards.
    Approach.tsx reads progress through that distance and sets each step's
-   state; everything here is layout and the resting look.
-
-   The panel carries the frame's side rules and the grid paper for its
-   whole height, so the held content never sits over a bare gap. While
-   the content is held the paper is pinned to the viewport
-   (background-attachment: fixed, as the reference does for its own
-   ruling): otherwise the grid would slide under text that isn't moving. */
-.approach {
+   state; everything here is layout and the resting look. The section
+   itself is the page column, which carries the frame's rules and the grid
+   paper per the Figma. */
+.approach-panel {
   position: relative;
   background: var(--bg);
-}
-.approach-panel {
-  border-top: 1px solid var(--line);
-  background-color: var(--bg);
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 28px 28px;
 }
 .approach-stage {
   position: sticky;
   top: var(--header-h);
+}
+.approach {
+  position: relative;
 }
 .approach-body {
   position: relative;
   padding: var(--sp) var(--page-pad);
   display: grid;
   row-gap: var(--sp-head);
-}
-@media (min-width: 860px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {
-  .approach-panel { background-attachment: fixed; }
+  border-top: 1px solid var(--line);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 /* Where the held layout can't fit (narrow or very short), or under reduced
    motion: no hold, the section simply flows. Must match FLOW_QUERY in
