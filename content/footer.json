@@ -1,0 +1,25 @@
+{
+  "contact": {
+    "label": "Contact",
+    "email": "Budagovy@gmail.com",
+    "phone": { "display": "+972502434399", "href": "tel:+972502434399" },
+    "location": "Tel Aviv, Israel"
+  },
+  "sitemap": {
+    "label": "Sitemap",
+    "links": [
+      { "label": "Welcome", "href": "#top" },
+      { "label": "Projects", "href": "#work" },
+      { "label": "About Me", "href": "#about" }
+    ]
+  },
+  "elsewhere": {
+    "label": "Elsewhere",
+    "links": [
+      { "label": "LinkedIn", "href": null },
+      { "label": "Instagram", "href": null }
+    ]
+  },
+  "copyright": "© 2026 Yonatan Budagov – All rights reserved",
+  "character": { "src": "/footer/character.webp", "alt": "Illustrated Yonatan in a green cap, holding a coffee, saying hi" }
+}

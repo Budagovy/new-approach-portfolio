@@ -1,163 +1,46 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------
-   Tokens. Carried over from the portfolio so the splash looks the
-   same on day one. Retune them here when the new site gets its own
-   palette; nothing below hardcodes a colour.
+   The page is the Figma frame (1440 x 2568), built to scale.
+
+   --u is one frame pixel: 1/1440 of the viewport's width. Every
+   dimension below is written as the number read off the frame times
+   --u, so at a 1440px window the page IS the frame, and at any other
+   desktop width it is the same picture, larger or smaller. That is
+   deliberate: the frame's type is small at 1440 (body 11px) because it
+   is a canvas, and the site is mostly seen far wider than that.
+
+   Below 860px the frame's side-by-side layouts cannot fit, so --u
+   stops tracking the viewport and the sections stack (see the end of
+   this file). The few sizes that would be unreadable at small --u
+   carry a px floor with max().
    --------------------------------------------------------------- */
 
 :root {
-  --bg: #fff9e5;
-  --ink: #16140e;
-  --muted: #57534a;
-  --faint: #8b8577;
-  --line: rgb(22 20 14 / 0.16);
-  --rule: rgb(22 20 14 / 0.55);
-  --grid: rgb(22 20 14 / 0.035);
-  --accent: #f3b44a;
-  --accent-ink: #16140e;
+  --u: clamp(0.8px, calc(100vw / 1440), 2.2px);
 
-  --fs-display: clamp(34px, 4.2vw, 61.7px);
-  --fs-lead: clamp(16px, 1.3vw, 19px);
-  --fs-micro: 10.5px;
-  --lh-display: 1.04;
-  --tr-display: -0.03em;
+  --bg: #fff9e5;
+  --bg-footer: #fffcf0;
+  --ink: #2d2c28;
+  --ink-strong: #16140e;
+  --muted: #4a4842;
+  --faint: #8b8577;
+  --frame: #a3a29c;
+  --bar: #2f2e2a;
+  --accent: #f0a93b;
+  --accent-ink: #16140e;
+  /* The outer ground's faint horizontal grain, outside the page frame. */
+  --grain: rgb(96 110 84 / 0.055);
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-1: 200ms;
 
-  /* The page column: pleurat.com's container, measured on the live site at
-     a sweep of viewport widths rather than assumed. Below 962px it runs
-     edge to edge with a flat 25px inner padding; above that it steps
-     through three tiers (98vw/40px, 96vw/52px, then a hard 1524px ceiling
-     reached via 88vw/68px). --page-max is the column's width, --page-pad
-     the inner padding every section's content sits behind. */
-  --page-max: 100%;
-  --page-pad: 25px;
-
-  --header-h: 64px;
-
-  /* Vertical rhythm, taken from pleurat.com as authored there (read from
-     its stylesheet, not estimated): every section is content-height with
-     --sp above and below its content, and --sp-head between a section's
-     head and its body. Both scale with the screen's height. The narrower
-     pair below applies up to 961px, where the page column goes edge to
-     edge (the reference switches at the same point). */
-  --sp: clamp(96px, 12vh, 152px);
-  --sp-head: clamp(46px, 6vh, 78px);
-
-  /* Height of the city strip at the foot of the hero: its heading row plus
-     its scene, as set inside the component's own stylesheet. */
-  --strip-h: calc(68px + 110px);
-}
-
-@media (min-width: 601px) {
-  :root { --strip-h: calc(48px + clamp(110px, 9vw, 160px)); }
-}
-
-@media (min-width: 640px) {
-  :root { --header-h: 76px; }
-}
-@media (max-width: 961px) {
-  :root { --sp: clamp(64px, 8vh, 96px); --sp-head: clamp(32px, 4.6vh, 48px); }
-}
-@media (min-width: 962px) {
-  :root { --page-max: 98vw; --page-pad: 40px; }
-}
-@media (min-width: 1186px) {
-  :root { --page-max: 96vw; --page-pad: 52px; }
-}
-@media (min-width: 1536px) {
-  :root { --page-max: min(1524px, 88vw); --page-pad: 68px; }
+  --column-w: calc(840 * var(--u));
+  --header-h: calc(64 * var(--u));
+  --section-h: calc(553 * var(--u));
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
 * { box-sizing: border-box; min-width: 0; }
-
-/* The centred page column every section shares, so their outer boundaries
-   line up: the nav row, the hero (inside the viewport-sized splash stage),
-   the approach stage, and whatever follows. Backgrounds and the video stay
-   outside it, across the viewport; the column carries the frame's vertical
-   rules, and each section draws its own top rule on it. */
-.page {
-  width: 100%;
-  max-width: var(--page-max);
-  margin-inline: auto;
-}
-/* The frame's side rules, only once the column has a margin to sit in;
-   below 962px it is the full viewport and a rule on the screen edge is
-   just a stray line. */
-@media (min-width: 962px) {
-  .page-frame { border-inline: 1px solid var(--line); }
-}
-
-/* --- Site header ------------------------------------------------------ */
-/* Fixed, not in document flow, so it never has to share the splash-stage's
-   sticky math (see SplashScreen.tsx) — it just floats above it. Anchor
-   links jump via the browser's own hash scroll, offset by scroll-padding-top
-   below so a section's top doesn't land under this bar. */
-.site-header {
-  position: fixed;
-  inset: 0 0 auto 0;
-  z-index: 50;
-  height: var(--header-h);
-  background: var(--bg);
-}
-/* The rule under the nav is the top edge of the page frame, so it spans
-   the column, not the viewport. */
-.site-header-row {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding-inline: var(--page-pad);
-  border-bottom: 1px solid var(--line);
-}
-.site-header-name {
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.site-header-nav {
-  display: none;
-  align-items: center;
-  gap: clamp(24px, 3vw, 40px);
-}
-@media (min-width: 720px) {
-  .site-header-nav { display: flex; }
-}
-.site-header-link {
-  position: relative;
-  padding-bottom: 14px;
-  font-size: 0.95rem;
-  color: var(--ink);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.site-header-dot {
-  position: absolute;
-  left: 50%;
-  bottom: 2px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  translate: -50% 0;
-}
-.site-header-cta {
-  flex: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-weight: 700;
-  font-size: 0.95rem;
-  text-decoration: none;
-  white-space: nowrap;
-}
 
 html {
   -webkit-text-size-adjust: 100%;
@@ -166,528 +49,463 @@ html {
 
 body {
   margin: 0;
-  background: var(--bg);
+  padding-bottom: calc(44 * var(--u));
   color: var(--ink);
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  background-color: var(--bg);
+  background-image: repeating-linear-gradient(0deg, var(--grain) 0 1px, transparent 1px 3px);
 }
 
-/* --- Splash ------------------------------------------------------------- */
-.splash { background: var(--bg); color: var(--ink); }
-/* The track sits above what follows it (.splash-next), which is held
-   under the hero, beneath the room, for the whole pin. */
-.splash-track { position: relative; z-index: 1; }
-.splash-next { position: relative; }
-.splash-next-stick { position: sticky; }
-.splash-stage {
-  position: sticky; top: 0;
-  height: 100dvh;
-  overflow: hidden;
-  /* No ground of its own: under a short hero the stage is a window onto
-     whatever is held beneath it once the room has faded. The room carries
-     the cream instead, for the moment before its footage paints. */
-}
-.splash-frame {
-  background: var(--bg);
-  position: absolute;
-  top: 50%; left: 50%;
-  translate: -50% -50%;
-  will-change: transform, opacity;
-}
-.splash-frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
+h1, h2, h3, p, ol, ul { margin: 0; padding: 0; }
+ol, ul { list-style: none; }
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-/* Clips to the monitor's current window. Sits at exactly inset:0 — never
-   moved or scaled itself — because the clip-path insets below are computed
-   in viewport-absolute pixels, which only stays correct as long as this
-   element's own local (0,0) is the viewport's (0,0). The transform that
-   actually grows the hero lives one level down, on .splash-hero-stage,
-   specifically so it never has to share an element with this clip. */
-.splash-hero {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  will-change: clip-path;
+/* The centred column the header row and the page frame share. */
+.column {
+  width: var(--column-w);
+  max-width: 100%;
+  margin-inline: auto;
 }
-/* One hero instance, rendered at its natural full-page size always — the
-   splash stage's own size, i.e. the viewport less any scrollbar, the same
-   width every other section's page column is laid out in — then scaled
-   and positioned by SplashScreen to cover its parent's current clip
-   window. Scale never exceeds 1, so type is never magnified past its own
-   painted resolution — only ever shown at native size or smaller. */
-.splash-hero-stage {
-  position: absolute;
-  width: 100%;
+
+/* --- Header ------------------------------------------------------------- */
+/* Fixed. Only its column is painted (plain cream, like the frame), so the
+   grain shows either side of it as it does beside the frame. */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  height: var(--header-h);
+}
+.site-header-row {
   height: 100%;
-  translate: -50% -50%;
-  color: var(--ink);
-  will-change: transform;
-}
-/* The cover, in two layers that clear together (opacity only) AFTER the
-   room has fully gone, to uncover what is held under a short hero: the
-   stage's ground behind the room, and the hero stage's foot under the
-   hero block. See coverOpacity in SplashScreen for why the order is
-   strict. */
-.splash-ground,
-.splash-foot {
-  position: absolute;
-  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(24 * var(--u));
+  padding-inline: calc(52 * var(--u));
   background: var(--bg);
-  will-change: opacity;
 }
-
-/* The resting screen, laid over the hero inside the same stage: opaque, so
-   at rest the monitor shows only this; SplashScreen fades it out as the
-   push begins. */
-.splash-screen {
+.site-header-name {
+  font-size: calc(16 * var(--u));
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.site-header-group {
+  display: flex;
+  align-items: center;
+  gap: calc(31 * var(--u));
+}
+.site-header-nav {
+  display: flex;
+  align-items: center;
+  gap: calc(24 * var(--u));
+}
+.site-header-link {
+  position: relative;
+  font-size: calc(11 * var(--u));
+  color: var(--ink);
+  white-space: nowrap;
+}
+.site-header-dot {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: calc(100% + 6 * var(--u));
+  width: calc(5 * var(--u));
+  height: calc(5 * var(--u));
+  border-radius: 50%;
+  background: var(--accent);
+  translate: -50% 0;
+}
+/* Compact, rectangular, square corners. */
+.site-header-cta {
   display: grid;
   place-items: center;
+  height: calc(24 * var(--u));
+  padding-inline: calc(13 * var(--u));
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: calc(12 * var(--u));
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* --- Page frame --------------------------------------------------------- */
+/* The thin grey rule around everything under the header, plain cream
+   inside, with a small orange mark in each corner. */
+.frame {
+  position: relative;
+  margin-top: var(--header-h);
+  border: 1px solid var(--frame);
   background: var(--bg);
-  will-change: opacity;
 }
-
-/* --- Greeting (what the monitor shows at rest) ---------------------------- */
-.greeting {
-  padding: 0 var(--page-pad);
-  text-align: center;
+.frame-mark {
+  position: absolute;
+  z-index: 2;
+  width: calc(10 * var(--u));
+  height: calc(10 * var(--u));
+  border: 0 solid var(--accent);
+  pointer-events: none;
 }
-.greeting-line {
-  margin: 0;
-  font-size: var(--fs-display);
-  font-weight: 500;
-  line-height: var(--lh-display);
-  letter-spacing: var(--tr-display);
-  color: var(--ink);
-}
-.greeting-emphasis { font-weight: 700; }
-.greeting-mark { color: var(--accent); font-weight: 700; }
-
-/* Narrow viewports and reduced motion: room above, hero as the page. */
-.splash-flat { display: flex; flex-direction: column; }
-.splash-flat-media { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+.frame-mark--tl { top: calc(10 * var(--u)); left: calc(10 * var(--u)); border-top-width: 1px; border-left-width: 1px; }
+.frame-mark--tr { top: calc(10 * var(--u)); right: calc(10 * var(--u)); border-top-width: 1px; border-right-width: 1px; }
+.frame-mark--bl { bottom: calc(10 * var(--u)); left: calc(10 * var(--u)); border-bottom-width: 1px; border-left-width: 1px; }
+.frame-mark--br { bottom: calc(10 * var(--u)); right: calc(10 * var(--u)); border-bottom-width: 1px; border-right-width: 1px; }
 
 /* --- Hero ----------------------------------------------------------------- */
-/* Fills its parent: one full screen inside the splash, content height under
-   reduced motion where the parent has no fixed height. Two rows: the copy,
-   then the city strip along the foot. */
+/* 553 tall in the frame: the copy starts 165 down, the strip sits on the
+   foot. */
 .hero {
-  position: relative;
-  height: 100%;
-  background: var(--bg);
+  min-height: var(--section-h);
+  display: flex;
+  flex-direction: column;
 }
-/* The hero's content lives in the page column; the stage around it stays
-   viewport-sized (the splash's geometry depends on that) and just shows
-   the cream ground either side. */
-.hero-page {
-  height: 100%;
-  display: grid;
-  grid-template-rows: 1fr auto;
-}
-/* The copy is centred on the FULL screen, not on the space left above the
-   strip: the row's top padding equals the strip's height, so the area the
-   copy centres within runs from strip-height down to strip-height-from-the-
-   bottom, whose midpoint is the screen's own. That keeps the headline on
-   the monitor's centre in the pinned splash and matches the Figma frame,
-   while still reserving the strip's row so the two can never overlap. On
-   short viewports there isn't room for that symmetry, so it falls back to
-   centring in whatever is left above the strip. */
-.hero-main {
-  display: grid;
-  place-items: center;
-  padding: calc(var(--strip-h) + 24px) var(--page-pad) 24px;
-}
-@media (max-height: 720px) {
-  .hero-main { padding-top: 24px; }
-}
-/* Under reduced motion the hero is plain page content below the video, at
-   content height, so there is no screen to centre on. */
-@media (prefers-reduced-motion: reduce) {
-  .hero-main { padding-top: 48px; padding-bottom: 48px; }
-}
-/* The reference's hero, from 860px up on screens tall enough to hold it:
-   content-height, the header's height plus 120px above the copy, the
-   strip closing it a head-gap below, no bottom padding. The stage around
-   it is still one full screen (the zoom lands on it); the hero is a block
-   at its top with cream below, and SplashScreen pulls the next section up
-   by the difference so it sits directly under the hero when the pin
-   releases. On short or narrow screens the hero stays one full screen, as
-   the slot contract describes. */
-@media (min-width: 860px) and (min-height: 740px) {
-  .splash-hero-stage .hero { height: auto; }
-  .splash-hero-stage .hero-page { height: auto; grid-template-rows: auto auto; }
-  .splash-hero-stage .hero-main { padding: calc(var(--header-h) + 120px) var(--page-pad) 0; }
-  .splash-hero-stage .hero-strip { margin-top: var(--sp-head); }
-}
-.hero-strip {
-  min-width: 0;
-}
-/* The strip is a web component with its own shadow styles. It's rendered
-   as an unknown tag on the server and upgraded on the client, so display
-   and min-height are set from out here to hold its space (and stop a
-   layout shift) before that upgrade; --strip-h mirrors the component's
-   own heading + scene heights. The theme variables map its palette onto
-   this site's tokens, and the outer font-family beats the Arial its :host
-   rule would otherwise apply. */
-portfolio-city-strip {
-  display: block;
-  min-height: var(--strip-h);
-  font-family: inherit;
-  --strip-bg: var(--bg);
-  --strip-ink: var(--ink);
-  --strip-muted: var(--muted);
-  --strip-accent: var(--accent);
-}
-/* Sized by the column it sits in (not the viewport — an earlier 90vw
-   width here overflowed the column's rules on phones), capped at a
-   reading measure. */
-.hero-body {
-  position: relative;
-  width: 100%;
-  max-width: 46rem;
+.hero-copy {
+  padding: calc(165 * var(--u)) calc(40 * var(--u)) 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
   text-align: center;
 }
-.hero-eyebrow {
+.hero-badge {
   display: inline-flex;
   align-items: center;
-  max-width: 100%;
-  text-align: center;
-  padding: 8px 16px;
-  border: 1px solid var(--line);
+  height: calc(20 * var(--u));
+  padding-inline: calc(10 * var(--u));
+  border: 1px solid var(--frame);
   border-radius: 999px;
-  font-size: var(--fs-micro);
-  letter-spacing: 0.1em;
+  font-size: max(8px, calc(9 * var(--u)));
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
-}
-/* On phones the column leaves the pill a few px short of one line at
-   full tracking; tighten it a touch rather than wrap. */
-@media (max-width: 420px) {
-  .hero-eyebrow { letter-spacing: 0.06em; padding-inline: 12px; }
+  white-space: nowrap;
 }
 .hero-headline {
-  margin: 0;
+  margin-top: calc(19 * var(--u));
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.15em;
-  font-size: var(--fs-display);
+  font-size: calc(37 * var(--u));
   font-weight: 500;
-  line-height: var(--lh-display);
-  letter-spacing: var(--tr-display);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  color: var(--ink);
 }
-/* The rotating phrase. All seven candidates are stacked in the same grid
-   cell, so the box is always as tall as whichever one wraps the most at the
-   current width, not just the longest by character count (a long single
-   word like "businesses" can wrap sooner than a longer but shorter-worded
-   phrase). Only the active one is visible; the rest sit at opacity 0. */
-.hero-word-stage {
-  position: relative;
-  display: grid;
-  width: 100%;
-  overflow: hidden;
-  /* This stage sits inside a scaled ancestor when rendered as the monitor
-     preview. Isolating it into its own stacking/paint context keeps the
-     overflow clip reliable there rather than depending on how the browser
-     happens to composite a clipped box inside a scaled one. */
-  isolation: isolate;
-  contain: paint;
-}
-.hero-word {
-  grid-area: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.hero-emphasis {
   font-weight: 700;
   color: var(--accent);
-  text-align: center;
 }
 .hero-note {
-  margin: 0;
-  max-width: 42ch;
-  font-size: var(--fs-lead);
-  line-height: 1.55;
+  margin-top: calc(16 * var(--u));
+  font-size: calc(13 * var(--u));
+  line-height: 1.4;
   color: var(--muted);
+  white-space: nowrap;
+}
+.hero-strip {
+  margin-top: auto;
+  padding-top: calc(40 * var(--u));
+}
+/* The strip is a web component with its own shadow styles, rendered as an
+   unknown tag on the server and upgraded on the client, so display and
+   min-height are set out here to hold its space before that. Its sizes
+   are the frame's, handed in through the custom properties it exposes;
+   the walker is 38% of the scene, as drawn (the component's own default,
+   82%, made him tower over the skyline), and the "next" control, which
+   the frame doesn't have, is off. */
+portfolio-city-strip {
+  display: block;
+  min-height: calc(123 * var(--u));
+  font-family: inherit;
+  --strip-bg: var(--bg);
+  --strip-ink: var(--ink-strong);
+  --strip-muted: var(--muted);
+  --strip-accent: var(--accent);
+  --strip-role-ink: var(--ink-strong);
+  --strip-head-h: calc(26 * var(--u));
+  --strip-pad: calc(28 * var(--u));
+  --strip-gap: calc(11 * var(--u));
+  --strip-sep: calc(4 * var(--u));
+  --strip-number: max(8px, calc(10 * var(--u)));
+  --strip-company: calc(15 * var(--u));
+  --strip-company-tracking: -0.01em;
+  --strip-company-weight: 700;
+  --strip-role: max(8px, calc(10 * var(--u)));
+  --strip-scene-h: calc(97 * var(--u));
+  --strip-walker-h: 38%;
+  --strip-walker-x: 10.5%;
+  --strip-next: none;
 }
 
-/* --- Approach (four steps) ------------------------------------------------ */
-/* Content-height on the reference's rhythm (--sp above and below,
-   --sp-head between the heading and the timeline, the label tucked into
-   the top-left corner under the section's top rule), and HELD while its
-   steps reveal. The holding is layout, not script: .approach-panel is as
-   tall as what it holds plus .approach-hold (a spacer, APPROACH.holdVh
-   screens); .approach-stage is sticky under the fixed header, so it stays
-   put for exactly the spacer's distance. What it holds is this section
-   AND the one after it, as one unit, so the next section is in view
-   beneath this one throughout the hold instead of arriving afterwards.
-   Approach.tsx reads progress through that distance and sets each step's
-   state; everything here is layout and the resting look. The section
-   itself is the page column, which carries the frame's rules and the grid
-   paper per the Figma. */
-.approach-panel {
-  position: relative;
-  background: var(--bg);
-}
-.approach-stage {
-  position: sticky;
-  top: var(--header-h);
-}
-.approach {
-  position: relative;
-}
-.approach-body {
-  position: relative;
-  padding: var(--sp) var(--page-pad);
-  display: grid;
-  row-gap: var(--sp-head);
-  border-top: 1px solid var(--line);
-  background-color: var(--bg);
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-/* Where the held layout can't fit (narrow or very short), or under reduced
-   motion: no hold, the section simply flows. Must match FLOW_QUERY in
-   Approach.tsx, which switches the activation logic the same way. */
-@media (max-width: 859px), (max-height: 599px), (prefers-reduced-motion: reduce) {
-  .approach-stage { position: static; }
-  .approach-hold { display: none; }
-}
-.approach-label {
-  position: absolute;
-  top: 16px;
-  left: var(--page-pad);
-  display: inline-flex;
-  gap: 1.4em;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
+/* --- Sections ------------------------------------------------------------- */
+/* Each opens with the charcoal bar and has the same 553 of body under it. */
+.section-bar {
+  display: flex;
+  align-items: center;
+  gap: calc(7 * var(--u));
+  height: calc(17 * var(--u));
+  min-height: 14px;
+  padding-inline: calc(20 * var(--u));
+  background: var(--bar);
+  color: var(--bg);
+  font-size: max(7px, calc(6 * var(--u)));
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--faint);
+  white-space: nowrap;
 }
-.approach-heading {
-  align-self: center;
-  justify-self: center;
-  margin: 0;
-  font-size: var(--fs-display);
+.section-bar-index { font-family: var(--mono); font-weight: 400; }
+.section-body {
+  min-height: var(--section-h);
+}
+.section-heading {
+  font-size: calc(20 * var(--u));
   font-weight: 500;
-  line-height: var(--lh-display);
-  letter-spacing: var(--tr-display);
+  line-height: 1.2;
+  letter-spacing: -0.04em;
   text-align: center;
+  color: var(--ink);
 }
-.approach-steps { position: relative; }
-.approach-track {
+
+/* --- My approach ---------------------------------------------------------- */
+.approach-body { padding-top: calc(73 * var(--u)); padding-bottom: calc(60 * var(--u)); }
+.approach-timeline {
   position: relative;
-  height: 26px;
+  margin-top: calc(129 * var(--u));
 }
+/* The rule runs the whole width of the frame, through the circles' centres. */
 .approach-line {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
+  inset-inline: 0;
+  top: calc(12 * var(--u));
   height: 1px;
-  margin-top: -0.5px;
-  background: var(--rule);
-}
-/* Runs marker 01 to marker 04, i.e. between the centres of the first and
-   last of four equal columns; scaleX from the left is the progress. */
-.approach-fill {
-  position: absolute;
-  left: 12.5%;
-  width: 75%;
-  top: 50%;
-  height: 2px;
-  margin-top: -1px;
-  background: var(--accent);
-  transform-origin: left center;
-  will-change: transform;
-}
-.approach-markers {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-}
-.approach-marker-slot {
-  display: flex;
-  justify-content: center;
-}
-.approach-marker {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  overflow: hidden;
   background: var(--ink);
-  color: var(--bg);
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
 }
-.approach-marker-fill {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--accent);
-}
-.approach-marker-num { position: relative; }
-.approach-marker--inline { display: none; }
-.approach-copy {
-  margin: 22px 0 0;
-  padding: 0;
-  list-style: none;
+.approach-steps {
+  position: relative;
+  margin-inline: calc(10 * var(--u));
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  column-gap: 24px;
 }
 .approach-step {
-  padding: 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+  padding-inline: calc(7 * var(--u));
 }
+.approach-marker {
+  display: grid;
+  place-items: center;
+  width: calc(24 * var(--u));
+  height: calc(24 * var(--u));
+  border-radius: 50%;
+  background: var(--bar);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: max(8px, calc(9 * var(--u)));
+}
+.approach-marker--active { background: var(--accent); }
 .approach-step-title {
-  margin: 0;
-  font-size: clamp(16px, 1.2vw, 18px);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
+  margin-top: calc(14 * var(--u));
+  font-size: calc(15 * var(--u));
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.045em;
+  color: var(--ink);
 }
 .approach-step-desc {
-  margin: 8px auto 0;
-  max-width: 30ch;
-  font-size: 14px;
-  line-height: 1.5;
+  margin-top: calc(5 * var(--u));
+  max-width: calc(176 * var(--u));
+  font-size: calc(10 * var(--u));
+  line-height: 1.3;
   color: var(--muted);
+  text-wrap: balance;
 }
 
-/* Narrow: a vertical timeline instead of four across, the marker drawn
-   inside each step and joined by a rule down the left. */
-@media (max-width: 859px) {
-  .approach-track { display: none; }
-  .approach-copy {
-    position: relative;
-    margin-top: 0;
-    grid-template-columns: 1fr;
-    row-gap: 32px;
-  }
-  .approach-copy::before {
-    content: "";
-    position: absolute;
-    left: 13px;
-    top: 13px;
-    bottom: 13px;
-    width: 1px;
-    background: var(--rule);
-  }
-  .approach-step {
-    display: grid;
-    grid-template-columns: 26px 1fr;
-    column-gap: 16px;
-    padding: 0;
-    text-align: left;
-  }
-  .approach-marker--inline {
-    display: grid;
-    grid-row: 1 / span 2;
-  }
-  .approach-step-desc { margin-left: 0; }
-}
-
-
-/* --- Selected projects (grid) --------------------------------------------- */
-/* Ordinary in-flow section: the label, then three 2:3 images in a row with
-   a title and tag under each, per the Figma frame — square corners, a
-   hairline gutter, the grid a little narrower than the column and centred
-   in it (the frame's cards measure ~376px at 1440, hence the 1150px cap).
-   Vertical rhythm from the frame too: a deep breath between label and
-   grid, a shorter one below. */
-.projects {
-  background: var(--bg);
-}
-/* Same rhythm as the approach: content-height, --sp above and below, the
-   label in the top-left corner. No heading (per the Figma), so the grid
-   is the section's whole body. Cards are back at the frame's size: the
-   grid is capped at 1150px (cards ~376px at 1440) and nothing else. */
-.projects-body {
-  position: relative;
-  padding: var(--sp) var(--page-pad);
-  border-top: 1px solid var(--line);
-}
-.projects-label {
-  position: absolute;
-  top: 16px;
-  left: var(--page-pad);
-  display: inline-flex;
-  gap: 1.4em;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--faint);
-}
+/* --- Selected Projects ---------------------------------------------------- */
+.projects-body { padding-top: calc(46 * var(--u)); padding-bottom: calc(60 * var(--u)); }
 .projects-grid {
-  list-style: none;
-  width: 100%;
-  max-width: 1150px;
-  margin: 0 auto;
-  padding: 0;
+  width: calc(670 * var(--u));
+  max-width: 100%;
+  margin: calc(26 * var(--u)) auto 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: calc(5 * var(--u));
 }
-.project {
-  display: block;
-  color: inherit;
-  text-decoration: none;
-}
+.project { display: block; }
 .project-media {
   position: relative;
   display: block;
   aspect-ratio: 2 / 3;
   overflow: hidden;
-  background: #e8e8e8;
+  background: #e8e4d6;
 }
+/* Cover, then enlarged by the frame's per-image zoom; links grow a touch
+   more on hover. */
 .project-media img {
   position: absolute;
   inset: 0;
-  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 600ms var(--ease);
+  scale: var(--zoom, 1);
+  transition: scale 600ms var(--ease);
 }
-a.project:hover .project-media img { transform: scale(1.03); }
-a.project:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 .project-title {
   display: block;
-  margin-top: 14px;
-  font-size: 17px;
+  margin-top: calc(8 * var(--u));
+  font-size: max(10px, calc(10.5 * var(--u)));
   font-weight: 700;
   line-height: 1.3;
-  letter-spacing: -0.01em;
+  color: var(--ink);
 }
 .project-tag {
   display: block;
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  margin-top: calc(3 * var(--u));
+  font-size: max(8px, calc(6 * var(--u)));
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--faint);
 }
-/* Phones: one card per row. */
-@media (max-width: 699px) {
-  .projects-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
+
+/* --- About Me ------------------------------------------------------------- */
+.about-body { padding-top: calc(46 * var(--u)); padding-bottom: calc(60 * var(--u)); }
+.about-row {
+  margin: calc(86 * var(--u)) 0 0 calc(105 * var(--u));
+  display: flex;
+  align-items: flex-start;
+  gap: calc(22 * var(--u));
+}
+.about-photo {
+  flex: none;
+  width: calc(220 * var(--u));
+  height: calc(240 * var(--u));
+  border-radius: calc(6 * var(--u));
+  overflow: hidden;
+}
+.about-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; }
+.about-bio {
+  width: calc(372 * var(--u));
+  padding-top: calc(1 * var(--u));
+  font-size: calc(11 * var(--u));
+  line-height: calc(14 / 11);
+  color: var(--ink-strong);
+}
+.about-bio p { white-space: pre-line; }
+.about-bio p + p { margin-top: calc(14 * var(--u)); }
+.about-hello { font-weight: 700; color: var(--accent); }
+
+/* --- Footer --------------------------------------------------------------- */
+.footer {
+  position: relative;
+  min-height: calc(198 * var(--u));
+  padding: calc(27 * var(--u)) calc(39 * var(--u)) calc(36 * var(--u));
+  border-top: 1px solid var(--frame);
+  background: var(--bg-footer);
+  overflow: hidden;
+}
+.footer-columns {
+  display: grid;
+  grid-template-columns: calc(244 * var(--u)) calc(180 * var(--u)) auto;
+  justify-content: start;
+}
+.footer-label {
+  font-family: var(--mono);
+  font-size: max(8px, calc(6 * var(--u)));
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.footer-list {
+  margin-top: calc(11 * var(--u));
+  display: grid;
+  row-gap: calc(5 * var(--u));
+  font-size: max(10px, calc(10 * var(--u)));
+  line-height: 1.25;
+  color: var(--muted);
+}
+.footer-list a:hover { color: var(--ink-strong); }
+.footer-list--contact li:first-child { margin-bottom: calc(5 * var(--u)); }
+.footer-email { color: var(--ink-strong); }
+.footer-copyright {
+  margin-top: calc(42 * var(--u));
+  font-family: var(--mono);
+  font-size: max(8px, calc(6 * var(--u)));
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+/* Stands on the frame's bottom edge, to the right. */
+.footer-character {
+  position: absolute;
+  left: calc(588 * var(--u));
+  bottom: 0;
+  width: calc(184 * var(--u));
+  height: auto;
+  pointer-events: none;
+}
+
+/* --- Narrow screens ------------------------------------------------------- */
+/* The frame's rows cannot sit side by side here, so everything stacks.
+   --u becomes a fixed, larger unit (type stays readable), the column runs
+   nearly edge to edge, and sections take the height of their content. */
+@media (max-width: 859px) {
+  :root {
+    --u: 1.35px;
+    --column-w: calc(100% - 24px);
+    --header-h: 56px;
+    --section-h: 0px;
   }
+  .site-header-row { padding-inline: 16px; }
+  .site-header-nav { display: none; }
+
+  .hero-copy { padding: 72px 20px 0; }
+  .hero-headline { font-size: clamp(28px, 8.6vw, 40px); }
+  .hero-note { white-space: normal; }
+  .hero-badge { white-space: normal; height: auto; padding-block: 5px; text-align: center; }
+  .hero-strip { padding-top: 56px; }
+  portfolio-city-strip { --strip-pad: 14px; --strip-walker-h: 46%; --strip-walker-x: 16%; }
+
+  .section-bar { padding-inline: 14px; }
+  .approach-body, .projects-body, .about-body { padding: 56px 20px 64px; }
+
+  /* A vertical timeline: the rule runs down the left through the circles. */
+  .approach-timeline { margin-top: 44px; }
+  .approach-line { inset: 0 auto 0 calc(12 * var(--u)); width: 1px; height: auto; }
+  .approach-steps { margin-inline: 0; grid-template-columns: 1fr; row-gap: 30px; }
+  .approach-step {
+    display: grid;
+    grid-template-columns: calc(24 * var(--u)) 1fr;
+    column-gap: 16px;
+    justify-items: start;
+    text-align: left;
+    padding-inline: 0;
+  }
+  .approach-marker { grid-row: 1 / span 2; }
+  .approach-step-title { margin-top: 4px; }
+  .approach-step-desc { max-width: none; font-size: 14px; line-height: 1.5; }
+
+  .projects-grid { width: 100%; margin-top: 36px; grid-template-columns: 1fr; gap: 36px; }
+  .project-title { font-size: 16px; margin-top: 12px; }
+  .project-tag { font-size: 11px; margin-top: 4px; }
+
+  .about-row { margin: 40px 0 0; flex-direction: column; gap: 28px; }
+  .about-photo { width: 100%; height: auto; aspect-ratio: 11 / 12; }
+  .about-bio { width: 100%; font-size: 15px; line-height: 1.55; }
+  .about-bio p + p { margin-top: 18px; }
+
+  .footer { padding: 36px 20px 190px; }
+  .footer-columns { grid-template-columns: 1fr 1fr; row-gap: 32px; column-gap: 24px; }
+  .footer-columns > :first-child { grid-column: 1 / -1; }
+  .footer-list { font-size: 14px; row-gap: 8px; margin-top: 12px; }
+  .footer-label, .footer-copyright { font-size: 10px; }
+  .footer-copyright { margin-top: 36px; }
+  .footer-character { left: auto; right: 12px; width: 170px; }
 }

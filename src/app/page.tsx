@@ -1,46 +1,39 @@
-import { SplashScreen, type SplashData } from "@/components/SplashScreen";
-import { AnimatedHero, type AnimatedHeroData } from "@/components/AnimatedHero";
-import { MonitorGreeting, type MonitorGreetingData } from "@/components/MonitorGreeting";
 import { SiteHeader, type SiteHeaderData } from "@/components/SiteHeader";
+import { Hero, type HeroData } from "@/components/Hero";
 import { Approach, type ApproachData } from "@/components/Approach";
 import { Projects, type ProjectsData } from "@/components/Projects";
+import { About, type AboutData } from "@/components/About";
+import { SiteFooter, type SiteFooterData } from "@/components/SiteFooter";
 import type { CityStripExperience } from "@/components/CityStrip";
-import splash from "../../content/splash.json";
-import hero from "../../content/hero.json";
-import greeting from "../../content/greeting.json";
 import header from "../../content/header.json";
+import hero from "../../content/hero.json";
 import experience from "../../content/experience.json";
 import approach from "../../content/approach.json";
 import projects from "../../content/projects.json";
+import about from "../../content/about.json";
+import footer from "../../content/footer.json";
 
-/* The composition. The splash does not need to know what it is showing:
-   the greeting is what the monitor shows at rest, the hero is what the
-   scroll arrives at. Sections that hold the reader (the splash, the
-   approach) take what follows them as a `next` slot, because they keep
-   it in view beneath themselves while they hold: the reader always sees
-   where the page goes next. Reading order in the DOM is unchanged. */
+/* The composition, in the Figma frame's order: header, then everything
+   else inside the bordered page frame: hero with the city strip, My
+   approach, Selected Projects, About Me, footer. The four corner marks
+   belong to the frame. */
 export default function Home() {
   return (
     <>
       <SiteHeader data={header as SiteHeaderData} />
-      <main>
-        <SplashScreen
-          data={splash as SplashData}
-          id="top"
-          screen={<MonitorGreeting data={greeting as MonitorGreetingData} />}
-          next={
-            <Approach
-              data={approach as ApproachData}
-              next={<Projects data={projects as ProjectsData} />}
-            />
-          }
-        >
-          <AnimatedHero
-            data={hero as AnimatedHeroData}
-            experience={experience.items as CityStripExperience[]}
-          />
-        </SplashScreen>
-      </main>
+      <div className="column frame">
+        <span className="frame-mark frame-mark--tl" aria-hidden="true" />
+        <span className="frame-mark frame-mark--tr" aria-hidden="true" />
+        <main>
+          <Hero data={hero as HeroData} experience={experience.items as CityStripExperience[]} />
+          <Approach data={approach as ApproachData} />
+          <Projects data={projects as ProjectsData} />
+          <About data={about as AboutData} />
+        </main>
+        <SiteFooter data={footer as SiteFooterData} />
+        <span className="frame-mark frame-mark--bl" aria-hidden="true" />
+        <span className="frame-mark frame-mark--br" aria-hidden="true" />
+      </div>
     </>
   );
 }

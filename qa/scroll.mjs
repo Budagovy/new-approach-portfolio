@@ -44,16 +44,16 @@ const trace = async (page, dy, ms = 1200) => page.evaluate(async ({ dy, ms }) =>
   ok("Lenis is on the document", await page.evaluate(() => document.documentElement.classList.contains("lenis")), "");
 
   await page.mouse.move(720, 500);
-  /* 300px: far enough from every landing that the guide (SmoothScroll) leaves it alone, so this
+  /* 200px: far enough from every landing that the guide (SmoothScroll) leaves it alone, so this
      measures Lenis's glide by itself. 600px used to be too, until the splash's arrival landing
      was given a longer reach. The guide has its own gate, qa/flow.mjs. */
-  const t = await trace(page, 300, 2000);
+  const t = await trace(page, 200, 2000);
   const distinct = [...new Set(t)];
   const final = t[t.length - 1];
   ok("one wheel tick glides: many intermediate positions, not a jump", distinct.length >= 8 && final > 0, `${distinct.length} distinct positions over ${t.length} frames, ends at ${final}`);
   const steps = t.slice(1).map((v, i) => v - t[i]).filter((d) => d > 0);
   ok("glide decelerates (later frames move less than earlier ones)", steps.length > 3 && steps[0] > steps[steps.length - 1], `first step ${steps[0]}px, last ${steps[steps.length - 1]}px`);
-  ok("glide settles on the tick's distance (300px), no overshoot or drift", final === 300 && Math.max(...t) === 300, `max ${Math.max(...t)}`);
+  ok("glide settles on the tick's distance (200px), no overshoot or drift", final === 200 && Math.max(...t) === 200, `max ${Math.max(...t)}`);
 
   // Programmatic scrollTo still lands exactly (what the QA gates rely on).
   // A position inside the page: the document is short now that sections are 500px.
@@ -64,11 +64,10 @@ const trace = async (page, dy, ms = 1200) => page.evaluate(async ({ dy, ms }) =>
 
   // Anchor link glides to the projects section, landing below the header.
   await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(400);
-  // Where the section rests once the holds above it have let go (it is held in view before that).
-  const workTop = await page.evaluate(() => { const resting = (el) => { let y = el.getBoundingClientRect().top + scrollY; for (let h = el.closest("[data-hold]"); h; h = h.parentElement ? h.parentElement.closest("[data-hold]") : null) { if (getComputedStyle(h).position !== "sticky") continue; y += h.parentElement.getBoundingClientRect().bottom - h.getBoundingClientRect().bottom; } return Math.round(y); }; return resting(document.querySelector("#work")); });
+  const workTop = await page.evaluate(() => document.querySelector("#work").getBoundingClientRect().top + scrollY);
   await page.click('a.site-header-link[href="#work"]');
   const a = await page.evaluate(async () => { const out = []; const t0 = performance.now(); await new Promise((r) => { const tick = () => { out.push(Math.round(scrollY)); if (performance.now() - t0 < 2500) requestAnimationFrame(tick); else r(); }; requestAnimationFrame(tick); }); return out; });
-  const aFinal = a[a.length - 1], headerH = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")));
+  const aFinal = a[a.length - 1], headerH = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop));
   ok("nav 'Projects' glides (many positions) to the section, header offset", [...new Set(a)].length >= 10 && Math.abs(aFinal - Math.min(workTop - headerH, maxScroll)) <= 2, `${[...new Set(a)].length} positions, ends ${aFinal} vs ${Math.min(workTop - headerH, maxScroll)} (page bottom ${maxScroll})`);
   await page.screenshot({ path: OUT + "scroll-projects-anchor.png" });
   ok("no console errors", errors.length === 0, errors.join(" | "));

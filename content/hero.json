@@ -1,14 +1,6 @@
 {
-  "eyebrow": "Yonatan Budagov — Senior Product Designer",
-  "prefix": "I design products that",
-  "words": [
-    "solve real problems.",
-    "make complexity simple.",
-    "feel intuitive.",
-    "turn friction into flow.",
-    "help people do more.",
-    "help businesses grow.",
-    "make usage easier."
-  ],
-  "note": "6 years of connecting user needs with business goals from discovery to launch."
+  "badge": "Yonatan Budagov Senior Product Designer",
+  "lead": "I design products that",
+  "emphasis": "make life easier.",
+  "note": "6 years of connecting user needs with business goals"
 }

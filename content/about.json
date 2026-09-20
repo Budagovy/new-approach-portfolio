@@ -1,0 +1,11 @@
+{
+  "label": { "index": "03", "text": "Who doing it" },
+  "heading": "About Me",
+  "photo": { "src": "/about/yonatan.webp", "alt": "Yonatan walking a wooden boardwalk beside a turquoise lake" },
+  "intro": { "emphasis": "Nice to meet you!", "rest": "I'm Yonatan," },
+  "paragraphs": [
+    "I'm a Senior Product Designer based in Kiryat Ono, Israel, with six years of experience designing digital products used by millions.",
+    "I believe the best products come from strong collaboration. I enjoy working closely with product managers, developers, and teams that genuinely care about what they're building. I'm naturally curious, ask a lot of questions, and enjoy turning complex problems into simple, thoughtful experiences.\nI bring together product thinking, strong craft, and new ways of working with AI to move from ideas to great experiences faster.",
+    "Outside of design, I'm usually making something with my hands. I build watches, have been playing drums for 20 years, cook, work in my garden, and restore old furniture. Creating beyond the screen keeps me curious and brings a fresh perspective to my work."
+  ]
+}

@@ -7,12 +7,10 @@
     "build": "next build",
     "start": "next start -p 3220",
     "typecheck": "tsc --noEmit",
-    "qa": "node qa/splash.mjs",
-    "qa:approach": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON qa/approach.mjs",
-    "qa:projects": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON qa/projects.mjs",
+    "qa": "node qa/page.mjs",
+    "qa:page": "node qa/page.mjs",
     "qa:scroll": "node qa/scroll.mjs",
-    "qa:sections": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON qa/sections.mjs",
-    "qa:flow": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON qa/flow.mjs"
+    "qa:compare": "node qa/compare.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

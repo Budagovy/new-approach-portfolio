@@ -1,79 +1,50 @@
-"use client";
-
-import { motion, useReducedMotion, type Variants } from "motion/react";
-import { EASE, PROJECTS } from "@/lib/motion";
+import type { CSSProperties } from "react";
+import { RevealGroup, RevealItem } from "@/components/Reveal";
+import { SectionBar, type SectionLabel } from "@/components/SectionBar";
 
 export interface Project {
   title: string;
   tag: string;
   image: string;
+  /** How far the image is enlarged inside its 2:3 crop, as in the Figma frame (1 = cover). */
+  zoom?: number;
   href?: string | null;
 }
 
 export interface ProjectsData {
-  label: { index: string; text: string };
+  label: SectionLabel;
+  heading: string;
   items: Project[];
 }
 
-/* The label fades in as the section enters; the cards then open one after
-   another the first time enough of the grid is on screen: a gentle fade
-   with a small rise, each starting a beat after the last, so the row
-   reads left to right without ever hurrying. Timings in PROJECTS. */
-const label: Variants = {
-  hidden: { opacity: 0 },
-  shown: { opacity: 1, transition: { duration: 0.6, ease: EASE } },
-};
-const list: Variants = {
-  hidden: {},
-  shown: { transition: { delayChildren: 0.1, staggerChildren: PROJECTS.stagger } },
-};
-const card: Variants = {
-  hidden: { opacity: 0, y: PROJECTS.rise },
-  shown: { opacity: 1, y: 0, transition: { duration: PROJECTS.duration, ease: EASE } },
-};
-
 /**
- * Selected projects: a plain grid of 2:3 images, title and tag under each,
- * per the Figma frame. Ordinary in-flow section. The only motion is the
- * cards opening one after another the first time they scroll into view;
- * under reduced motion they are simply there.
+ * "Selected Projects", per the Figma frame: a small centred heading, then
+ * three equal 2:3 portrait crops in a row with a narrow gap, a small
+ * left-aligned title and tag under each. The cards fade in one after
+ * another as the section enters.
  */
 export function Projects({ data }: { data: ProjectsData }) {
-  const reduce = useReducedMotion();
-
   return (
-    <section id="work" className="projects" data-snap="start">
-      <div className="page page-frame projects-body">
-        <motion.span
-          className="projects-label"
-          variants={label}
-          initial={reduce ? "shown" : "hidden"}
-          whileInView="shown"
-          viewport={{ once: true, amount: 1 }}
-        >
-          <span>{data.label.index}</span>
-          <span>{data.label.text}</span>
-        </motion.span>
+    <section id="work" className="section projects" data-snap>
+      <SectionBar label={data.label} />
+      <div className="section-body projects-body">
+        <RevealItem as="h2" className="section-heading" alone>
+          {data.heading}
+        </RevealItem>
 
-        <motion.ol
-          className="projects-grid"
-          variants={list}
-          initial={reduce ? "shown" : "hidden"}
-          whileInView="shown"
-          viewport={{ once: true, amount: PROJECTS.inView }}
-        >
+        <RevealGroup as="ol" className="projects-grid">
           {data.items.map((project) => {
             const inner = (
               <>
-                <span className="project-media">
-                  <img src={project.image} alt={project.title} width={440} height={660} loading="lazy" />
+                <span className="project-media" style={{ "--zoom": project.zoom ?? 1 } as CSSProperties}>
+                  <img src={project.image} alt={project.title} width={941} height={1672} loading="lazy" />
                 </span>
                 <span className="project-title">{project.title}</span>
                 <span className="project-tag">{project.tag}</span>
               </>
             );
             return (
-              <motion.li key={project.title} className="project-item" variants={card}>
+              <RevealItem as="li" key={project.title} className="project-item">
                 {project.href ? (
                   <a
                     className="project"
@@ -86,10 +57,10 @@ export function Projects({ data }: { data: ProjectsData }) {
                 ) : (
                   <div className="project">{inner}</div>
                 )}
-              </motion.li>
+              </RevealItem>
             );
           })}
-        </motion.ol>
+        </RevealGroup>
       </div>
     </section>
   );
