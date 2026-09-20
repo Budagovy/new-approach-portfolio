@@ -1,4 +1,4 @@
-/* QA gate for the "My approach" section: exactly one screen tall, the
+/* QA gate for the "My approach" section: exactly 500px tall (--section-h), the
    timed sequence (entrance, then the line running 01 to 04 lighting each
    step in order, the finished state held), layout stability, and the
    flowing narrow / short / reduced-motion layouts. Exits non-zero on
@@ -23,6 +23,7 @@ const URL_ = process.env.QA_URL || "http://localhost:3220";
    from the implementation. */
 const { fillDelay: FILL_DELAY, fillDuration: FILL_DURATION } = APPROACH;
 const SEQUENCE_MS = (FILL_DELAY + FILL_DURATION) * 1000;
+const SECTION_H = 500;
 
 const fails = [];
 const ok = (name, pass, detail = "") => { console.log(`${pass ? "PASS" : "FAIL"}  ${name.padEnd(56)} ${detail}`); if (!pass) fails.push(name); };
@@ -68,7 +69,7 @@ for (const [w, h] of [[1440, 900], [1280, 720]]) {
   const base = await page.evaluate(probe);
   const { secTop, vh } = base;
   console.log(`${w}x${h}: section top ${secTop}, height ${base.secH}px (= ${(base.secH / vh).toFixed(2)}vh), doc ${base.docH}`);
-  ok(`${w}x${h}: section is exactly one screen`, base.secH === vh && base.stageH === vh, `${base.secH} vs ${vh}`);
+  ok(`${w}x${h}: section is exactly ${SECTION_H}px`, base.secH === SECTION_H && base.stageH === SECTION_H, `${base.secH}`);
   ok(`${w}x${h}: not pinned (in flow)`, base.stagePos === "static", base.stagePos);
   const nextTop = await page.evaluate(() => { const a = document.querySelector(".approach"); const next = a.nextElementSibling; return next ? next.offsetTop : document.documentElement.scrollHeight; });
   ok(`${w}x${h}: whatever follows starts exactly at the section end`, nextTop === secTop + base.secH, `${nextTop} vs ${secTop + base.secH}`);
@@ -108,7 +109,7 @@ for (const [w, h] of [[1440, 900], [1280, 720]]) {
   ok(`${w}x${h}: emphasis: 04 at 1, earlier dimmed but readable`, s.titles.slice(0, 3).every((t) => t.o > 0.6 && t.o < 1), JSON.stringify(s.titles.map((t) => t.o)));
   ok(`${w}x${h}: no layout shift: title boxes identical hidden vs revealed`, s.titles.map((t) => [t.x, t.w, t.h].join("x")).join("|") === boxesBefore.join("|"), "");
   ok(`${w}x${h}: revealed text sits at y=0 (no residual offset)`, s.titles.every((t) => t.y === 0), JSON.stringify(s.titles.map((t) => t.y)));
-  ok(`${w}x${h}: everything inside the screen`, s.contentBottom <= vh, `content bottom ${s.contentBottom} of ${vh}`);
+  ok(`${w}x${h}: everything inside the section`, s.contentBottom <= SECTION_H, `content bottom ${s.contentBottom} of ${SECTION_H}`);
   await page.screenshot({ path: OUT + `approach-${w}-complete.png` });
 
   // Leave and come back: the finished state holds (played once).
@@ -121,13 +122,13 @@ for (const [w, h] of [[1440, 900], [1280, 720]]) {
   await browser.close();
 }
 
-/* ---------- short viewport 1280x650: flowing, four across ---------- */
+/* ---------- short viewport 1280x650: same fixed box, four across ---------- */
 {
   const { browser, page, errors } = await open({ viewport: { width: 1280, height: 650 } });
   const b = await page.evaluate(probe);
-  const s = await go(page, b.secTop - 100, 1200);
-  ok("short viewport: flowing (grows to content)", s.stagePos === "static" && s.secH < 1300, `${s.stagePos} ${s.secH}px`);
-  ok("short viewport: all four steps readable", s.titles.every((t) => t.o === 1) && s.discs.every((d) => d === 1), JSON.stringify(s.titles.map((t) => t.o)));
+  const s = await go(page, b.secTop - 100, 4200);
+  ok("short viewport: still the 500px box", s.secH === SECTION_H && s.contentBottom <= SECTION_H, `${s.secH}px, content bottom ${s.contentBottom}`);
+  ok("short viewport: sequence completes, all four lit", s.titles.every((t) => t.o > 0.6) && s.discs.every((d) => d === 1), JSON.stringify(s.titles.map((t) => t.o)));
   await page.screenshot({ path: OUT + "approach-short.png" });
   ok("short viewport: no console errors", errors.length === 0, errors.join(" | "));
   await browser.close();
@@ -153,7 +154,7 @@ for (const [w, h] of [[1440, 900], [1280, 720]]) {
   const { browser, page } = await open({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
   const b = await page.evaluate(probe);
   const s = await go(page, b.secTop - 50, 900);
-  ok("reduced motion: static, all four shown, fill complete", s.stagePos === "static" && s.titles.every((t) => t.o === 1) && s.discs.every((d) => d === 1) && s.fill === 1, JSON.stringify({ pos: s.stagePos, fill: s.fill }));
+  ok("reduced motion: all four shown, fill complete", s.stagePos === "static" && s.titles.every((t) => t.o === 1) && s.discs.every((d) => d === 1) && s.fill === 1, JSON.stringify({ pos: s.stagePos, fill: s.fill }));
   await page.screenshot({ path: OUT + "approach-reduced.png" });
   await browser.close();
 }

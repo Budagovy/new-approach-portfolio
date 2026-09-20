@@ -18,17 +18,22 @@ export const SCROLL = {
  * Splash choreography, as scroll progress 0 to 1 across the pinned range.
  * The push scale is computed per viewport in SplashScreen, not set here.
  *
- *   0    -> 0.08   a beat on the room, so it registers as a place
- *   0.08 -> 0.72   the push, greeting handing over to the hero
- *   0.72 -> 1      a settle on the hero before the page moves on
+ *   0    -> 0.06   a beat on the room, so it registers as a place
+ *   0.06 -> 0.6    the push, greeting handing over to the hero
+ *   0.6  -> 1      the settle, during which the next section slides up
+ *                  under the hero
  *
- * The settle is short but not nothing: arriving somewhere and being moved
- * straight on is what makes a transition feel rushed. The holds used to be
- * far longer (0.18 and 0.38 of a 4.5-screen track); see pinVh.
+ * The hero is a --section-h (500px) block at the top of the full-screen
+ * stage and the next section is pulled up beneath it (globals.css), so
+ * that section enters the screen (100dvh - 500px) before the pin ends.
+ * zoomEnd is set so the push is over by then on screens up to ~1080px
+ * tall: zoomEnd <= 1 - (vh - 500) / ((pinVh - 1) * vh). Taller than that
+ * and the section starts arriving over the last of the push, which reads
+ * fine (the room is already fading) but is why this number is what it is.
  */
 export const HERO = {
-  zoomStart: 0.08,
-  zoomEnd: 0.72,
+  zoomStart: 0.06,
+  zoomEnd: 0.6,
   /**
    * Pinned scroll length, in viewport heights. Was 4.5 with the push
    * spanning 0.18 to 0.62 — a long hold at each end. The user found it

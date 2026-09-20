@@ -53,8 +53,11 @@ const trace = async (page, dy, ms = 1200) => page.evaluate(async ({ dy, ms }) =>
   ok("glide settles on the tick's distance (600px), no overshoot or drift", final === 600 && Math.max(...t) === 600, `max ${Math.max(...t)}`);
 
   // Programmatic scrollTo still lands exactly (what the QA gates rely on).
-  await page.evaluate(() => scrollTo(0, 3000)); await page.waitForTimeout(300);
-  ok("native scrollTo still lands exactly", (await page.evaluate(() => scrollY)) === 3000, "");
+  // A position inside the page: the document is short now that sections are 500px.
+  const maxScroll = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+  const probeY = Math.min(1500, maxScroll - 100);
+  await page.evaluate((y) => scrollTo(0, y), probeY); await page.waitForTimeout(300);
+  ok("native scrollTo still lands exactly", (await page.evaluate(() => scrollY)) === probeY, `${probeY}`);
 
   // Anchor link glides to the projects section, landing below the header.
   await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(400);
@@ -62,7 +65,7 @@ const trace = async (page, dy, ms = 1200) => page.evaluate(async ({ dy, ms }) =>
   await page.click('a.site-header-link[href="#work"]');
   const a = await page.evaluate(async () => { const out = []; const t0 = performance.now(); await new Promise((r) => { const tick = () => { out.push(Math.round(scrollY)); if (performance.now() - t0 < 2500) requestAnimationFrame(tick); else r(); }; requestAnimationFrame(tick); }); return out; });
   const aFinal = a[a.length - 1], headerH = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")));
-  ok("nav 'Projects' glides (many positions) to the section, header offset", [...new Set(a)].length >= 10 && Math.abs(aFinal - (workTop - headerH)) <= 2, `${[...new Set(a)].length} positions, ends ${aFinal} vs ${workTop - headerH}`);
+  ok("nav 'Projects' glides (many positions) to the section, header offset", [...new Set(a)].length >= 10 && Math.abs(aFinal - Math.min(workTop - headerH, maxScroll)) <= 2, `${[...new Set(a)].length} positions, ends ${aFinal} vs ${Math.min(workTop - headerH, maxScroll)} (page bottom ${maxScroll})`);
   await page.screenshot({ path: OUT + "scroll-projects-anchor.png" });
   ok("no console errors", errors.length === 0, errors.join(" | "));
   await ctx.close();

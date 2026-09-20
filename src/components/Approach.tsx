@@ -26,7 +26,7 @@ export interface ApproachData {
 type StepState = "off" | "current" | "done";
 
 /** Where the four-across layout can't fit; mirrors the CSS breakpoint. */
-const FLOW_QUERY = "(max-width: 859px), (max-height: 699px)";
+const FLOW_QUERY = "(max-width: 859px)";
 
 /* Entrance, as the section scrolls into view: heading, then line, then the
    markers, in a short cascade. Played once. */

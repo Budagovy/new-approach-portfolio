@@ -20,7 +20,9 @@ The contract for whatever goes in the slot:
 - **It is one full screen.** In the pinned splash its parent (`.splash-hero-stage`)
   is exactly the splash stage's size — the viewport, less any scrollbar.
   Fill it with `height: 100%`. A shorter hero leaves a gap as the reader
-  arrives.
+  arrives — which is now used on purpose from 860px up: the hero is a
+  `--section-h` (500px) block at the top of the stage and the next section
+  is pulled up to fill the gap. See "Section heights".
 - **Its root is never transformed by the hero itself.** `SplashScreen` applies
   the scale and position that grow it into view; do not add a competing
   transform to the slot's own root, or the two will fight.
@@ -298,6 +300,38 @@ rest, the strip's heading row shows along the bottom edge and the skyline
 is cropped by the bezel: that is the cover-fit doing its job, since the
 strip is part of the one full screen the slot contract asks for.
 
+## Section heights
+
+From 860px up, the hero block, "My approach" and "Selected projects" are
+each exactly `--section-h` (500px, in `globals.css`) tall, at the user's
+explicit request; they were each one full screen before. Below 860px the
+stacked layouts cannot fit a fixed box and run at content height (the
+hero stays a full screen there).
+
+Approach and projects are plain in-flow boxes. The hero is the awkward
+one: the splash stage must stay a full screen (the zoom lands on it), so
+the hero is a 500px block at the top of the stage — the fixed header's
+76px included, so the copy is set a step smaller inside it
+(`--fs-display` capped at 40px, tighter gaps) to fit header clearance,
+copy and city strip — with cream below. `.splash-track` carries
+`margin-bottom: min(0px, calc(var(--section-h) - 100dvh))`, which pulls
+the approach up so that at the instant the pin releases its top is
+exactly 500px down the screen; during the settle after the push it slides
+up over the stage's empty foot. `HERO.zoomEnd` (0.6) is chosen so the
+push is over before it enters on screens up to ~1080px tall; the formula
+is in `motion.ts`. None of the splash maths changed: the stage is still
+the full screen, it just has content only in its top 500px, so on the
+monitor it reads as a page with its content at the top.
+
+Because the page is now short (2,760px at 1440x900) and Projects is the
+last section, the `#work` anchor cannot bring it up to the header: the
+page bottoms out first. That resolves itself when About/Contact exist.
+
+`npm run qa:sections` gates all of this at four sizes: the three
+heights, content inside each box, hero copy clear of header and strip,
+the approach at exactly 500px on release and off screen when the push
+ends, no gaps between sections.
+
 ## Track lengths
 
 Only the splash is pinned now. Its track was shortened at the user's
@@ -313,9 +347,8 @@ there.
 
 ## The approach section
 
-`Approach.tsx`, the four-step timeline after the hero: exactly one
-screen tall (`.approach-stage { height: 100dvh }`), in flow, the column
-carrying `padding-top: var(--header-h)` for the fixed header. The
+`Approach.tsx`, the four-step timeline after the hero: exactly
+`--section-h` tall (see "Section heights"), in flow. The
 sequence plays on its own, once, when the section comes 40% into view:
 the entrance cascade (heading, line, markers) lights step 01, then after
 `APPROACH.fillDelay` a single motion value `fill` is animated 0 to 1 over
@@ -339,13 +372,11 @@ and step copy is always in flow at full size, only its opacity/translate
 change, so revealing it never shifts layout (the QA compares title boxes
 hidden vs. revealed).
 
-Where four-across can't fit in a screen, the section grows to its
-content and flows: `FLOW_QUERY` in the component (narrow or short
-viewport) and the matching media rules in `globals.css` must stay in
-step. Narrow gets a vertical timeline with the marker drawn inside each
+Where four-across can't fit (under 860px), the section grows to its
+content and flows: `FLOW_QUERY` in the component and the matching media
+rule in `globals.css` must stay in step. Narrow gets a vertical timeline with the marker drawn inside each
 step (the horizontal track is hidden), each step lighting as it scrolls
-into view; short-but-wide keeps four across, all lit; reduced motion
-shows all four lit at once. Copy is in
+into view; reduced motion shows all four lit at once. Copy is in
 `content/approach.json`, timings in `APPROACH` in `src/lib/motion.ts`.
 
 ## The projects section
@@ -353,16 +384,16 @@ shows all four lit at once. Copy is in
 `Projects.tsx`, after the approach: a plain grid, per the Figma frame —
 three 2:3 images in a row, square corners, an 8px gutter, a bold title
 and a small uppercase tag under each, under the `02 Selected projects`
-label, no heading. Ordinary in-flow section, exactly one screen (the
-header's height reserved at the top like the splash, the grid centred in
-the rest), so the page reads as a run of screens. The grid is capped
-twice: at the frame's 1150px (its cards measure ~376px at 1440), and by
-the screen's height — `.projects-body` works out the card height that
+label, no heading. Ordinary in-flow section, exactly `--section-h` tall
+(see "Section heights"), the grid centred under the label. The grid is
+capped twice: at the frame's 1150px (its cards measure ~376px at 1440),
+and by the box's height — `.projects-body` works out the card height that
 fits under the label with the captions and paddings (`--projects-card-h`)
 and the grid's `max-width` is three cards of that height at 2:3 plus two
-gutters. So on a short screen the cards shrink (279px wide at 1366x768,
-254px at 1280x720) and the section never grows past 100dvh; the gate
-checks this at five sizes. The caption allowance (`--projects-caption-h`,
+gutters. At 500px that makes the cards 237px wide, well under the
+frame's 376px: the price of the fixed height, and the first thing to
+revisit if the user finds them small. The gate checks the fit at five
+sizes. The caption allowance (`--projects-caption-h`,
 60px) is the title and tag with their margins; change those and it must
 follow. Phones (one column) are the exception and run past a screen. The only motion is the cards opening one
 after another — a gentle fade with a 12px rise, 180ms apart — the first
