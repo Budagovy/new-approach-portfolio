@@ -1,0 +1,460 @@
+{
+  "slug": "second-office",
+  "meta": {
+    "title": "Second Office - Yonatan Budagov",
+    "description": "From a founder's early vision to a shipped mobile experience. Designing flexible workdays around both the place and the people."
+  },
+  "hero": {
+    "eyebrow": "Second Office",
+    "heading": [
+      "A place to work.",
+      "People to work with."
+    ],
+    "lede": [
+      "From a founder's early vision to a shipped mobile experience.",
+      "Designing flexible workdays around both the place and the people."
+    ],
+    "facts": [
+      {
+        "label": "My role",
+        "value": "End-to-end product design"
+      },
+      {
+        "label": "Working with",
+        "value": "Founders, stakeholders & developers"
+      },
+      {
+        "label": "Project",
+        "value": "Mobile app / January 2023"
+      }
+    ],
+    "phones": [
+      {
+        "src": "/work/second-office/02-map-cutout.svg",
+        "width": 445,
+        "height": 909,
+        "alt": "Second Office map screen: workspaces across lower Manhattan, with a Mooza Space card showing who plans to be there",
+        "caption": "Workspace discovery"
+      },
+      {
+        "src": "/work/second-office/03-space-cutout.svg",
+        "width": 445,
+        "height": 909,
+        "alt": "Second Office workspace detail screen: photo of Moooza Space, amenities, a desk price of $40 a day and a Take a seat button",
+        "caption": "Desk booking",
+        "lead": true
+      },
+      {
+        "src": "/work/second-office/04-together-select-cutout.svg",
+        "width": 425,
+        "height": 872,
+        "alt": "Second Office Get Together screen: contacts arranged around the Mooza workspace circle, with a Continue button",
+        "caption": "Shared workdays"
+      }
+    ]
+  },
+  "blocks": [
+    {
+      "type": "rule"
+    },
+    {
+      "type": "section",
+      "id": "brief",
+      "label": "The brief",
+      "heading": [
+        "Turn a broad vision",
+        "into an everyday product."
+      ],
+      "intro": "A private founder and two team members approached me with a broad idea: let people choose where to work each day, across a network of workspaces. I helped define, research, design and test the mobile experience, working with the founders and developers through to production.",
+      "blocks": [
+        {
+          "type": "columns",
+          "items": [
+            {
+              "label": "Employee need",
+              "title": "Flexibility without isolation.",
+              "text": "Employees wanted less commuting and more choice, without losing the connection of working around other people."
+            },
+            {
+              "label": "Business goal",
+              "title": "Adoption that supports efficiency.",
+              "text": "Companies were the paying customers. The business aimed to reduce underused office space while preserving engagement. My focus was an employee experience worth using."
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "My scope: product definition, user and market research, competitive analysis, core flows, UI, prototyping, user testing and stakeholder presentations."
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "research",
+      "tone": "surface",
+      "layout": "split",
+      "label": "Research / Understanding the workday",
+      "heading": [
+        "Less commuting.",
+        "More connection."
+      ],
+      "intro": "I combined interviews and short surveys with stakeholder conversations and competitive research to connect daily employee friction with business needs.",
+      "blocks": [
+        {
+          "type": "stats",
+          "items": [
+            {
+              "value": "78%",
+              "text": "commuted more than 45 minutes daily"
+            },
+            {
+              "value": "62%",
+              "text": "felt disconnected from their team when working from home"
+            },
+            {
+              "value": "82%",
+              "text": "would be happy to meet new people while working"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Reported in the original project research. Sample size and recruitment details are not available in the case-study record; these are directional signals, not population estimates."
+        },
+        {
+          "type": "rule"
+        },
+        {
+          "type": "quote",
+          "text": "“I love working from home, but sometimes I miss the energy of being around my team.”",
+          "source": "Yael / UX Designer / Original research"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "insight",
+      "label": "Competitive analysis & key insight",
+      "heading": [
+        "Booking was the starting point.",
+        "People changed the brief."
+      ],
+      "blocks": [
+        {
+          "type": "mediaText",
+          "side": "left",
+          "figure": {
+            "src": "/work/second-office/08-competitive-analysis.png",
+            "width": 1900,
+            "height": 1096,
+            "alt": "Original competitor comparison board: Envoy, Robin and OfficeSpace compared by unique value proposition, company advantages and company disadvantages, on sticky notes",
+            "caption": "Original competitor comparison"
+          },
+          "text": [
+            {
+              "kind": "paragraph",
+              "tone": "ink",
+              "text": "I benchmarked hybrid-workspace products to compare shared capabilities and identify an opportunity to connect booking with belonging."
+            },
+            {
+              "kind": "paragraph",
+              "text": "The original direction focused on reserving a desk. User conversations led me to expand it: knowing who planned to be there could also influence the choice of workspace."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "label": "How might we",
+          "heading": [
+            "Help employees choose where to work with flexibility and belonging, while helping companies use office space more efficiently?"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "kickoff",
+      "label": "Alignment & project kickoff",
+      "heading": [
+        "Make the direction testable",
+        "before making it bigger."
+      ],
+      "intro": "The founder challenged the added development effort and feasibility of the social layer. I presented the user needs and potential product value. We agreed to prototype and test the direction before moving into development.",
+      "blocks": [
+        {
+          "type": "mediaText",
+          "side": "left",
+          "figure": {
+            "src": "/work/second-office/10-kickoff-and-flows.png",
+            "width": 2306,
+            "height": 1156,
+            "alt": "Original flow exploration: a booking flow chart starting from the Where button, shown in a recorded project working session with the team on a video call",
+            "caption": "Original flow exploration and project working session"
+          },
+          "text": [
+            {
+              "kind": "label",
+              "text": "The design challenge"
+            },
+            {
+              "kind": "title",
+              "text": [
+                "Keep booking lightweight.",
+                "Make connection possible."
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "The social layer added product complexity and development effort. I had to balance individual productivity with connection on a small mobile screen."
+            },
+            {
+              "kind": "paragraph",
+              "text": "I shaped the core flows, checked feasibility with developers and validated priorities with stakeholders."
+            }
+          ]
+        },
+        {
+          "type": "steps",
+          "items": [
+            "Challenge the added scope",
+            "Approve a prototype",
+            "Test, then develop"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "rule"
+    },
+    {
+      "type": "section",
+      "id": "booking",
+      "label": "Key solution / Booking",
+      "heading": [
+        "One clear place to start.",
+        "Three steps toward a desk."
+      ],
+      "intro": "I designed the core flow for the morning, before leaving for work: a prominent Where action, workspace discovery and a space-detail view.",
+      "blocks": [
+        {
+          "type": "flow",
+          "items": [
+            {
+              "phone": {
+                "src": "/work/second-office/01-discover-cutout.svg",
+                "width": 445,
+                "height": 909,
+                "alt": "Second Office home screen: a large blue Where button at the centre of a faded map, with an invitation from a colleague below"
+              },
+              "title": "Start with Where",
+              "detail": {
+                "src": "/work/second-office/01-discover.png",
+                "width": 516,
+                "height": 983,
+                "focus": {
+                  "x": 45,
+                  "y": 41,
+                  "zoom": 1.5
+                }
+              },
+              "label": "A clear entry point",
+              "text": "The morning task needed an obvious starting action. Inspired by Shazam, I gave Where visual priority. This was a design intention, not a measured speed improvement."
+            },
+            {
+              "phone": {
+                "src": "/work/second-office/02-map-cutout.svg",
+                "width": 445,
+                "height": 909,
+                "alt": "Second Office map screen: workspaces across lower Manhattan, with a Mooza Space card showing who plans to be there"
+              },
+              "title": "Explore places & people",
+              "detail": {
+                "src": "/work/second-office/02-map.png",
+                "width": 516,
+                "height": 983,
+                "focus": {
+                  "x": 45,
+                  "y": 39,
+                  "zoom": 2.3
+                }
+              },
+              "label": "People in the choice",
+              "text": "The research connected flexibility with belonging. Showing people on the map brought that context into workspace discovery, before choosing a place."
+            },
+            {
+              "phone": {
+                "src": "/work/second-office/03-space-cutout.svg",
+                "width": 445,
+                "height": 909,
+                "alt": "Second Office workspace detail screen: photo of Moooza Space, amenities, a desk price of $40 a day and a Take a seat button"
+              },
+              "title": "Review a workspace",
+              "detail": {
+                "src": "/work/second-office/03-space.png",
+                "width": 516,
+                "height": 983,
+                "focus": {
+                  "x": 45,
+                  "y": 82,
+                  "zoom": 1.25
+                }
+              },
+              "label": "Context before booking",
+              "text": "The detail view combines amenities, people and price. The booking action sits beside the price, keeping cost visible at the point of commitment."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "band"
+    },
+    {
+      "type": "section",
+      "id": "gettogether",
+      "label": "Key solution / GetTogether",
+      "heading": [
+        "A shared workday,",
+        "without all the back-and-forth."
+      ],
+      "blocks": [
+        {
+          "type": "mediaText",
+          "side": "right",
+          "phones": [
+            {
+              "src": "/work/second-office/04-together-select-cutout.svg",
+              "width": 425,
+              "height": 872,
+              "alt": "Get Together screen with the Mooza workspace circle empty and a row of contacts above it",
+              "caption": "Choose a workspace"
+            },
+            {
+              "src": "/work/second-office/05-together-invite-cutout.svg",
+              "width": 425,
+              "height": 872,
+              "alt": "Get Together screen with four contacts dragged into the Mooza workspace circle, ready to be invited",
+              "caption": "Invite others to join"
+            }
+          ],
+          "text": [
+            {
+              "kind": "title",
+              "text": [
+                "Choose a workspace.",
+                "Bring people into the plan."
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "The workspace is the shared destination: people drag contacts into its circle, then continue to invite them. This makes the proposed group visible around a place. Connections can extend beyond an immediate team."
+            },
+            {
+              "kind": "paragraph",
+              "text": "My hypothesis: visible work plans could reduce the need for several conversations and delayed replies in the morning. Visibility helps with the choice; an invitation makes it actionable."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "id": "wider-product",
+      "label": "The wider product",
+      "heading": [
+        "Designed end to end."
+      ],
+      "intro": "Onboarding, connections, reservations and profiles were part of the same experience. The screens shown here all reached production.",
+      "blocks": [
+        {
+          "type": "gallery",
+          "items": [
+            {
+              "src": "/work/second-office/13-onboarding-cutout.svg",
+              "width": 466,
+              "height": 951,
+              "alt": "Onboarding screen: Welcome Home, with a field for an organisation code and sign-in options",
+              "caption": "Onboarding"
+            },
+            {
+              "src": "/work/second-office/15-connections-cutout.svg",
+              "width": 466,
+              "height": 951,
+              "alt": "Connections screen: Hello Alexander, a list of colleagues to sync as connections",
+              "caption": "Connections"
+            },
+            {
+              "src": "/work/second-office/16-availability-cutout.svg",
+              "width": 466,
+              "height": 951,
+              "alt": "Seat selection screen: a floor plan with available desks marked, and the chosen seats and dates listed below",
+              "caption": "Seat selection"
+            },
+            {
+              "src": "/work/second-office/17-reservation-cutout.svg",
+              "width": 466,
+              "height": 951,
+              "alt": "Reservation screen: a Mooza Space booking pass with guest, dates, seats and a barcode",
+              "caption": "Reservation"
+            },
+            {
+              "src": "/work/second-office/18-booking-history-cutout.svg",
+              "width": 466,
+              "height": 951,
+              "alt": "My Booking screen: a list of upcoming and past bookings with cancel and re-book actions",
+              "caption": "Booking history"
+            },
+            {
+              "src": "/work/second-office/19-profile-cutout.svg",
+              "width": 466,
+              "height": 951,
+              "alt": "Profile screen: Alexander Mokdon, status options, credits, community and support",
+              "caption": "Profile"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "rule"
+    },
+    {
+      "type": "section",
+      "id": "outcome",
+      "label": "Validation, outcome & learning",
+      "heading": [
+        "A tested direction.",
+        "A product people used."
+      ],
+      "blocks": [
+        {
+          "type": "columns",
+          "items": [
+            {
+              "label": "Prototype validation",
+              "text": "Employees from different companies tested the prototype. Feedback highlighted the simplicity of booking and the appeal of GetTogether. Testing covered the app as a whole and supported moving into development."
+            },
+            {
+              "label": "Production outcome",
+              "text": "The app, including the social features shown here, reached production and was used outside testing. It was live for a limited period before the company closed. I do not have verified adoption or retention figures to report."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "label": "What I learned",
+          "heading": [
+            "Designing the transaction was only part",
+            "of designing the workday."
+          ],
+          "text": "The project taught me to consider both the individual task and its social context, and to make a new direction tangible and testable when its added scope raises questions."
+        },
+        {
+          "type": "aside",
+          "label": "AI in the process",
+          "text": "I also used AI to support exploration across research, competitive analysis and early concepts."
+        }
+      ]
+    }
+  ]
+}

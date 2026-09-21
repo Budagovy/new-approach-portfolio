@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import Link from "next/link";
 import { RevealGroup, RevealItem } from "@/components/Reveal";
 import { SectionBar, type SectionLabel } from "@/components/SectionBar";
 
@@ -21,7 +22,9 @@ export interface ProjectsData {
  * "Selected Projects", per the Figma frame: a small centred heading, then
  * three equal 2:3 portrait crops in a row with a narrow gap, a small
  * left-aligned title and tag under each. The cards fade in one after
- * another as the section enters.
+ * another as the section enters. A project with an `href` is one link
+ * around its image and title: a case study inside the site ("/work/...")
+ * opens in the same tab through the router, an outside address in a new one.
  */
 export function Projects({ data }: { data: ProjectsData }) {
   return (
@@ -45,7 +48,11 @@ export function Projects({ data }: { data: ProjectsData }) {
             );
             return (
               <RevealItem as="li" key={project.title} className="project-item">
-                {project.href ? (
+                {project.href?.startsWith("/") ? (
+                  <Link className="project" href={project.href}>
+                    {inner}
+                  </Link>
+                ) : project.href ? (
                   <a
                     className="project"
                     href={project.href}

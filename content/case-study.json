@@ -1,0 +1,4 @@
+{
+  "back": { "label": "Back to projects", "href": "/#work" },
+  "zoom": { "open": "Expand image", "close": "Close" }
+}

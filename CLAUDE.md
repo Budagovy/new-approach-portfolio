@@ -1,6 +1,7 @@
 # Yonatan Budagov portfolio - project rules
 
-One page, built to match the owner's Figma frame. Next.js 16 (Turbopack),
+A homepage built to match the owner's Figma frame, plus case-study pages
+under `/work/<slug>` (see "Case studies"). Next.js 16 (Turbopack),
 React 19, Motion (`motion/react`), Lenis, Tailwind v4 (imported, barely
 used; the stylesheet is hand-written in `src/app/globals.css`).
 
@@ -14,7 +15,9 @@ section after the hero opens with a thin charcoal bar ("01 HOW I DO IT",
 "02 WHAT I DO", "03 WHO DOING IT"). Plain cream inside the frame, a faint
 horizontal grain outside it.
 
-`src/app/page.tsx` is the composition and reads in that order.
+`src/app/page.tsx` is the composition and reads in that order, inside
+`PageFrame`: the header, the bordered frame with its corner marks and the
+footer, shared by every route.
 
 **Geometry scales; type sizes do not.** Two systems in `globals.css`,
 deliberately separate:
@@ -136,6 +139,90 @@ artwork: the owner's stated order.
   fade with a small rise, once, as the element enters; items in a group a
   beat apart. Under reduced motion it is a cut.
 
+## Case studies
+
+`/work/<slug>`, currently Second Office. Built from a design handoff the
+owner supplied (a one-page PDF as visual reference, an approved-copy
+file, phone cutouts and research boards). Travelito and Joyn are meant to
+follow on the same system.
+
+**How it is put together.** A case study is a hero plus an ordered list of
+typed blocks: `section` (label, heading, optional intro; nests its own
+blocks), `columns`, `stats`, `note`, `quote`, `mediaText` (an image or
+phones beside text), `callout` (the dark panel), `steps`, `flow` (phone,
+title, detail crop, text per step), `gallery`, `aside`, `rule`, `band`.
+The vocabulary is `src/components/case-study/types.ts`; `Blocks.tsx`
+renders it; `CaseStudy.tsx` is the page. **Adding a project is content,
+not components:** write `content/work/<slug>.json`, import it in
+`src/lib/work.ts`, and point the project's `href` in
+`content/projects.json` at `/work/<slug>`. The route
+(`src/app/work/[slug]/page.tsx`) generates every registered slug
+statically (`dynamicParams = false`), so each URL loads and refreshes
+directly and anything else is a 404. A different project can use the
+blocks in a different order; add a block type only when a project needs a
+layout none of them can express.
+
+**Rules the owner set for it.**
+- Live text and separate images: never the PDF embedded or a flattened
+  image. The copy is the approved copy verbatim, in the approved order;
+  no claims, metrics or content added. `QA_COPY=<One-Pager-copy.md> npm
+  run qa:case` checks both directions: every approved line is on the
+  page, and every sentence on the page is in the approved copy.
+- The site's chrome, once: `PageFrame current="#work"` puts the shared
+  header (Projects active), frame and footer round it. The handoff PDF's
+  own header and footer lines ("Yonatan Budagov / Product design /
+  Selected work", "SecondOffice") are document context and are NOT
+  reproduced. Off the homepage, the header's and footer's hash links
+  become "/#work" etc. through the router (`src/lib/links.ts`).
+  "Back to projects" (top and end) goes to `/#work`.
+- Cream ground `#FFF9E5`, ink `#16140E` (`--ink-strong`), accent
+  `#F3B44A`, all from the site's tokens. Two colours are the case
+  study's own, scoped under `.cs`: the pale research surface `#FBF0D5`
+  and a quiet divider `#DAD4C2`.
+- Phone mockups are the supplied `*-cutout.svg` files, straight on the
+  cream: no white background, tray or container, and the colours inside
+  the screens untouched. When they were copied into `public/work/`, each
+  SVG's viewBox was trimmed to its own clip rectangle (the device sat
+  off-centre in the canvas, with empty margin where a shadow had been),
+  which changes nothing inside the device. The three detail crops under
+  the booking flow are the same screens enlarged around a focus point
+  (`detail.focus` in the content) and fill their panels edge to edge.
+- In the research statistics only `78%`, `62%`, `82%` are orange; their
+  descriptions are dark. No other orange text on cream (the labels on
+  the dark callouts are orange on ink, 9:1).
+- Headings and paragraphs left-aligned, THE BRIEF included: its label,
+  heading, paragraph, columns and scope note share one left edge.
+- Type is the SITE's scale, not the handoff's. The handoff asked for a
+  hero up to 76px, 50px headings and 18-22px copy; it predates the
+  owner's scale (14 / 17 / 26 / 36 / display), which they asked to hold
+  "across all pages and case studies". So: h1 = display, section
+  headings = 36 (the first use of that step), subheads and the quote =
+  26, copy = 17, labels = 14. Hierarchy from the handoff, sizes from the
+  site.
+- A heading is a list of lines: one per line from 900px up, run together
+  below, so a phone never gets a forced break.
+- Natural scrolling: none of the homepage's reveals or guided landings.
+
+**Expanding an image** (`Zoomable.tsx`): a real `<button>` round the image
+and a native `<dialog>` opened with `showModal()`. The platform then does
+focus trapping, Escape, and returning focus to the trigger; a backdrop
+click closes it; `data-lenis-prevent` stops the page scrolling behind. No
+library, no hand-rolled focus trap.
+
+**Measure.** `ch` is the width of "0", which in Google Sans Flex is wider
+than the average letter: a `66ch` cap set ~85 characters a line. The
+caps in use (56-58ch) give 60-75.
+
+**A bug this route exposed, fixed in `CityStrip.tsx`.** Pressing Back from
+a case study crashed the homepage ("This page couldn't load"): `Cannot
+set property speed of #<PortfolioCityStrip> which has only a getter`.
+React 19 writes a JSX prop as a PROPERTY when the custom element is
+already defined and has one by that name; on a first load it is not yet
+defined, so `speed` went out as an attribute and nothing was wrong. The
+second mount in one session (only possible once the site had a second
+route) threw. The wrapper now sets `speed` and `asset-base` with
+`setAttribute`. Do not pass them as JSX props again.
+
 ## Scrolling
 
 `SmoothScroll.tsx`, mounted in the root layout: Lenis inertia for wheel and
@@ -165,6 +252,12 @@ path keyed by platform, `QA_CHROME` overrides), then:
   target and the header nav lands on it; the column rule at 2544;
   stacked and overflow-free at 390 and 768; no console errors or hydration
   mismatches in either motion mode.
+- `npm run qa:case`: the case study (above): the card as one same-tab
+  link, direct load and refresh, 404 for unknown slugs, the shared chrome,
+  the approved copy both ways, section order, heading levels, colours,
+  cutouts with nothing behind them, left alignment, measure, image
+  proportions, the type scale, keyboard and zoom behaviour, and overflow
+  at 1440 / 1024 / 768 / 390 / 320 and at 200% zoom.
 - `npm run qa:scroll`: Lenis glides, settles exactly, native `scrollTo`
   still lands exactly, a nav anchor lands under the header, not started
   under reduced motion.
@@ -179,7 +272,11 @@ or `page.route`).
 ## Open items, waiting on the owner
 
 - LinkedIn and Instagram addresses (`content/footer.json`, `href: null`).
-- Case-study links for the three projects (`href: null`).
+- Travelito and Joyn case studies (`href: null` in `content/projects.json`
+  until they exist).
+- Original Figma exports of the Second Office screens, if available: the
+  supplied images are PDF-derived and fine UI text in them is soft when
+  expanded.
 - `src/app/icon.svg` is still a placeholder mark.
 
 ## What was here before, and where it went

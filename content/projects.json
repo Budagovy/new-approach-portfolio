@@ -1,9 +1,30 @@
 {
-  "label": { "index": "02", "text": "What I do" },
+  "label": {
+    "index": "02",
+    "text": "What I do"
+  },
   "heading": "Selected Projects",
   "items": [
-    { "title": "Second Office", "tag": "App design", "image": "/projects/second-office.webp", "zoom": 1.41, "href": null },
-    { "title": "Travelito", "tag": "App design", "image": "/projects/travelito.webp", "zoom": 1.02, "href": null },
-    { "title": "Joyn", "tag": "Design passions & experiments", "image": "/projects/joyn.webp", "zoom": 1, "href": null }
+    {
+      "title": "Second Office",
+      "tag": "App design",
+      "image": "/projects/second-office.webp",
+      "zoom": 1.41,
+      "href": "/work/second-office"
+    },
+    {
+      "title": "Travelito",
+      "tag": "App design",
+      "image": "/projects/travelito.webp",
+      "zoom": 1.02,
+      "href": null
+    },
+    {
+      "title": "Joyn",
+      "tag": "Design passions & experiments",
+      "image": "/projects/joyn.webp",
+      "zoom": 1,
+      "href": null
+    }
   ]
 }
