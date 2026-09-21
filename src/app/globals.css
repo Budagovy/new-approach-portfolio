@@ -1,23 +1,38 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------
-   The page is the Figma frame (1440 x 2568), built to scale.
+   Two systems, deliberately separate.
 
-   --u is one frame pixel: 1/1440 of the viewport's width. Every
-   dimension below is written as the number read off the frame times
-   --u, so at a 1440px window the page IS the frame, and at any other
-   desktop width it is the same picture, larger or smaller. That is
-   deliberate: the frame's type is small at 1440 (body 11px) because it
-   is a canvas, and the site is mostly seen far wider than that.
+   GEOMETRY follows the Figma frame (1440 x 2568, an 840 column).
+   --u is one frame pixel: the column's width / 840. Every box, gap
+   and offset is the number read off the frame times --u, so the
+   layout keeps the frame's proportions at any desktop width.
 
-   Below 860px the frame's side-by-side layouts cannot fit, so --u
-   stops tracking the viewport and the sections stack (see the end of
-   this file). The few sizes that would be unreadable at small --u
-   carry a px floor with max().
+   TYPE SIZES do not scale. They are the owner's fixed scale (below),
+   in rem so they honour the reader's browser font size. ONLY the sizes
+   come from that scale: the typeface, weights, letter-spacing and
+   colours are the owner's and are exactly as they were. (A first pass
+   at this also retuned weights, tracking and colours; the owner asked
+   for sizes only and it was reverted. Do not "improve" them again.)
+
+   The two meet in the column's minimum width: 17px body in the
+   frame's 840px column would give the four approach columns ~23
+   characters a line, so the column never goes below 1120px. From
+   1920px up it is the frame's 58.33vw again. Below 1184px (1120 plus
+   a margin) that column no longer fits and everything stacks (end of
+   this file).
    --------------------------------------------------------------- */
 
 :root {
-  --u: clamp(0.8px, calc(100vw / 1440), 2.2px);
+  --column-w: clamp(1120px, 58.333vw, 1540px);
+  --u: calc(var(--column-w) / 840);
+
+  /* The type scale: the only font sizes on the site. */
+  --fs-small: 0.875rem;    /* 14  labels, metadata, nav, tags, footer */
+  --fs-body: 1.0625rem;    /* 17  body, descriptions                  */
+  --fs-title: 1.625rem;    /* 26  section titles, project titles      */
+  --fs-headline: 2.25rem;  /* 36  headlines (case-study pages)        */
+  --fs-display: clamp(2rem, 1.1rem + 2.9vw, 3.5rem); /* hero only: 32 on phones, 48-56 on desktop, never more */
 
   --bg: #fff9e5;
   --bg-footer: #fffcf0;
@@ -34,7 +49,6 @@
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-  --column-w: calc(840 * var(--u));
   --header-h: calc(64 * var(--u));
   --section-h: calc(553 * var(--u));
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -89,7 +103,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   background: var(--bg);
 }
 .site-header-name {
-  font-size: calc(16 * var(--u));
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: -0.015em;
   color: var(--ink);
@@ -107,7 +121,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 }
 .site-header-link {
   position: relative;
-  font-size: calc(11 * var(--u));
+  font-size: var(--fs-small);
   color: var(--ink);
   white-space: nowrap;
 }
@@ -125,11 +139,11 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .site-header-cta {
   display: grid;
   place-items: center;
-  height: calc(24 * var(--u));
+  height: max(calc(24 * var(--u)), 2.25rem);
   padding-inline: calc(13 * var(--u));
   background: var(--accent);
   color: var(--accent-ink);
-  font-size: calc(12 * var(--u));
+  font-size: var(--fs-small);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -174,11 +188,11 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .hero-badge {
   display: inline-flex;
   align-items: center;
-  height: calc(20 * var(--u));
-  padding-inline: calc(10 * var(--u));
+  min-height: max(calc(20 * var(--u)), 2rem);
+  padding-inline: max(calc(10 * var(--u)), 1rem);
   border: 1px solid var(--frame);
   border-radius: 999px;
-  font-size: max(8px, calc(9 * var(--u)));
+  font-size: var(--fs-small);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
@@ -189,7 +203,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: calc(37 * var(--u));
+  font-size: var(--fs-display);
   font-weight: 500;
   line-height: 1.12;
   letter-spacing: -0.035em;
@@ -201,8 +215,8 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 }
 .hero-note {
   margin-top: calc(16 * var(--u));
-  font-size: calc(13 * var(--u));
-  line-height: 1.4;
+  font-size: var(--fs-body);
+  line-height: 1.5;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -219,22 +233,23 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
    the frame doesn't have, is off. */
 portfolio-city-strip {
   display: block;
-  min-height: calc(123 * var(--u));
+  min-height: calc(max(26 * var(--u), 2.5rem) + 97 * var(--u));
   font-family: inherit;
   --strip-bg: var(--bg);
   --strip-ink: var(--ink-strong);
   --strip-muted: var(--muted);
   --strip-accent: var(--accent);
   --strip-role-ink: var(--ink-strong);
-  --strip-head-h: calc(26 * var(--u));
+  --strip-head-h: max(calc(26 * var(--u)), 2.5rem);
   --strip-pad: calc(28 * var(--u));
   --strip-gap: calc(11 * var(--u));
   --strip-sep: calc(4 * var(--u));
-  --strip-number: max(8px, calc(10 * var(--u)));
-  --strip-company: calc(15 * var(--u));
+  --strip-number: var(--fs-small);
+  --strip-company: var(--fs-body);
   --strip-company-tracking: -0.01em;
   --strip-company-weight: 700;
-  --strip-role: max(8px, calc(10 * var(--u)));
+  --strip-role: var(--fs-small);
+  --strip-small: var(--fs-small);
   --strip-scene-h: calc(97 * var(--u));
   --strip-walker-h: 38%;
   --strip-walker-x: 10.5%;
@@ -247,12 +262,11 @@ portfolio-city-strip {
   display: flex;
   align-items: center;
   gap: calc(7 * var(--u));
-  height: calc(17 * var(--u));
-  min-height: 14px;
+  min-height: max(calc(17 * var(--u)), 2.25rem);
   padding-inline: calc(20 * var(--u));
   background: var(--bar);
   color: var(--bg);
-  font-size: max(7px, calc(6 * var(--u)));
+  font-size: var(--fs-small);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -263,7 +277,7 @@ portfolio-city-strip {
   min-height: var(--section-h);
 }
 .section-heading {
-  font-size: calc(20 * var(--u));
+  font-size: var(--fs-title);
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: -0.04em;
@@ -281,7 +295,7 @@ portfolio-city-strip {
 .approach-line {
   position: absolute;
   inset-inline: 0;
-  top: calc(12 * var(--u));
+  top: max(calc(12 * var(--u)), 1rem);
   height: 1px;
   background: var(--ink);
 }
@@ -301,18 +315,18 @@ portfolio-city-strip {
 .approach-marker {
   display: grid;
   place-items: center;
-  width: calc(24 * var(--u));
-  height: calc(24 * var(--u));
+  width: max(calc(24 * var(--u)), 2rem);
+  height: max(calc(24 * var(--u)), 2rem);
   border-radius: 50%;
   background: var(--bar);
   color: var(--bg);
   font-family: var(--mono);
-  font-size: max(8px, calc(9 * var(--u)));
+  font-size: var(--fs-small);
 }
 .approach-marker--active { background: var(--accent); }
 .approach-step-title {
   margin-top: calc(14 * var(--u));
-  font-size: calc(15 * var(--u));
+  font-size: var(--fs-body);
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.045em;
@@ -320,9 +334,9 @@ portfolio-city-strip {
 }
 .approach-step-desc {
   margin-top: calc(5 * var(--u));
-  max-width: calc(176 * var(--u));
-  font-size: calc(10 * var(--u));
-  line-height: 1.3;
+  max-width: 30ch;
+  font-size: var(--fs-body);
+  line-height: 1.55;
   color: var(--muted);
   text-wrap: balance;
 }
@@ -360,15 +374,15 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 .project-title {
   display: block;
   margin-top: calc(8 * var(--u));
-  font-size: max(10px, calc(10.5 * var(--u)));
+  font-size: var(--fs-title);
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.2;
   color: var(--ink);
 }
 .project-tag {
   display: block;
   margin-top: calc(3 * var(--u));
-  font-size: max(8px, calc(6 * var(--u)));
+  font-size: var(--fs-small);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--faint);
@@ -391,10 +405,11 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 }
 .about-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; }
 .about-bio {
-  width: calc(372 * var(--u));
+  width: calc(388 * var(--u));
+  max-width: 66ch;
   padding-top: calc(1 * var(--u));
-  font-size: calc(11 * var(--u));
-  line-height: calc(14 / 11);
+  font-size: var(--fs-body);
+  line-height: 1.6;
   color: var(--ink-strong);
 }
 .about-bio p { white-space: pre-line; }
@@ -417,7 +432,7 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 }
 .footer-label {
   font-family: var(--mono);
-  font-size: max(8px, calc(6 * var(--u)));
+  font-size: var(--fs-small);
   font-weight: 400;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -427,8 +442,8 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
   margin-top: calc(11 * var(--u));
   display: grid;
   row-gap: calc(5 * var(--u));
-  font-size: max(10px, calc(10 * var(--u)));
-  line-height: 1.25;
+  font-size: var(--fs-small);
+  line-height: 1.45;
   color: var(--muted);
 }
 .footer-list a:hover { color: var(--ink-strong); }
@@ -437,7 +452,7 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 .footer-copyright {
   margin-top: calc(42 * var(--u));
   font-family: var(--mono);
-  font-size: max(8px, calc(6 * var(--u)));
+  font-size: var(--fs-small);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--faint);
@@ -453,13 +468,15 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 }
 
 /* --- Narrow screens ------------------------------------------------------- */
-/* The frame's rows cannot sit side by side here, so everything stacks.
-   --u becomes a fixed, larger unit (type stays readable), the column runs
-   nearly edge to edge, and sections take the height of their content. */
-@media (max-width: 859px) {
+/* Under 1184px the 1120px column no longer fits, and four columns of 17px
+   text in anything narrower cannot hold a readable line, so everything
+   stacks. --u becomes a fixed unit, the column runs nearly edge to edge,
+   and sections take the height of their content. The type scale is the
+   same five sizes. */
+@media (max-width: 1183px) {
   :root {
     --u: 1.35px;
-    --column-w: calc(100% - 24px);
+    --column-w: min(calc(100% - 24px), 1000px);
     --header-h: 56px;
     --section-h: 0px;
   }
@@ -467,7 +484,6 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
   .site-header-nav { display: none; }
 
   .hero-copy { padding: 72px 20px 0; }
-  .hero-headline { font-size: clamp(28px, 8.6vw, 40px); }
   .hero-note { white-space: normal; }
   .hero-badge { white-space: normal; height: auto; padding-block: 5px; text-align: center; }
   .hero-strip { padding-top: 56px; }
@@ -490,22 +506,31 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
   }
   .approach-marker { grid-row: 1 / span 2; }
   .approach-step-title { margin-top: 4px; }
-  .approach-step-desc { max-width: none; font-size: 14px; line-height: 1.5; }
+  .approach-step-desc { max-width: 52ch; }
 
   .projects-grid { width: 100%; margin-top: 36px; grid-template-columns: 1fr; gap: 36px; }
-  .project-title { font-size: 16px; margin-top: 12px; }
-  .project-tag { font-size: 11px; margin-top: 4px; }
+  .project-title { margin-top: 12px; }
+  .project-tag { margin-top: 4px; }
 
   .about-row { margin: 40px 0 0; flex-direction: column; gap: 28px; }
   .about-photo { width: 100%; height: auto; aspect-ratio: 11 / 12; }
-  .about-bio { width: 100%; font-size: 15px; line-height: 1.55; }
+  .about-bio { width: 100%; }
   .about-bio p + p { margin-top: 18px; }
 
   .footer { padding: 36px 20px 190px; }
   .footer-columns { grid-template-columns: 1fr 1fr; row-gap: 32px; column-gap: 24px; }
   .footer-columns > :first-child { grid-column: 1 / -1; }
-  .footer-list { font-size: 14px; row-gap: 8px; margin-top: 12px; }
-  .footer-label, .footer-copyright { font-size: 10px; }
+  .footer-list { row-gap: 8px; margin-top: 12px; }
   .footer-copyright { margin-top: 36px; }
   .footer-character { left: auto; right: 12px; width: 170px; }
+}
+/* Tablets: room for the cards in a row and the photo beside the text. */
+@media (min-width: 700px) and (max-width: 1183px) {
+  .projects-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .about-row { flex-direction: row; gap: 32px; }
+  .about-photo { width: 38%; }
+  .about-bio { width: auto; flex: 1; }
+  .footer { padding-bottom: 40px; }
+  .footer-columns { grid-template-columns: repeat(3, auto); justify-content: start; column-gap: 48px; }
+  .footer-columns > :first-child { grid-column: auto; }
 }

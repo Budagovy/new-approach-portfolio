@@ -16,23 +16,43 @@ horizontal grain outside it.
 
 `src/app/page.tsx` is the composition and reads in that order.
 
-**Built to scale.** `--u` in `globals.css` is one frame pixel, 1/1440 of
-the viewport's width, and every dimension is written as the number read
-off the frame times `--u`. At a 1440px window the page is the frame (the
-gate measures it: section bars within 2px, total height within 3px); at
-any other desktop width it is the same picture scaled. This is deliberate,
-not a shortcut: the frame's type is small at 1440 (headline 37px, body
-11px) because it is a design canvas, and the owner views the site around
-2500px wide, where it comes out at 65px and 19px. If something looks small
-at 1440, that is the frame, not a bug; change it only if the owner asks.
-A few micro sizes (bar labels, tags, 6px in the frame) carry a `max()` px
-floor so they stay legible when `--u` is small.
+**Geometry scales; type sizes do not.** Two systems in `globals.css`,
+deliberately separate:
 
-Below 860px the side-by-side layouts cannot fit: `--u` becomes a fixed
-1.35px, the column runs nearly edge to edge, and everything stacks (a
-vertical timeline, one card per row, photo over biography). The frame has
-no mobile design; this is ours, and the rule is only that it reads well
-and nothing overflows.
+- *Geometry* follows the frame. `--u` is one frame pixel, the column's
+  width / 840, and every box, gap and offset is the number read off the
+  frame times `--u`.
+- *Type sizes* are the owner's fixed scale, in rem: **14** small / labels /
+  metadata / nav / footer, **17** body and descriptions, **26** section and
+  project titles, **36** headlines (defined; for case-study pages), and a
+  hero display of **48-56 maximum** (`--fs-display`, a clamp: 56 on
+  desktop, 32 on a phone), used on the hero headline only. No other font
+  size may appear anywhere, including inside the city strip's shadow DOM:
+  `npm run qa:type` reads every visible text run at five widths and fails
+  on any other size.
+
+**Sizes ONLY. The typeface, weights, letter-spacing and colours are the
+owner's and are not to be "improved".** The first pass at this scale also
+retuned weights, tracking, text colours (for WCAG contrast) and rendering
+settings; the owner's reaction was "you changed all website font ... i
+asked you to change only the Sizes", and it was all reverted: the
+stylesheet was rebuilt from the live one with nothing but size values (and
+the room they need) changed, and a diff proved no weight, tracking, colour
+or family line differed. Several of the owner's colours are under WCAG
+contrast (orange as text 1.9:1, the faint grey 3.5:1); `qa:type` measures
+and REPORTS these as NOTE lines and does not fail on them. Raise it with
+the owner; do not fix it unasked.
+
+Where fixed type meets proportional geometry: 17px body in the frame's
+840px column gave the four approach columns ~23 characters a line, so the
+column is `clamp(1120px, 58.333vw, 1540px)`: never under 1120, the
+frame's 58.33% again from 1920px up (the owner's own screen is ~2544px,
+where nothing about the layout changed). Below 1184px that column no
+longer fits and everything stacks (a vertical timeline, photo over
+biography; cards three across from 700px, one per row below). Sections
+keep the frame's 553-unit minimum height and grow where 17px copy needs
+it. A few fixed-height boxes became minimums so 14px text fits them (the
+section bar, the Contact button, the badge, the approach circles).
 
 **Measuring the frame.** The PDF's text is outlined (no extractable text
 runs), so sizes and positions were read from a 1:1 render (pdf.js in
@@ -50,7 +70,9 @@ image sits hidden beneath the visible one in the file. Ignore it.)
 
 **Comparing.** `QA_REF=<reference.png> npm run qa:compare` screenshots the
 full page at 1440 and tiles it beside the reference at the same scale
-(`qa/frames/compare-N.png`). The reference is not in the repo (11MB, the
+(`qa/frames/compare-N.png`). Since the type scale replaced the frame's
+proportional type, expect the text to differ from the reference by
+design; the comparison is for structure and spacing. The reference is not in the repo (11MB, the
 owner's file). Fix layout and spacing first, then type, colour, borders,
 artwork: the owner's stated order.
 
@@ -137,10 +159,10 @@ back, every time.
 Dev server up (`npm run dev`, port 3220), a local Chrome (none is bundled;
 path keyed by platform, `QA_CHROME` overrides), then:
 
-- `npm run qa` (= `qa:page`): the page against the frame's numbers at
-  1440; exact hero copy; all four approach steps at once with only the
+- `npm run qa:type`: the type scale (above).
+- `npm run qa` (= `qa:page`): the frame's geometry in column units; exact hero copy; all four approach steps at once with only the
   first circle orange; headings; about; footer; every in-page link has a
-  target and the header nav lands on it; proportional scaling at 1920;
+  target and the header nav lands on it; the column rule at 2544;
   stacked and overflow-free at 390 and 768; no console errors or hydration
   mismatches in either motion mode.
 - `npm run qa:scroll`: Lenis glides, settles exactly, native `scrollTo`

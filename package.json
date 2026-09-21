@@ -10,7 +10,8 @@
     "qa": "node qa/page.mjs",
     "qa:page": "node qa/page.mjs",
     "qa:scroll": "node qa/scroll.mjs",
-    "qa:compare": "node qa/compare.mjs"
+    "qa:compare": "node qa/compare.mjs",
+    "qa:type": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON qa/type.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -1,8 +1,9 @@
 /* QA gate for the page as a whole, against the Figma frame (1440 x 2568) it is built from.
 
-   At 1440 wide the page should BE the frame, so geometry is checked in frame pixels with a
-   small tolerance: the column, the header, each section's charcoal bar, the footer, the total
-   height. Then content (exact hero copy, all four approach steps at once with only the first
+   Geometry is the frame's, proportional to the column (--u = column / 840): the column's
+   width rule, the header, the hero's height, each section's minimum height. Type is NOT
+   proportional: it is the owner's fixed scale, gated in qa/type.mjs, so sections may be
+   taller than the frame's where 17px copy needs the room, never shorter. Then content (exact hero copy, all four approach steps at once with only the first
    circle orange, the headings, the about block, the footer), navigation (every link has a
    real target and lands on it), proportional scaling at another desktop width, the stacked
    phone layout with no horizontal overflow, and no console errors or hydration mismatches in
@@ -83,45 +84,45 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
 {
   const { ctx, page, errors } = await open({ viewport: { width: 1440, height: 900 } });
   const before = await page.evaluate(probe);
-  ok("opens on the hero: no intro to scroll through", before.hero.top === FRAME.header + 1 || near(before.hero.top, FRAME.header, 2), `hero top ${before.hero.top}`);
+  ok("opens on the hero: no intro to scroll through", near(before.hero.top, before.header.h + 1, 2), `hero top ${before.hero.top}, header ${before.header.h}`);
   ok("below the fold waits to be seen (reveals)", before.cards.every((c) => c.opacity === 0), JSON.stringify(before.cards.map((c) => c.opacity)));
   await walk(page);
   const s = await page.evaluate(probe);
 
   ok("order: header, hero, approach, projects, about, footer", s.order.join(",") === "header,top,approach,work,about,contact", s.order.join(","));
-  ok("column is the frame's 840, centred (300..1140)", near(s.frame.left, FRAME.column[0], 8) && near(s.frame.right, FRAME.column[1], 8) && near(s.frame.w, 840, 2), `${s.frame.left}..${s.frame.right}`);
-  ok("header 64 tall, its row in the same column", near(s.header.h, FRAME.header, 1) && near(s.headerRow.left, s.frame.left, 1) && near(s.headerRow.right, s.frame.right, 1), `h ${s.header.h}, row ${s.headerRow.left}..${s.headerRow.right}`);
-  ok("section bars where the frame has them", s.bars.length === 3 && s.bars.every((b, i) => near(b.top, FRAME.bars[i], 8)), `${s.bars.map((b) => b.top).join(", ")} vs ${FRAME.bars.join(", ")}`);
-  ok("bars span the frame, charcoal, labelled as in the frame", s.bars.every((b) => near(b.w, 838, 3)) && s.bars.map((b) => b.text.toUpperCase()).join("|") === "01 HOW I DO IT|02 WHAT I DO|03 WHO DOING IT", s.bars.map((b) => b.text).join(" | "));
-  ok("footer and frame end where the frame's do", near(s.footer.top, FRAME.footerTop, 10) && near(s.frame.bottom, FRAME.frameBottom, 12), `footer ${s.footer.top}, frame bottom ${s.frame.bottom}`);
-  ok("total height matches the frame (2568)", near(s.docH, FRAME.height, 14), `${s.docH}`);
+  const u = s.frame.w / 840; // one frame pixel
+  ok("column: 1120 at a 1440 window (its floor), centred", near(s.frame.w, 1120, 2) && near(s.frame.left + s.frame.right, 1440 - 15, 18), `${s.frame.left}..${s.frame.right} (${s.frame.w})`);
+  ok("header 64 frame-px tall, its row in the same column", near(s.header.h, 64 * u, 2) && near(s.headerRow.left, s.frame.left, 1) && near(s.headerRow.right, s.frame.right, 1), `h ${s.header.h} (64u = ${(64 * u).toFixed(0)})`);
+  ok("hero is the frame's 553 tall; sections at least that, in order, no gaps", near(s.bars[0].top - s.hero.top, 553 * u, 6) && s.bars[1].top - s.bars[0].bottom >= 553 * u - 2 && s.bars[2].top - s.bars[1].bottom >= 553 * u - 2 && s.footer.top - s.bars[2].bottom >= 553 * u - 2, `hero ${s.bars[0].top - s.hero.top}, approach ${s.bars[1].top - s.bars[0].bottom}, projects ${s.bars[2].top - s.bars[1].bottom}, about ${s.footer.top - s.bars[2].bottom} (553u = ${(553 * u).toFixed(0)})`);
+  ok("bars span the frame, charcoal, labelled as in the frame", s.bars.every((b) => near(b.w, s.frame.w - 2, 3)) && s.bars.map((b) => b.text.toUpperCase()).join("|") === "01 HOW I DO IT|02 WHAT I DO|03 WHO DOING IT", s.bars.map((b) => b.text).join(" | "));
+  ok("footer closes the frame", near(s.footer.bottom, s.frame.bottom, 3), `footer bottom ${s.footer.bottom}, frame bottom ${s.frame.bottom}`);
   ok("four orange corner marks", s.marks === 4, `${s.marks}`);
 
-  ok("header: name left, nav and Contact grouped right", s.name.left < 400 && s.group.left > 720 && near(s.group.right, s.frame.right - 52, 4), `name ${s.name.left}, group ${s.group.left}..${s.group.right}`);
+  ok("header: name left, nav and Contact grouped right", s.name.left < s.frame.left + 120 * u && s.group.left > 720 && near(s.group.right, s.frame.right - 52 * u, 5), `name ${s.name.left}, group ${s.group.left}..${s.group.right}`);
   ok("Contact: square-cornered orange button; active dot under Welcome", s.cta.radius === "0px" && s.cta.bg === s.accent && s.cta.text === "Contact" && s.dot, JSON.stringify(s.cta));
 
   ok("hero headline, exactly", s.headline.map((h) => h.text).join(" / ") === "I design products that / make life easier.", s.headline.map((h) => h.text).join(" / "));
   ok("second line orange and bold; each line on one line", s.headline[1].color === s.accent && +s.headline[1].weight >= 700 && s.headline.every((h) => h.h < s.headlineSize * 1.4), `${s.headline[1].color} ${s.headline[1].weight}`);
   ok("subtitle, exactly, on one line", s.note.text === "6 years of connecting user needs with business goals" && s.note.lines === 1, `${s.note.lines} line(s)`);
   ok("role badge", s.badge.toUpperCase() === "YONATAN BUDAGOV SENIOR PRODUCT DESIGNER", s.badge);
-  ok("hero headline at the frame's size (37)", near(s.headlineSize, FRAME.heroHeadline, 0.6), `${s.headlineSize}px`);
+  ok("hero headline at the scale's display size (48-56)", s.headlineSize >= 48 && s.headlineSize <= 56, `${s.headlineSize}px`);
 
-  ok("section headings: My approach, Selected Projects, About Me, centred", s.headings.map((h) => h.text).join("|") === "My approach|Selected Projects|About Me" && s.headings.every((h) => near(h.centre, 720, 8)), s.headings.map((h) => `${h.text}@${h.centre}`).join(", "));
-  ok("section headings about half the hero's size (20 vs 37)", s.headings.every((h) => near(h.size, FRAME.sectionHeading, 0.6)) && s.headings[0].size / s.headlineSize < 0.6, `${s.headings[0].size}px / ${s.headlineSize}px`);
+  ok("section headings: My approach, Selected Projects, About Me, centred", s.headings.map((h) => h.text).join("|") === "My approach|Selected Projects|About Me" && s.headings.every((h) => near(h.centre, (s.frame.left + s.frame.right) / 2, 8)), s.headings.map((h) => `${h.text}@${h.centre}`).join(", "));
+  ok("section headings about half the hero's size (26 vs 56)", s.headings.every((h) => near(h.size, 26, 0.1)) && s.headings[0].size / s.headlineSize < 0.6, `${s.headings[0].size}px / ${s.headlineSize}px`);
 
   ok("approach: plain ground, no grid", s.approachBg === "none", s.approachBg);
   ok("approach: all four steps shown together, titles and descriptions", s.steps.length === 4 && s.steps.every((st) => st.opacity === 1 && st.title && st.desc > 40) && new Set(s.steps.map((st) => st.top)).size === 1, JSON.stringify(s.steps.map((st) => st.opacity)));
   const barRgb = (() => { const n = parseInt(s.bar.slice(1), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; })();
   ok("approach: only the first circle orange, the rest charcoal", s.steps[0].marker === s.accent && s.steps.slice(1).every((st) => st.marker === barRgb), s.steps.map((st) => st.marker).join(" | "));
-  ok("approach: rule across the whole frame, circles evenly spaced", near(s.line.w, 838, 3) && near(s.steps[1].cx - s.steps[0].cx, 205, 3) && near(s.steps[3].cx - s.steps[2].cx, 205, 3), `line ${s.line.w}, circles ${s.steps.map((st) => st.cx).join(", ")}`);
+  ok("approach: rule across the whole frame, circles evenly spaced", near(s.line.w, s.frame.w - 2, 3) && near(s.steps[1].cx - s.steps[0].cx, 205 * u, 3) && near(s.steps[3].cx - s.steps[2].cx, 205 * u, 3), `line ${s.line.w}, circles ${s.steps.map((st) => st.cx).join(", ")}`);
 
-  ok("projects: three equal 2:3 crops in a row, 5px gaps, images loaded", s.cards.length === 3 && s.cards.every((c) => near(c.aspect, 0.667, 0.01) && c.loaded && c.top === s.cards[0].top) && near(s.cards[1].left - s.cards[0].right, 5, 1), JSON.stringify(s.cards.map((c) => [c.left, c.right])));
+  ok("projects: three equal 2:3 crops in a row, 5px gaps, images loaded", s.cards.length === 3 && s.cards.every((c) => near(c.aspect, 0.667, 0.01) && c.loaded && c.top === s.cards[0].top) && near(s.cards[1].left - s.cards[0].right, 5 * u, 1.5), JSON.stringify(s.cards.map((c) => [c.left, c.right])));
   ok("projects: order kept, captions left-aligned under each", s.cards.map((c) => c.title).join(",") === "Second Office,Travelito,Joyn" && s.cards.every((c) => c.captionLeft === c.left && c.tag), s.cards.map((c) => c.title).join(","));
-  ok("projects: group centred, 670 wide (385..1055)", near(s.cards[0].left, 385, 8) && near(s.cards[2].right, 1055, 8), `${s.cards[0].left}..${s.cards[2].right}`);
+  ok("projects: group centred, 670 frame-px wide", near(s.cards[2].right - s.cards[0].left, 670 * u, 3) && near((s.cards[0].left + s.cards[2].right) / 2, (s.frame.left + s.frame.right) / 2, 3), `${s.cards[0].left}..${s.cards[2].right}`);
 
   ok("about: photo left, biography right, orange introduction", s.about.photo.right < s.about.bio.left && s.about.hello.text === "Nice to meet you!" && s.about.hello.color === s.accent && s.about.paragraphs === 4 && s.about.photoLoaded, `photo ..${s.about.photo.right}, bio ${s.about.bio.left}..`);
   ok("footer: Contact, Sitemap, Elsewhere, copyright", s.foot.labels.join("|").toUpperCase() === "CONTACT|SITEMAP|ELSEWHERE" && s.foot.mail === "mailto:Budagovy@gmail.com" && /2026 Yonatan Budagov/i.test(s.foot.copyright), s.foot.labels.join(" | "));
-  ok("footer: character at the bottom right, standing on the frame's edge", s.foot.characterLoaded && s.foot.character.left > 800 && near(s.foot.character.bottom, s.frame.bottom, 3), `x ${s.foot.character.left}, bottom ${s.foot.character.bottom} vs ${s.frame.bottom}`);
+  ok("footer: character at the bottom right, standing on the frame's edge", s.foot.characterLoaded && s.foot.character.left > s.frame.left + s.frame.w * 0.6 && near(s.foot.character.bottom, s.frame.bottom, 3), `x ${s.foot.character.left}, bottom ${s.foot.character.bottom} vs ${s.frame.bottom}`);
   ok("no dead links in the footer (unknown addresses are plain text)", s.foot.deadLinks === 0, `${s.foot.deadLinks}`);
 
   ok("every in-page link has a real target", s.links.length >= 4 && s.links.every((l) => l.exists), s.links.map((l) => `${l.href}${l.exists ? "" : " MISSING"}`).join(" "));
@@ -138,12 +139,11 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
 
 /* ---------- another desktop width: the same picture, scaled ---------- */
 {
-  const { ctx, page, errors } = await open({ viewport: { width: 1920, height: 1080 } });
+  const { ctx, page, errors } = await open({ viewport: { width: 2544, height: 1276 } });
   await walk(page);
-  const s = await page.evaluate(probe), k = (1920 - 15) / 1440; // less the scrollbar Chrome reserves? measured below instead
-  const scale = s.frame.w / 840;
-  ok("1920: column, headline and section heights all scale together", near(scale, 1920 / 1440, 0.02) && near(s.headlineSize / 37, scale, 0.02) && near(s.bars[1].top - s.bars[0].top, 569 * scale, 8), `x${scale.toFixed(3)}; headline ${s.headlineSize}px; approach ${s.bars[1].top - s.bars[0].top}px`);
-  ok("1920: no overflow, no console errors", s.overflow === 0 && errors.length === 0, `${s.overflow}px ${errors.join(" | ")}`);
+  const s = await page.evaluate(probe);
+  ok("2544: column is the frame's 58.33% again; geometry scales, type does not", near(s.frame.w, 2544 * 0.58333, 4) && s.headlineSize === 56 && s.headings[0].size === 26 && near(s.bars[0].top - s.hero.top, 553 * (s.frame.w / 840), 6), `column ${s.frame.w}, headline ${s.headlineSize}px, hero ${s.bars[0].top - s.hero.top}px`);
+  ok("2544: no overflow, no console errors", s.overflow === 0 && errors.length === 0, `${s.overflow}px ${errors.join(" | ")}`);
   await ctx.close();
 }
 
@@ -153,8 +153,9 @@ for (const [w, h] of [[390, 844], [768, 1024]]) {
   await walk(page);
   const s = await page.evaluate(probe);
   ok(`${w}px: no horizontal overflow`, s.overflow === 0, `${s.overflow}px`);
-  ok(`${w}px: stacked (steps and cards one per row), all revealed and loaded`, new Set(s.steps.map((st) => st.top)).size === 4 && new Set(s.cards.map((c) => c.top)).size === 3 && s.cards.every((c) => c.opacity === 1 && c.loaded) && s.steps.every((st) => st.opacity === 1), "");
-  ok(`${w}px: about stacks photo over biography; everything inside the frame`, s.about.photo.bottom <= s.about.bio.top && s.about.bio.right <= s.frame.right && s.cards.every((c) => c.right <= s.frame.right) && s.foot.character.right <= s.frame.right, `bio ..${s.about.bio.right}, frame ..${s.frame.right}`);
+  const cardRows = new Set(s.cards.map((c) => c.top)).size;
+  ok(`${w}px: steps stacked, cards ${w < 700 ? "one per row" : "three across"}, all revealed and loaded`, new Set(s.steps.map((st) => st.top)).size === 4 && cardRows === (w < 700 ? 3 : 1) && s.cards.every((c) => c.opacity === 1 && c.loaded) && s.steps.every((st) => st.opacity === 1), `${cardRows} card row(s)`);
+  ok(`${w}px: about ${w < 700 ? "stacks photo over biography" : "photo beside biography"}; everything inside the frame`, (w < 700 ? s.about.photo.bottom <= s.about.bio.top : s.about.photo.right <= s.about.bio.left) && s.about.bio.right <= s.frame.right && s.cards.every((c) => c.right <= s.frame.right) && s.foot.character.right <= s.frame.right, `bio ..${s.about.bio.right}, frame ..${s.frame.right}`);
   ok(`${w}px: no console errors`, errors.length === 0, errors.join(" | "));
   await page.screenshot({ path: `${OUT}page-${w}.png`, fullPage: true });
   await ctx.close();

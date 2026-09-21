@@ -19,7 +19,7 @@ template.innerHTML = `
 :host{display:block;--strip-bg:#fefbf2;--strip-ink:#22221c;--strip-muted:#969285;--strip-accent:#cc8d23;color:var(--strip-ink);font-family:Arial,Helvetica,sans-serif;direction:ltr}
 *{box-sizing:border-box}.strip{background:var(--strip-bg);overflow:hidden}
 .heading{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:var(--strip-head-h,48px);padding:0 var(--strip-pad,22px)}
-.experience{display:flex;align-items:baseline;gap:var(--strip-gap,16px);min-width:0}.title-copy{min-width:0}.separator{color:var(--strip-role-ink,var(--strip-muted));margin:0 var(--strip-sep,8px)}.separator[hidden]{display:none}.number{font:var(--strip-number,12px) monospace;color:var(--strip-accent)}
+.experience{display:flex;align-items:baseline;gap:var(--strip-gap,16px);min-width:0}.title-copy{min-width:0}.separator{color:var(--strip-role-ink,var(--strip-muted));margin:0 var(--strip-sep,8px);font-size:var(--strip-role,inherit)}.separator[hidden]{display:none}.number{font:var(--strip-number,12px) monospace;color:var(--strip-accent)}
 .company{font-size:var(--strip-company,28px);letter-spacing:var(--strip-company-tracking,-1.1px);font-weight:var(--strip-company-weight,500)}.role{color:var(--strip-role-ink,var(--strip-muted));font-size:var(--strip-role,17px)}
 button{font:inherit;color:inherit;cursor:pointer}.next{display:var(--strip-next,inline-block);border:0;background:none;font-size:11px;letter-spacing:1.4px;color:var(--strip-muted);padding:12px 0;white-space:nowrap}
 button:focus-visible{outline:2px solid var(--strip-accent);outline-offset:3px}
@@ -30,11 +30,11 @@ button:focus-visible{outline:2px solid var(--strip-accent);outline-offset:3px}
 .ground{position:absolute;left:0;right:0;bottom:5px;height:1px;background:#aaa798;opacity:.5;z-index:2}
 .walker{position:absolute;left:var(--strip-walker-x,13%);bottom:2px;width:auto;height:var(--strip-walker-h,82%);aspect-ratio:500/685;z-index:3;border:0;padding:0;background:transparent;overflow:visible;transform:translateX(-50%)}
 .walker canvas{height:100%;width:100%;display:block}.walker video{display:none}.shadow{position:absolute;width:51%;height:3%;border-radius:50%;background:#77756640;bottom:3%;left:20%}
-.figure{position:absolute;inset:0;transform-origin:50% 95%}.greeting{position:absolute;bottom:96%;left:50%;font:12px Arial,sans-serif;white-space:nowrap;padding:5px 9px;background:var(--strip-bg);border:1px solid #c7bda6;border-radius:8px;opacity:0;transform:translate(-30%,5px);transition:opacity .15s,transform .15s;pointer-events:none}
+.figure{position:absolute;inset:0;transform-origin:50% 95%}.greeting{position:absolute;bottom:96%;left:50%;font:var(--strip-small,12px) Arial,sans-serif;white-space:nowrap;padding:5px 9px;background:var(--strip-bg);border:1px solid #c7bda6;border-radius:8px;opacity:0;transform:translate(-30%,5px);transition:opacity .15s,transform .15s;pointer-events:none}
 .greeting.show{opacity:1;transform:translate(-30%,0)}
 .fade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,var(--strip-bg),transparent 4%,transparent 96%,var(--strip-bg));z-index:4}
-.pause{position:absolute;right:10px;bottom:10px;z-index:5;border:1px solid #bcb6a280;border-radius:50%;width:25px;height:25px;background:var(--strip-bg);color:var(--strip-muted);font-size:11px;opacity:0;transition:opacity .15s}.scene:hover .pause,.pause:focus-visible{opacity:1}
-@media(max-width:600px){.heading{padding:0 12px;gap:8px}.experience{gap:9px}.heading{min-height:68px}.company{font-size:18px}.title-copy{line-height:1.35}.separator{margin:0 4px}.role{font-size:12px}.next{font-size:9px;letter-spacing:.5px}.walker{left:var(--strip-walker-x,20%);height:var(--strip-walker-h,72%)}.pause{opacity:.7}.scene{height:var(--strip-scene-h,110px)}}
+.pause{position:absolute;right:10px;bottom:10px;z-index:5;border:1px solid #bcb6a280;border-radius:50%;width:25px;height:25px;background:var(--strip-bg);color:var(--strip-muted);font-size:var(--strip-small,11px);opacity:0;transition:opacity .15s}.scene:hover .pause,.pause:focus-visible{opacity:1}
+@media(max-width:600px){.heading{padding:0 12px;gap:8px}.experience{gap:9px}.heading{min-height:68px}.company{font-size:var(--strip-company,18px)}.title-copy{line-height:1.35}.separator{margin:0 4px}.role{font-size:var(--strip-role,12px)}.next{font-size:var(--strip-small,9px);letter-spacing:.5px}.walker{left:var(--strip-walker-x,20%);height:var(--strip-walker-h,72%)}.pause{opacity:.7}.scene{height:var(--strip-scene-h,110px)}}
 @media(prefers-reduced-motion:reduce){.greeting{transition:none}}
 </style>
 <section class="strip" aria-label="Career journey">
