@@ -81,6 +81,21 @@ export const HERO = {
 } as const;
 
 /**
+ * The greeting typed onto the monitor at rest, after the typewriter the
+ * owner pointed at (21st.dev, designali-in): one character at a time
+ * behind a thin cursor that blinks, a beat before it starts, held with
+ * the cursor blinking once complete.
+ */
+export const GREETING = {
+  /** Before the first character, ms. */
+  delay: 600,
+  /** Per character, ms. */
+  perChar: 70,
+  /** The cursor's blink, seconds per cycle (CSS). */
+  blink: 1,
+} as const;
+
+/**
  * Guided scrolling: a gentle assist that settles a wheel or trackpad
  * scroll onto the next section's landing, never a lock. The rules that
  * keep it from feeling rigid:

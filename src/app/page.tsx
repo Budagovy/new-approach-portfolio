@@ -29,11 +29,12 @@ import about from "../../content/about.json";
 export default function Home() {
   return (
     <>
-      <SiteHeader data={header as SiteHeaderData} home />
       <SplashScreen
         data={splash as SplashData}
         id="top"
+        chrome={<SiteHeader data={header as SiteHeaderData} home />}
         screen={<MonitorGreeting data={greeting as MonitorGreetingData} />}
+        cue={greeting.cue}
         next={
           <div className="column frame frame--rest">
             <main>

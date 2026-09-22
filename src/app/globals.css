@@ -233,20 +233,60 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   text-align: center;
 }
 /* Set at stage size and then shown scaled down onto the monitor (about
-   0.28 at 1440), so it is sized to read AS SEEN THERE: ~48px on the
-   screen. It is a picture on a monitor, not page text, and is not on the
-   page's type scale on purpose. */
+   0.28 at 1440, 0.22 at 2544), so it is sized to read AS SEEN THERE: in
+   the owner's Figma the line is 0.28 of the monitor's width, about 15px
+   on the screen at 1440 and 21px at 2544. It is a picture on a monitor,
+   not page text, and is not on the page's type scale on purpose. */
 .greeting-line {
   margin: 0;
-  font-size: clamp(2.75rem, 12vw, 11rem);
-  text-wrap: balance;
-  font-weight: 500;
-  line-height: 1.06;
-  letter-spacing: -0.035em;
+  font-size: clamp(1.75rem, 3.7vw, 7rem);
+  white-space: nowrap;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   color: var(--ink-strong);
 }
 .greeting-emphasis { font-weight: 700; }
 .greeting-mark { color: var(--accent); font-weight: 700; }
+/* The typewriter's cursor: a thin bar after the last character, steady
+   while typing, blinking once the line is complete (and always, under
+   reduced motion, since there is no typing). */
+.greeting-cursor {
+  display: inline-block;
+  width: 0.06em;
+  height: 0.95em;
+  margin-left: 0.08em;
+  vertical-align: -0.12em;
+  background: var(--accent);
+  animation: greeting-blink 1s steps(2, jump-none) infinite;
+}
+.greeting-cursor--typing { animation: none; }
+@keyframes greeting-blink { from { opacity: 1; } to { opacity: 0; } }
+
+/* The header, kept out of the room and brought in with the hero. The
+   header inside is still position: fixed (opacity does not change a
+   fixed element's containing block; a transform would). */
+/* The wrapper is a stacking context (opacity), so it needs a z-index of
+   its own above the track (1) or the header paints under the room. */
+.splash-chrome { position: relative; z-index: 60; will-change: opacity; }
+
+/* "scroll", with a short line dropping from it, low in the room. */
+.splash-cue {
+  position: absolute;
+  left: 50%;
+  bottom: 6vh;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  translate: -50% 0;
+  color: var(--bg);
+  text-shadow: 0 1px 12px rgb(22 20 14 / 0.5);
+  pointer-events: none;
+}
+.splash-cue-word { font-size: var(--fs-small); font-weight: 500; letter-spacing: 0.02em; }
+.splash-cue-line { width: 1px; height: 2.25rem; background: currentColor; opacity: 0.8; }
+@media (prefers-reduced-motion: reduce) { .greeting-cursor { animation: none; } }
 
 /* Reduced motion: the room above, then the page as it is. */
 .splash-flat { display: flex; flex-direction: column; }

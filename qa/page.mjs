@@ -45,6 +45,7 @@ const probe = () => {
   const o = (sel) => { const e = q(sel); return e ? +(+cs(e).opacity).toFixed(2) : null; };
   return {
     scrollY: Math.round(scrollY),
+    chrome: q(".splash-chrome") ? +cs(q(".splash-chrome")).opacity : 1,
     splash: { room: o(".splash-frame"), greeting: o(".splash-screen"), scale: (() => { const t = q(".splash-hero-stage") && cs(q(".splash-hero-stage")).transform; return !t || t === "none" ? 1 : +t.match(/matrix\(([^,]+)/)[1]; })() },
     accent: asRgb(accent),
     order: qa("header.site-header, #top, #approach, #work, #about, #contact").map((e) => e.id || "header"),
@@ -92,6 +93,7 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
   const { ctx, page, errors } = await open({ viewport: { width: 1440, height: 900 } });
   const before = await page.evaluate(probe);
   ok("opens on the splash: the room, the greeting on its monitor", before.splash.room === 1 && before.splash.greeting === 1, JSON.stringify(before.splash));
+  ok("no menu bar over the room at rest (it comes in with the hero)", before.chrome === 0, `header opacity ${before.chrome}`);
   ok("below the fold waits to be seen (reveals)", before.cards.every((c) => c.opacity === 0), JSON.stringify(before.cards.map((c) => c.opacity)));
   await walk(page);
   /* The page proper is measured at the pin's release: the hero at native scale at the top and
@@ -100,7 +102,10 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
   const s = await page.evaluate(probe);
   ok("hero arrived: room and greeting gone, hero at native scale under the header", s.splash.room === 0 && s.splash.greeting === 0 && near(s.splash.scale, 1, 0.01) && near(s.hero.top - scrollY_(s), s.header.h + 1, 2), JSON.stringify({ ...s.splash, heroTop: s.hero.top - scrollY_(s), header: s.header.h }));
 
-  ok("order: header, hero, approach, projects, about, footer", s.order.join(",") === "header,top,approach,work,about,contact", s.order.join(","));
+  /* The header is rendered through the splash (it is kept out of the room and brought in with
+     the hero), so in DOM order it sits inside the #top section. */
+  ok("order: header (in the splash), hero, approach, projects, about, footer", s.order.join(",") === "top,header,approach,work,about,contact", s.order.join(","));
+
   const u = s.frame.w / 840; // one frame pixel
   ok("column: 1120 at a 1440 window (its floor), centred", near(s.frame.w, 1120, 2) && near(s.frame.left + s.frame.right, 1440 - 15, 18), `${s.frame.left}..${s.frame.right} (${s.frame.w})`);
   ok("header 64 frame-px tall, its row in the same column", near(s.header.h, 64 * u, 2) && near(s.headerRow.left, s.frame.left, 1) && near(s.headerRow.right, s.frame.right, 1), `h ${s.header.h} (64u = ${(64 * u).toFixed(0)})`);

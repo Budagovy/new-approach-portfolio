@@ -50,6 +50,8 @@ export function SplashScreen({
   id,
   screen,
   next,
+  chrome,
+  cue,
   children,
 }: {
   data: SplashData;
@@ -72,6 +74,15 @@ export function SplashScreen({
    * full-height hero it simply waits below the screen, as before.
    */
   next?: ReactNode;
+  /**
+   * The site's fixed header. Handed to the splash so it can keep it out
+   * of the picture while the room is on screen and bring it in as the
+   * hero arrives: the room is the whole screen, with nothing over it but
+   * the monitor's greeting and the scroll cue.
+   */
+  chrome?: ReactNode;
+  /** The word under the cue at the foot of the room ("scroll"). */
+  cue?: string;
   children: ReactNode;
 }) {
   /* The server cannot know the reader's motion preference, so the first
@@ -82,9 +93,10 @@ export function SplashScreen({
   const [flat, setFlat] = useState(false);
   useEffect(() => setFlat(!!reduce), [reduce]);
   return !flat ? (
-    <SplashPinned data={data} id={id} screen={screen} next={next}>{children}</SplashPinned>
+    <SplashPinned data={data} id={id} screen={screen} next={next} chrome={chrome} cue={cue}>{children}</SplashPinned>
   ) : (
     <>
+      {chrome}
       <SplashFlat data={data} id={id} reduce>{children}</SplashFlat>
       {next}
     </>
@@ -128,12 +140,16 @@ function SplashPinned({
   id,
   screen: resting,
   next,
+  chrome,
+  cue,
   children,
 }: {
   data: SplashData;
   id?: string;
   screen?: ReactNode;
   next?: ReactNode;
+  chrome?: ReactNode;
+  cue?: string;
   children: ReactNode;
 }) {
   const { frame, screen } = data.video;
@@ -418,6 +434,13 @@ function SplashPinned({
      hero beneath is what the reader interacts with from then on. */
   const screenOpacity = useTransform(push, [HERO.screenOut[0], HERO.screenOut[1]], [1, 0], { clamp: true });
   const screenPointer = useTransform(screenOpacity, (o) => (o > 0.02 ? "auto" : "none"));
+
+  /* The header comes in with the hero: as the room fades, over the same
+     slice of the push, so the page arrives whole. Until then it is not
+     there at all (no pointer events either). The scroll cue leaves as the
+     push begins, with the greeting. */
+  const chromeOpacity = useTransform(push, [HERO.roomOut[0], HERO.roomOut[1]], [0, 1], { clamp: true });
+  const chromePointer = useTransform(chromeOpacity, (o) => (o > 0.5 ? "auto" : "none"));
   /* Blur removed for now while the handoff geometry is the thing being
      verified: it previously masked the point where the footage would show
      its own pixels through the reveal, which is a real seam worth checking
@@ -431,6 +454,11 @@ function SplashPinned({
 
   return (
     <section id={id} className="splash">
+      {chrome && (
+        <motion.div className="splash-chrome" style={{ opacity: chromeOpacity, pointerEvents: chromePointer }}>
+          {chrome}
+        </motion.div>
+      )}
       <div
         ref={trackRef}
         className="splash-track"
@@ -446,6 +474,13 @@ function SplashPinned({
         <div ref={stageRef} className="splash-stage">
           {/* The stage's ground, behind the room: what the room fades to. */}
           <motion.div className="splash-ground" style={{ opacity: coverOpacity }} aria-hidden="true" />
+
+          {cue && (
+            <motion.div className="splash-cue" style={{ opacity: screenOpacity }} aria-hidden="true">
+              <span className="splash-cue-word">{cue}</span>
+              <span className="splash-cue-line" />
+            </motion.div>
+          )}
 
           {/* The room. Sized to cover the viewport at the footage aspect. */}
           <motion.div

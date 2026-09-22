@@ -63,7 +63,9 @@ const trace = async (page, dy, ms = 1200) => page.evaluate(async ({ dy, ms }) =>
   ok("native scrollTo still lands exactly", (await page.evaluate(() => scrollY)) === probeY, `${probeY}`);
 
   // Anchor link glides to the projects section, landing below the header.
-  await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(400);
+  /* The header is not on screen while the room is (it comes in with the hero), so the anchor
+     is clicked from the splash's release point, where the page proper begins. */
+  await page.evaluate(() => scrollTo(0, document.querySelector(".splash-track").offsetHeight - innerHeight)); await page.waitForTimeout(1500);
   const workTop = await page.evaluate(() => { const resting = (el) => { let y = el.getBoundingClientRect().top + scrollY; for (let h = el.closest("[data-hold]"); h; h = h.parentElement ? h.parentElement.closest("[data-hold]") : null) { if (getComputedStyle(h).position !== "sticky") continue; y += h.parentElement.getBoundingClientRect().bottom - h.getBoundingClientRect().bottom; } return y; }; return resting(document.querySelector("#work")); });
   await page.click('a.site-header-link[href="#work"]');
   const a = await page.evaluate(async () => { const out = []; const t0 = performance.now(); await new Promise((r) => { const tick = () => { out.push(Math.round(scrollY)); if (performance.now() - t0 < 2500) requestAnimationFrame(tick); else r(); }; requestAnimationFrame(tick); }); return out; });

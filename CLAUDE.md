@@ -249,6 +249,21 @@ sticky box marked `data-hold`), so the page is whole the moment the hero
 arrives and reads on with no seam. The two frame halves are one frame to
 the eye. The hero's own layout is untouched: it is the Figma frame's.
 
+**The room at rest, per the owner's Figma (2026-09-22).** No menu bar over
+the room: the header is handed to the splash as `chrome` and rendered in
+`.splash-chrome`, opacity 0 and no pointer events until the room fades,
+then in with the hero over the same slice of the push (`HERO.roomOut`).
+That wrapper is a stacking context and carries `z-index: 60`: without it
+the header painted UNDER the track (z 1) and could not be clicked. The
+greeting is small, as in the Figma (0.28 of the monitor's width: about
+15px on the screen at 1440, 21px at 2544), regular weight with a bold
+"you" and an orange stop, and is TYPED: `MonitorGreeting` reveals one
+character every `GREETING.perChar` ms after `GREETING.delay`, behind a
+thin accent cursor that blinks once the line is done (the owner pointed at
+21st.dev's designali-in typewriter; its source is behind an API key, so
+the behaviour was matched, not the code). A "scroll" cue with a short
+line sits low in the room and leaves with the greeting.
+
 **Things learned restoring it.**
 - The greeting is sized to read AS SEEN on the monitor (the stage is
   shown scaled down onto it, ~0.28 at 1440): `clamp(2.75rem, 12vw,
