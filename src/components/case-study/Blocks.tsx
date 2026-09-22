@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { Zoomable } from "./Zoomable";
-import type { CaseBlock, CaseDetail, CaseImage, CasePhone, CaseText } from "./types";
+import type { CaseBlock, CaseDetail, CaseImage, CasePhone, CasePrototype, CaseText } from "./types";
 
 type ZoomLabels = { open: string; close: string };
 
@@ -59,11 +59,26 @@ function Detail({ detail }: { detail: CaseDetail }) {
   );
 }
 
+/**
+ * A phone whose screen is a link: the empty frame image with the label set
+ * on its display as live text. Opens in a new tab (it leaves the site).
+ */
+function PrototypePhone({ prototype }: { prototype: CasePrototype }) {
+  return (
+    <a className="cs-prototype" href={prototype.href} target="_blank" rel="noopener noreferrer" title={prototype.title}>
+      <img src="/work/second-office/frame.png" alt="" width={890} height={1800} loading="lazy" decoding="async" />
+      <span className="cs-prototype-screen">
+        <span className="cs-prototype-label">{prototype.label}</span>
+      </span>
+    </a>
+  );
+}
+
 function Text({ items }: { items: CaseText[] }) {
   return (
     <div className="cs-text">
       {items.map((item) => {
-        if (item.kind === "label") return <p key={item.text} className="cs-label">{item.text}</p>;
+        if (item.kind === "label") return <p key={item.text} className={item.tone === "accent" ? "cs-label cs-label--accent" : "cs-label"}>{item.text}</p>;
         if (item.kind === "title") return <h3 key={item.text[0]} className="cs-h3"><Lines lines={item.text} /></h3>;
         return <p key={item.text.slice(0, 32)} className={item.tone === "ink" ? "cs-p cs-p--ink" : "cs-p"}>{item.text}</p>;
       })}
@@ -75,6 +90,9 @@ function Block({ block, labels }: { block: CaseBlock; labels: ZoomLabels }) {
   switch (block.type) {
     case "rule":
       return <hr className="cs-rule" />;
+
+    case "bar":
+      return <div className="cs-bar" aria-hidden="true" />;
 
     case "band":
       return <div className="cs-band" aria-hidden="true" />;
@@ -96,7 +114,7 @@ function Block({ block, labels }: { block: CaseBlock; labels: ZoomLabels }) {
         <div className="cs-columns">
           {block.items.map((item) => (
             <div key={item.label} className="cs-column">
-              <p className="cs-label">{item.label}</p>
+              <p className={item.labelTone === "accent" ? "cs-label cs-label--accent" : "cs-label"}>{item.label}</p>
               {item.title && <h3 className="cs-h3">{item.title}</h3>}
               <p className="cs-p">{item.text}</p>
             </div>
@@ -105,7 +123,12 @@ function Block({ block, labels }: { block: CaseBlock; labels: ZoomLabels }) {
       );
 
     case "note":
-      return <p className="cs-note">{block.text}</p>;
+      return (
+        <div className="cs-note-block">
+          {block.label && <p className="cs-label">{block.label}</p>}
+          <p className="cs-note">{block.text}</p>
+        </div>
+      );
 
     case "stats":
       return (
@@ -154,14 +177,17 @@ function Block({ block, labels }: { block: CaseBlock; labels: ZoomLabels }) {
 
     case "steps":
       return (
-        <ol className="cs-steps">
-          {block.items.map((item, i) => (
-            <li key={item} className="cs-step">
-              <span className="cs-step-number" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
-              <span>{item}</span>
-            </li>
-          ))}
-        </ol>
+        <div className="cs-steps-block">
+          {block.label && <p className="cs-label">{block.label}</p>}
+          <ol className="cs-steps">
+            {block.items.map((item, i) => (
+              <li key={item} className="cs-step">
+                <span className="cs-step-number" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
       );
 
     case "flow":
@@ -186,11 +212,14 @@ function Block({ block, labels }: { block: CaseBlock; labels: ZoomLabels }) {
 
     case "gallery":
       return (
-        <ul className="cs-gallery">
-          {block.items.map((phone) => (
-            <li key={phone.src}><Phone phone={phone} labels={labels} /></li>
-          ))}
-        </ul>
+        <div className={block.prototype ? "cs-gallery-row" : undefined}>
+          <ul className="cs-gallery" style={{ "--cols": block.columns ?? 6 } as CSSProperties}>
+            {block.items.map((phone) => (
+              <li key={phone.src}><Phone key={phone.src} phone={phone} labels={labels} /></li>
+            ))}
+          </ul>
+          {block.prototype && <PrototypePhone prototype={block.prototype} />}
+        </div>
       );
 
     case "aside":

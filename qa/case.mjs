@@ -15,8 +15,8 @@
    Responsive: no horizontal overflow at 1440 / 1024 / 768 / 390 / 320; columns stack; key
    screens stay wide enough to read on a phone.
 
-   Pass the approved copy to check it line by line:
-     QA_COPY=path/to/One-Pager-copy.md npm run qa:case
+   The approved copy (qa/copy/second-office.md, transcribed from the owner's refined PDF) is
+   checked line by line both ways; QA_COPY overrides the path.
    Exits non-zero on failure. Dev server must be up.
 */
 import { chromium } from "playwright-core";
@@ -30,7 +30,7 @@ const CHROME_PATHS = {
 const CHROME = process.env.QA_CHROME || CHROME_PATHS[process.platform] || CHROME_PATHS.darwin;
 const BASE = process.env.QA_URL || "http://localhost:3220";
 const PATH = "/work/second-office";
-const COPY = process.env.QA_COPY;
+const COPY = process.env.QA_COPY || "qa/copy/second-office.md";
 const OUT = "qa/frames/";
 mkdirSync(OUT, { recursive: true });
 
@@ -101,7 +101,7 @@ async function open(url, opts) {
       backs: qa(".cs-back").map((a) => ({ text: a.textContent.trim(), href: a.getAttribute("href") })),
       embeds: qa("embed, object, iframe, [src$='.pdf'], [href$='.pdf']").length,
       text: q(".cs").textContent.replace(/\s+/g, " "),
-      heads, h2: qa(".cs h2").map((h) => h.textContent.trim().replace(/\s+/g, " ")),
+      heads, h2: qa(".cs h2").map((h) => h.textContent.trim().replace(/\s+/g, " ")), headWeights: qa(".cs h1, .cs h2").map((h) => +cs(h).fontWeight),
       bodyBg: cs(document.body).backgroundColor, frameBg: cs(q(".frame")).backgroundColor, csColor: cs(q(".cs")).color, h1Color: cs(q(".cs-h1")).color,
       font: cs(q(".cs-h1")).fontFamily,
       stats: qa(".cs-stat").map((li) => ({ value: li.querySelector(".cs-stat-value").textContent, valueColor: cs(li.querySelector(".cs-stat-value")).color, textColor: cs(li.querySelector(".cs-stat-text")).color })),
@@ -109,7 +109,8 @@ async function open(url, opts) {
       phones: qa(".cs-phone img").filter((img) => !img.closest("dialog")).map((img) => { let white = null; for (let n = img; n && !n.classList.contains("cs"); n = n.parentElement) { const bg = cs(n).backgroundColor; if (bg !== "rgba(0, 0, 0, 0)" && !n.classList.contains("cs-section--surface")) white = `${n.className}: ${bg}`; } return { src: img.getAttribute("src"), white }; }),
       aligns: [...new Set(qa(".cs h1, .cs h2, .cs h3, .cs p, .cs dt, .cs dd").filter((el) => !el.closest(".cs-hero-phones")).map((el) => cs(el).textAlign))],
       briefLefts: ["#brief .cs-label", "#brief .cs-h2", "#brief .cs-intro", "#brief .cs-column", "#brief .cs-note"].map((x) => Math.round(q(x).getBoundingClientRect().left)),
-      images: qa(".cs img").filter((i) => !i.closest(".cs-detail") && !i.closest("dialog")).map((i) => ({ src: i.getAttribute("src").split("/").pop(), natural: (+i.getAttribute("width")) / (+i.getAttribute("height")), shown: i.getBoundingClientRect().width / i.getBoundingClientRect().height, loaded: i.complete && i.naturalWidth > 0, alt: i.getAttribute("alt") })),
+      proto: (() => { const a = q(".cs-prototype"); return a && { href: a.getAttribute("href"), target: a.getAttribute("target"), rel: a.getAttribute("rel"), text: a.textContent.trim() }; })(),
+    images: qa(".cs img").filter((i) => !i.closest(".cs-detail") && !i.closest("dialog") && !i.closest(".cs-prototype")).map((i) => ({ src: i.getAttribute("src").split("/").pop(), nat: i.naturalWidth, natural: (+i.getAttribute("width")) / (+i.getAttribute("height")), shown: i.getBoundingClientRect().width / i.getBoundingClientRect().height, loaded: i.complete && i.naturalWidth > 0, alt: i.getAttribute("alt") })),
       details: qa(".cs-detail").map((d) => { const r = d.getBoundingClientRect(), i = d.querySelector("img").getBoundingClientRect(); return { covered: i.left <= r.left + 0.5 && i.right >= r.right - 0.5 && i.top <= r.top + 0.5 && i.bottom >= r.bottom - 0.5, alt: d.querySelector("img").getAttribute("alt") }; }),
       sizes: [...new Set(textEls.filter((el) => el.getBoundingClientRect().width > 0).map((el) => Math.round(parseFloat(cs(el).fontSize) * 100) / 100))].sort((a, b) => a - b),
       measures: qa(".cs-p, .cs-intro, .cs-lede, .cs-note").map((p) => { const lh = parseFloat(cs(p).lineHeight), lines = Math.max(1, Math.round(p.getBoundingClientRect().height / lh)); return { cls: p.className, chars: Math.round(p.textContent.trim().length / lines), lines }; }),
@@ -124,20 +125,20 @@ async function open(url, opts) {
   ok("live text and separate images: no embedded PDF, frame or object", s.embeds === 0 && s.text.length > 3000 && s.images.length >= 16, `${s.text.length} chars of text, ${s.images.length} images`);
 
   if (COPY && existsSync(COPY)) {
-    const context = new Set(["# SecondOffice - continuous portfolio page", "Yonatan Budagov", "PRODUCT DESIGN / SELECTED WORK", "SecondOffice", "Yonatan Budagov / Product Design"]);
+    const context = new Set(["# Second Office - approved copy (transcribed from SecondOffice-Content-Refined.pdf, 2026-09-22)"]);
     const norm = (t) => t.toLowerCase().replace(/\s+/g, " ").trim();
     const page_ = norm(s.text);
     const lines = readFileSync(COPY, "utf8").split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !context.has(l) && !/^\d\d$/.test(l)).map((l) => l.replace(/^\d\d\s+/, ""));
     const absent = lines.filter((l) => !page_.includes(norm(l)));
-    ok(`approved copy: all ${lines.length} lines of One-Pager-copy.md are on the page`, absent.length === 0, absent.slice(0, 3).map((l) => `"${l.slice(0, 50)}"`).join("; "));
+    ok(`approved copy: all ${lines.length} lines of the refined copy are on the page`, absent.length === 0, absent.slice(0, 3).map((l) => `"${l.slice(0, 50)}"`).join("; "));
     /* Nothing invented: every sentence on the page comes from the approved copy (UI chrome aside). */
     const source = norm(readFileSync(COPY, "utf8").replace(/\r?\n/g, " "));
-    const sentences = await page.evaluate(() => [...document.querySelectorAll(".cs h1, .cs h2, .cs h3:not(.cs-flow-title), .cs-p, .cs-intro, .cs-lede .cs-line, .cs-note, .cs-quote p, .cs-stat-text, .cs-stat-value, .cs dd, .cs-label, .cs-caption, .cs-step span:last-child, .cs-flow-title span:last-child")].filter((e) => !e.closest("dialog")).map((e) => [...e.querySelectorAll(".cs-line")].length && !e.classList.contains("cs-line") ? [...e.querySelectorAll(".cs-line")].map((l) => l.textContent.trim()) : [e.textContent.trim()]).flat());
+    const sentences = await page.evaluate(() => [...document.querySelectorAll(".cs h1, .cs h2, .cs h3:not(.cs-flow-title), .cs-p, .cs-intro, .cs-lede .cs-line, .cs-note, .cs-quote p, .cs-stat-text, .cs-stat-value, .cs dd, .cs-label, .cs-caption, .cs-step span:last-child, .cs-flow-title span:last-child, .cs-prototype-label")].filter((e) => !e.closest("dialog")).map((e) => [...e.querySelectorAll(".cs-line")].length && !e.classList.contains("cs-line") ? [...e.querySelectorAll(".cs-line")].map((l) => l.textContent.trim()) : [e.textContent.trim()]).flat());
     const invented = [...new Set(sentences)].filter((t) => t && !source.includes(norm(t)));
     ok("nothing invented: every heading, paragraph, label and figure comes from the approved copy", invented.length === 0, invented.slice(0, 4).map((t) => `"${t.slice(0, 40)}"`).join("; "));
   } else console.log("NOTE  QA_COPY not set: the line-by-line copy check was skipped");
 
-  const expectedH2 = ["Turn a broad vision into an everyday product.", "Less commuting. More connection.", "Booking was the starting point. People changed the brief.", "Make the direction testable before making it bigger.", "One clear place to start. Three steps toward a desk.", "A shared workday, without all the back-and-forth.", "Designed end to end.", "A tested direction. A product people used."];
+  const expectedH2 = ["From a broad brief to a complete product.", "Less commuting. More connection.", "Booking was the starting point. People changed the brief.", "From product definition to delivery.", "One clear place to start. Three steps toward a desk.", "A shared workday, without all the back and forth.", "Designed end to end.", "What I learned from testing and delivery."];
   ok("sections in the approved order", s.h2.join("|") === expectedH2.join("|"), s.h2.length + " sections");
   const article = s.heads.filter((h) => !h.footer);
   let skipped = 0; for (let i = 1; i < article.length; i++) if (article[i].level > article[i - 1].level + 1) skipped++;
@@ -145,9 +146,13 @@ async function open(url, opts) {
 
   ok("cream ground (#FFF9E5), ink text (#16140E), Google Sans Flex", s.bodyBg === CREAM && s.frameBg === CREAM && s.csColor === INK && s.h1Color === INK && /Google Sans Flex/i.test(s.font), `${s.bodyBg} ${s.csColor} ${s.font.slice(0, 30)}`);
   ok("research: 78%, 62%, 82% in the accent (#F3B44A), their descriptions dark", s.stats.map((x) => x.value).join(",") === "78%,62%,82%" && s.stats.every((x) => x.valueColor === ACCENT && x.textColor === INK), JSON.stringify(s.stats.map((x) => [x.valueColor, x.textColor])));
-  const strayAccent = s.accentText.filter((c) => !c.includes("cs-stat-value") && !c.includes("(on dark)"));
-  ok("no other orange text on cream (only the figures; labels on the dark callouts)", strayAccent.length === 0 && s.accentText.filter((c) => c.includes("cs-stat-value")).length === 3, s.accentText.join("; "));
-  ok("phones are the supplied cutouts, with nothing white behind them", s.phones.length === 14 && s.phones.every((p) => p.src.endsWith("-cutout.svg") && !p.white), s.phones.filter((p) => p.white).map((p) => p.white).join("; ") || `${s.phones.length} phones`);
+  const strayAccent = s.accentText.filter((c) => !c.includes("cs-stat-value") && !c.includes("(on dark)") && !c.includes("cs-label--accent"));
+  ok("orange text on cream: the figures and the Problem/Solution labels only", strayAccent.length === 0 && s.accentText.filter((c) => c.includes("cs-stat-value")).length === 3 && s.accentText.filter((c) => c.includes("cs-label--accent")).length === 2, s.accentText.join("; "));
+  ok("The problem and The solution labels are orange", await page.evaluate(() => [...document.querySelectorAll("#brief .cs-column .cs-label")].every((l) => getComputedStyle(l).color === "rgb(243, 180, 74)")), "");
+  ok("bold section headings", s.headWeights.every((w) => w >= 700), s.headWeights.join(","));
+  ok("phones are the composited mockups (screen in the PDF's transparent frame), nothing white behind", s.phones.length === 14 && s.phones.every((p) => p.src.endsWith(".webp") && !p.white), s.phones.filter((p) => p.white).map((p) => p.white).join("; ") || `${s.phones.length} phones`);
+  ok("sharp assets: every mockup is 890px wide, every board at least 1100px", s.images.every((i) => i.nat >= 890), s.images.filter((i) => i.nat < 890).map((i) => `${i.src} ${i.nat}px`).join("; ") || "");
+  ok("Figma prototype: a real link, new tab, the PDF's address", s.proto && s.proto.href.startsWith("https://www.figma.com/proto/CK1WlplNhV9rSnQEi9T0mx/") && s.proto.target === "_blank" && /noopener/.test(s.proto.rel) && s.proto.text === "Prototype", JSON.stringify(s.proto));
   ok("headings and paragraphs left-aligned", s.aligns.every((a) => a === "left" || a === "start"), s.aligns.join(","));
   ok("THE BRIEF: label, heading, paragraph, columns and scope on one left edge", new Set(s.briefLefts).size === 1, s.briefLefts.join(", "));
   const wide = s.measures.filter((m) => m.lines > 1 && m.chars > 82);
@@ -190,6 +195,7 @@ async function open(url, opts) {
   const landed = await page.evaluate(() => ({ top: Math.round(document.querySelector("#work").getBoundingClientRect().top), pad: Math.round(parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)), vh: innerHeight }));
   ok("Back to projects lands on the homepage's projects section", page.url().endsWith("/#work") && landed.top >= 0 && landed.top <= landed.pad + 4, `projects top ${landed.top}, header ${landed.pad}`);
   ok("1440: no horizontal overflow, no console errors", s.overflow === 0 && errors.length === 0, `${s.overflow}px ${errors.join(" | ")}`);
+  try { const r = await fetch(s.proto.href, { method: "GET", redirect: "follow" }); ok("Figma prototype address answers (not 404)", r.status < 400, `HTTP ${r.status}`); } catch (e) { console.log("NOTE  Figma address not reachable from here: " + String(e).slice(0, 80)); }
   await ctx.close();
 }
 
@@ -206,6 +212,7 @@ for (const [w, h, mobile] of [[1024, 768, false], [768, 1024, true], [390, 844, 
       overflow: document.documentElement.scrollWidth - vw,
       spill: qa(".cs *").filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && !e.closest("dialog") && !e.closest(".cs-detail") && (r.right > vw + 1 || r.left < -1); }).slice(0, 3).map((e) => e.className),
       columnsRows: rows("#brief .cs-column"), statsRows: rows(".cs-stat"), flowRows: rows(".cs-flow-step"), galleryRows: rows(".cs-gallery li"),
+      captionsAligned: qa(".cs-phone figcaption, .cs-figure figcaption").filter((c) => !c.closest(".cs-hero-phones")).every((c) => Math.abs(c.getBoundingClientRect().left - c.parentElement.querySelector("img").getBoundingClientRect().left) <= 1),
       flowPhone: Math.round(q(".cs-flow .cs-phone img").getBoundingClientRect().width), pairPhone: Math.round(q(".cs-phone-pair img").getBoundingClientRect().width),
       h1: parseFloat(getComputedStyle(q(".cs-h1")).fontSize), body: parseFloat(getComputedStyle(q(".cs-p")).fontSize),
       clipped: qa(".cs h1, .cs h2, .cs h3, .cs p").filter((e) => e.scrollWidth > e.clientWidth + 1).length,
@@ -216,6 +223,7 @@ for (const [w, h, mobile] of [[1024, 768, false], [768, 1024, true], [390, 844, 
   ok(`${tag} no horizontal overflow, nothing outside the screen, no clipped text`, s.overflow === 0 && s.spill.length === 0 && s.clipped === 0, `overflow ${s.overflow}px, spill ${s.spill.join(",") || "none"}, clipped ${s.clipped}`);
   if (w >= 900) ok(`${tag} columns kept side by side`, s.columnsRows === 1 && s.statsRows === 1 && s.flowRows === 1, `${s.columnsRows}/${s.statsRows}/${s.flowRows}`);
   else ok(`${tag} columns, figures and the booking flow stack in reading order; gallery in two`, s.columnsRows === 2 && s.statsRows === 3 && s.flowRows === 3 && s.galleryRows === 3, `${s.columnsRows}/${s.statsRows}/${s.flowRows}/${s.galleryRows}`);
+  ok(`${tag} every caption starts at its image's left edge`, s.captionsAligned, "");
   if (w < 600) ok(`${tag} key screens stay readable; type stays on the scale, not shrunk`, s.flowPhone >= Math.min(250, w - 48) && s.pairPhone >= Math.min(250, w - 48) && s.body === 17 && s.h1 >= 32, `flow phone ${s.flowPhone}px, pair ${s.pairPhone}px, h1 ${s.h1}px, body ${s.body}px`);
   ok(`${tag} images loaded, no console errors`, s.loaded && errors.length === 0, errors.join(" | "));
   await page.evaluate(() => scrollTo(0, 0));

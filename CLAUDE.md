@@ -143,10 +143,31 @@ artwork: the owner's stated order.
 
 ## Case studies
 
-`/work/<slug>`, currently Second Office. Built from a design handoff the
-owner supplied (a one-page PDF as visual reference, an approved-copy
-file, phone cutouts and research boards). Travelito and Joyn are meant to
-follow on the same system.
+`/work/<slug>`, currently Second Office. First built from a design handoff
+(2026-09-21), then REPLACED on 2026-09-22 from the owner's refined PDF
+(`SecondOffice-Content-Refined.pdf` in the Codex outputs folder): new
+copy, a new section order (the brief folds in problem/solution/role, the
+kickoff became "Leading the product", the outcome is "What I learned"),
+charcoal bars between sections, bold headings, orange Problem/Solution
+labels, a fanned hero, a 3x2 gallery with a Figma prototype phone beside
+it. Travelito and Joyn are meant to follow on the same system.
+
+**Copy.** The refined PDF's text is mostly outlined, so it was transcribed
+by reading the render into `qa/copy/second-office.md`; `qa:case` checks
+that file against the page both ways. When the owner sends a revised
+PDF, update that file with it.
+
+**Assets.** The owner's folder (`Desktop/Cursor Folder/Final Portfolio
+2026/figma assets/Study case Assets/Second Office`) holds the two boards
+(`CI.png`, `kickoff meeting.png`) at the same pixels as the PDF's, and
+phone PNGs at ~420x850 that are LOWER resolution than the PDF's own
+embedded screens (1594x3437). So the phones on the page are built from
+the PDF: each screen composited into the PDF's transparent iPhone frame
+(890x1800) at the PDF's own inset, saved as WebP with alpha
+(`public/work/second-office/*.webp`); the bare screens for the three
+detail crops (`*-screen.webp`); and the empty frame (`frame.png`) for the
+prototype phone, whose "Prototype" label is live text. The build script
+was a scratch file; the recipe is above if it has to be redone.
 
 **How it is put together.** A case study is a hero plus an ordered list of
 typed blocks: `section` (label, heading, optional intro; nests its own
@@ -181,17 +202,19 @@ layout none of them can express.
   `#F3B44A`, all from the site's tokens. Two colours are the case
   study's own, scoped under `.cs`: the pale research surface `#FBF0D5`
   and a quiet divider `#DAD4C2`.
-- Phone mockups are the supplied `*-cutout.svg` files, straight on the
-  cream: no white background, tray or container, and the colours inside
-  the screens untouched. When they were copied into `public/work/`, each
-  SVG's viewBox was trimmed to its own clip rectangle (the device sat
-  off-centre in the canvas, with empty margin where a shadow had been),
-  which changes nothing inside the device. The three detail crops under
-  the booking flow are the same screens enlarged around a focus point
-  (`detail.focus` in the content) and fill their panels edge to edge.
-- In the research statistics only `78%`, `62%`, `82%` are orange; their
-  descriptions are dark. No other orange text on cream (the labels on
-  the dark callouts are orange on ink, 9:1).
+- Phone mockups sit straight on the cream: no white background, tray or
+  container, the colours inside the screens untouched. The hero fan's
+  overlap reads through a CSS drop-shadow on the cutout's own edge. The
+  three detail crops under the booking flow are the same screens enlarged
+  around a focus point (`detail.focus` in the content) and fill their
+  panels edge to edge.
+- Orange text on cream: only `78%`, `62%`, `82%` (descriptions dark) and
+  the two labels THE PROBLEM / THE SOLUTION (`labelTone: "accent"`), at
+  the owner's request; the labels on the dark callouts are orange on ink.
+- Bold (700) h1/h2/h3, per the refined brief.
+- The Figma prototype is `gallery.prototype`: a real link in a new tab,
+  drawn as the empty frame with the label as live text on its screen.
+  `qa:case` fetches the address and expects < 400.
 - Headings and paragraphs left-aligned, THE BRIEF included: its label,
   heading, paragraph, columns and scope note share one left edge.
 - Type is the SITE's scale, not the handoff's. The handoff asked for a

@@ -19,7 +19,7 @@ export interface CaseImage {
 }
 
 export interface CasePhone extends CaseImage {
-  /** Set larger than its neighbours (the hero's middle phone). */
+  /** Set larger than its neighbours (a hero's middle phone). */
   lead?: boolean;
 }
 
@@ -33,12 +33,21 @@ export interface CaseDetail {
 }
 
 export type CaseText =
-  | { kind: "label"; text: string }
+  | { kind: "label"; text: string; tone?: "accent" }
   | { kind: "title"; text: string[] }
   | { kind: "paragraph"; text: string; tone?: "ink" };
 
+/** An outside link shown as a phone with the label on its screen (a Figma prototype). */
+export interface CasePrototype {
+  label: string;
+  href: string;
+  /** What the link is for, for assistive technology ("Open the Figma prototype"). */
+  title: string;
+}
+
 export type CaseBlock =
   | { type: "rule" }
+  | { type: "bar" }
   | { type: "band" }
   | {
       type: "section";
@@ -52,15 +61,15 @@ export type CaseBlock =
       layout?: "split";
       blocks: CaseBlock[];
     }
-  | { type: "columns"; items: { label: string; title?: string; text: string }[] }
-  | { type: "note"; text: string }
+  | { type: "columns"; items: { label: string; labelTone?: "accent"; title?: string; text: string }[] }
+  | { type: "note"; label?: string; text: string }
   | { type: "stats"; items: { value: string; text: string }[] }
   | { type: "quote"; text: string; source: string }
   | { type: "mediaText"; side: "left" | "right"; figure?: CaseImage; phones?: CasePhone[]; text: CaseText[] }
   | { type: "callout"; label: string; heading: string[]; text?: string }
-  | { type: "steps"; items: string[] }
+  | { type: "steps"; label?: string; items: string[] }
   | { type: "flow"; items: { phone: CasePhone; title: string; detail: CaseDetail; label: string; text: string }[] }
-  | { type: "gallery"; items: CasePhone[] }
+  | { type: "gallery"; columns?: number; items: CasePhone[]; prototype?: CasePrototype }
   | { type: "aside"; label: string; text: string };
 
 export interface CaseStudyData {
@@ -72,6 +81,8 @@ export interface CaseStudyData {
     lede: string[];
     facts: { label: string; value: string }[];
     phones: CasePhone[];
+    /** "fan": the phones overlap in a row, each a step in front of the last. */
+    phonesLayout?: "fan";
   };
   blocks: CaseBlock[];
 }

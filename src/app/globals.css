@@ -726,7 +726,12 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
   text-transform: uppercase;
   color: var(--muted);
 }
-.cs-h1, .cs-h2, .cs-h3 { font-weight: 500; color: var(--ink-strong); text-wrap: balance; }
+/* Bold section headings (the owner's brief for the refined case study). */
+/* Orange labels, where the owner asked for them (The problem / The solution).
+   Small orange on cream is 1.7:1; asked for, and reported by qa:type, not
+   changed. */
+.cs-label--accent { color: var(--accent); }
+.cs-h1, .cs-h2, .cs-h3 { font-weight: 700; color: var(--ink-strong); text-wrap: balance; }
 .cs-h1 { font-size: var(--fs-display); line-height: 1.08; letter-spacing: -0.035em; }
 .cs-h2 { font-size: var(--fs-headline); line-height: 1.15; letter-spacing: -0.03em; }
 .cs-h3 { font-size: var(--fs-title); line-height: 1.2; letter-spacing: -0.025em; }
@@ -761,7 +766,7 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 .cs-hero { padding: calc(28 * var(--u)) var(--cs-pad) var(--cs-section); }
 .cs-eyebrow { margin-top: clamp(2.5rem, 5vw, 4.5rem); }
 .cs-h1 { margin-top: 1.25rem; }
-.cs-lede { margin-top: 1.75rem; max-width: 56ch; }
+.cs-lede { margin-top: 1.75rem; max-width: 66ch; }
 .cs-facts {
   margin: clamp(2.5rem, 4vw, 3.5rem) 0 0;
   display: grid;
@@ -780,6 +785,19 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
   gap: clamp(1rem, 5vw, 5rem);
 }
 .cs-hero-phones .cs-caption { text-align: center; }
+/* The fan: three phones of one size overlapping by a quarter, each in
+   front of the one to its left, with a soft shadow so the overlaps read
+   (the shadow is CSS, on the cutout's own edge; no tray). */
+.cs-hero-phones--fan {
+  width: min(100%, 40rem);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  align-items: start;
+}
+.cs-hero-phones--fan .cs-phone { position: relative; width: 118%; }
+.cs-hero-phones--fan .cs-phone:nth-child(2) { z-index: 1; margin-left: -9%; }
+.cs-hero-phones--fan .cs-phone:nth-child(3) { z-index: 2; margin-left: -18%; }
+.cs-hero-phones--fan .cs-phone img { filter: drop-shadow(0 18px 28px rgb(22 20 14 / 0.22)); }
 
 /* Phones and images */
 .cs-phone { margin: 0; }
@@ -826,6 +844,11 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 .cs-rule { margin: 0 var(--cs-pad); border: 0; border-top: 1px solid var(--cs-line); }
 .cs-section .cs-rule { margin-inline: 0; }
 .cs-band { height: 2rem; background: var(--accent); }
+/* The charcoal bar between sections: the homepage's section bar, without
+   a label. */
+.cs-bar { height: max(calc(17 * var(--u)), 0.875rem); background: var(--bar); }
+/* A label above a note or the steps. */
+.cs-note-block > .cs-label + .cs-note, .cs-steps-block > .cs-label + .cs-steps { margin-top: 1.25rem; }
 
 .cs-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--cs-gap) clamp(2rem, 6vw, 6rem); }
 .cs-column > * + * { margin-top: 1rem; }
@@ -882,7 +905,18 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 .cs-detail { position: relative; aspect-ratio: 2.15; overflow: hidden; border-radius: 0.75rem; border-top: 1px solid var(--cs-line); background: var(--cs-surface); }
 .cs-detail img { position: absolute; max-width: none; height: auto; }
 
-.cs-gallery { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--cs-gap) clamp(1rem, 2.4vw, 2.25rem); }
+.cs-gallery { display: grid; grid-template-columns: repeat(var(--cols, 6), minmax(0, 1fr)); gap: var(--cs-gap) clamp(1rem, 2.4vw, 2.25rem); }
+/* The gallery with the prototype phone beside it: the phone is larger
+   than the gallery's and centred on its rows. */
+.cs-gallery-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.42fr); gap: clamp(2rem, 6vw, 6rem); align-items: center; }
+.cs-gallery-row .cs-gallery { width: 100%; }
+.cs-prototype { position: relative; display: block; width: min(100%, 15rem); margin-inline: auto; }
+.cs-prototype img { display: block; width: 100%; height: auto; transition: translate 300ms var(--ease); }
+.cs-prototype:hover img { translate: 0 -3px; }
+/* The frame's display area, from the PDF's own inset of screen in frame. */
+.cs-prototype-screen { position: absolute; left: 5.06%; top: 1.88%; width: 89.24%; height: 95.31%; border-radius: 12% / 6%; background: #fff; display: grid; place-items: center; transition: translate 300ms var(--ease); }
+.cs-prototype:hover .cs-prototype-screen { translate: 0 -3px; }
+.cs-prototype-label { font-size: var(--fs-body); font-weight: 700; color: #1d6ff2; }
 .cs-gallery .cs-caption { font-size: var(--fs-body); color: var(--ink-strong); }
 
 .cs-aside { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); gap: var(--cs-gap); align-items: baseline; }

@@ -34,7 +34,7 @@ export function CaseStudy({ data, chrome }: { data: CaseStudyData; chrome: CaseS
           ))}
         </dl>
 
-        <div className="cs-hero-phones">
+        <div className={data.hero.phonesLayout === "fan" ? "cs-hero-phones cs-hero-phones--fan" : "cs-hero-phones"}>
           {data.hero.phones.map((phone) => <Phone key={phone.src} phone={phone} labels={chrome.zoom} />)}
         </div>
       </header>
