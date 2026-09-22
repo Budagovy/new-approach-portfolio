@@ -265,8 +265,8 @@
                 "height": 2156,
                 "focus": {
                   "x": 50,
-                  "y": 40,
-                  "zoom": 1.5
+                  "y": 39,
+                  "zoom": 1
                 }
               },
               "label": "A clear entry point",
@@ -286,8 +286,8 @@
                 "height": 2156,
                 "focus": {
                   "x": 50,
-                  "y": 37,
-                  "zoom": 1.9
+                  "y": 36,
+                  "zoom": 1.2
                 }
               },
               "label": "People in the choice",
@@ -306,9 +306,9 @@
                 "width": 1000,
                 "height": 2156,
                 "focus": {
-                  "x": 48,
-                  "y": 88,
-                  "zoom": 1.15
+                  "x": 50,
+                  "y": 85,
+                  "zoom": 1
                 }
               },
               "label": "Context before booking",
