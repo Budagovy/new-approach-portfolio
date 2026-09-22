@@ -233,7 +233,7 @@ It was removed in the Figma rebuild (`b1d65e8`) on a misreading of the
 brief and the owner asked for it back: "why did you cancel the splash
 screen with the video we already developed? i didnt ask for it ... keep
 the home page as current version i like it, but add the splash screen".
-Restored in commit `3d5c...` (see git log) from `9675ac1`, on top of the
+Restored in commit `a03e97c` from `9675ac1`, on top of the
 current homepage without changing it. Do not remove it again.
 
 **How it sits round the page.** `SplashScreen` takes two slots. The
