@@ -86,13 +86,27 @@ function Text({ items }: { items: CaseText[] }) {
   );
 }
 
-function Block({ block, labels }: { block: CaseBlock; labels: ZoomLabels }) {
+/** Section numbers, from the blocks' order: the bar before a section shows that section's. */
+function numberSections(blocks: CaseBlock[]) {
+  const numbers = new Map<string, string>();
+  let n = 0;
+  for (const b of blocks) if (b.type === "section") numbers.set(b.id, String(++n).padStart(2, "0"));
+  return numbers;
+}
+
+function Block({ block, labels, bar }: { block: CaseBlock; labels: ZoomLabels; bar?: { number: string; name: string } }) {
   switch (block.type) {
     case "rule":
       return <hr className="cs-rule" />;
 
     case "bar":
-      return <div className="cs-bar" aria-hidden="true" />;
+      /* The charcoal bar between sections, with the coming section's number and name: the same
+         pair the side rail shows, so the two always correspond. */
+      return (
+        <div className="cs-bar" aria-hidden="true">
+          {bar && <span className="cs-bar-label"><span className="cs-bar-number">{bar.number}</span>{bar.name}</span>}
+        </div>
+      );
 
     case "band":
       return <div className="cs-band" aria-hidden="true" />;
@@ -234,11 +248,14 @@ function Block({ block, labels }: { block: CaseBlock; labels: ZoomLabels }) {
 
 /** Renders a list of blocks in order. Sections nest their own list. */
 export function Blocks({ blocks, labels }: { blocks: CaseBlock[]; labels: ZoomLabels }) {
+  const numbers = numberSections(blocks);
   return (
     <>
-      {blocks.map((block, i) => (
-        <Block key={"id" in block ? block.id : `${block.type}-${i}`} block={block} labels={labels} />
-      ))}
+      {blocks.map((block, i) => {
+        const next = block.type === "bar" ? blocks.slice(i + 1).find((b) => b.type === "section") : undefined;
+        const bar = next && next.type === "section" ? { number: numbers.get(next.id) ?? "", name: next.nav } : undefined;
+        return <Block key={"id" in block ? block.id : `${block.type}-${i}`} block={block} labels={labels} bar={bar} />;
+      })}
     </>
   );
 }

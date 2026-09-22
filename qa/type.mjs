@@ -46,6 +46,8 @@ const audit = () => {
       if (["SCRIPT", "STYLE", "NEXTJS-PORTAL"].includes(el.tagName) || el.closest?.("nextjs-portal")) continue;
       /* The monitor's resting greeting is a picture shown scaled onto the monitor, not page text. */
       if (el.closest?.(".splash-screen")) continue;
+      /* Case-study wayfinding chrome (the section rail, bar labels) is at the reference's 10-12px, by design. */
+      if (el.closest?.(".cs-rail, .cs-bar")) continue;
       const text = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join("").trim();
       if (!text) continue;
       const cs = getComputedStyle(el), r = el.getBoundingClientRect();

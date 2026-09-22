@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Blocks, Lines, Phone } from "./Blocks";
+import { SectionRail } from "./SectionRail";
 import type { CaseStudyChrome, CaseStudyData } from "./types";
 
 /**
@@ -16,8 +17,11 @@ export function CaseStudy({ data, chrome }: { data: CaseStudyData; chrome: CaseS
     </Link>
   );
 
+  const sections = data.blocks.filter((b) => b.type === "section").map((b, i) => ({ id: b.id, number: String(i + 1).padStart(2, "0"), name: b.nav }));
+
   return (
     <article className="cs">
+      <SectionRail items={sections} label={chrome.rail.label} />
       <header className="cs-hero">
         <nav className="cs-back-row" aria-label={chrome.back.label}>{back}</nav>
 

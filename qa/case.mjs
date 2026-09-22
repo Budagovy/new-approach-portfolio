@@ -10,6 +10,10 @@
    descriptions dark; phone cutouts with nothing white behind them; every heading and
    paragraph left-aligned (THE BRIEF's label, heading and paragraph on one left edge);
    paragraph measure; images at their natural proportions; the site's type scale only.
+   Section rail: one item per section, numbered, hidden over the hero and shown as the first
+   section nears; the active item follows the section in view; a click glides to the section
+   under the header; hovering unfolds the names; every bar between sections carries the same
+   number and name as the rail. Hidden under 1184px.
    Keyboard: the back link and images are reachable and visibly focused; an image opens
    with Enter, traps focus, closes with Escape and returns focus to where it was.
    Responsive: no horizontal overflow at 1440 / 1024 / 768 / 390 / 320; columns stack; key
@@ -160,14 +164,36 @@ async function open(url, opts) {
   const bent = s.images.filter((i) => !i.loaded || Math.abs(i.shown / i.natural - 1) > 0.012);
   ok("every image loaded, at its natural proportions, with alt text", bent.length === 0 && s.images.every((i) => i.alt && i.alt.length > 20), bent.map((i) => `${i.src} ${i.shown.toFixed(3)} vs ${i.natural.toFixed(3)}`).join("; ") || `${s.images.length} images`);
   ok("detail crops fill their panels (no tray), decorative alt", s.details.length === 3 && s.details.every((d) => d.covered && d.alt === ""), JSON.stringify(s.details));
-  const offScale = s.sizes.filter((z) => ![14, 17, 26, 36].includes(z) && !(z >= 48 && z <= 56));
-  ok("the site's type scale only (14 / 17 / 26 / 36 / display)", offScale.length === 0, `sizes ${s.sizes.join(", ")}`);
+  /* The section rail and the bar labels are wayfinding chrome at the reference's scale (10-12px), not page text. */
+  const offScale = s.sizes.filter((z) => ![11, 12, 14, 17, 26, 36].includes(z) && !(z >= 48 && z <= 56));
+  ok("the site's type scale only (14 / 17 / 26 / 36 / display; rail and bar chrome at 11-12)", offScale.length === 0, `sizes ${s.sizes.join(", ")}`);
+
+  /* section rail */
+  {
+    const rail = await page.evaluate(() => ({ items: [...document.querySelectorAll(".cs-rail-item")].map((a) => ({ href: a.getAttribute("href"), text: a.textContent.trim() })), sections: [...document.querySelectorAll(".cs > section[id]")].map((s) => s.id), bars: [...document.querySelectorAll(".cs-bar-label")].map((b) => b.textContent.trim()) }));
+    ok("rail: one numbered item per section, in order, each an anchor to it", rail.items.length === rail.sections.length && rail.items.every((it, i) => it.href === "#" + rail.sections[i] && it.text.startsWith(String(i + 1).padStart(2, "0"))), rail.items.map((i) => i.text).join(" | "));
+    ok("bars: every section's bar carries the rail's number and name", rail.bars.length === rail.items.length && rail.bars.every((b, i) => b === rail.items[i].text), rail.bars.join(" | "));
+    await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(300);
+    const atTop = await page.evaluate(() => ({ on: document.querySelector(".cs-rail").classList.contains("cs-rail--on"), pe: getComputedStyle(document.querySelector(".cs-rail")).pointerEvents }));
+    ok("rail hidden over the hero", !atTop.on && atTop.pe === "none", JSON.stringify(atTop));
+    let order = [];
+    for (const id of rail.sections) { await page.evaluate((id) => scrollTo(0, document.getElementById(id).getBoundingClientRect().top + scrollY - 200), id); await page.waitForTimeout(220); order.push(await page.evaluate(() => document.querySelector(".cs-rail-item--active")?.getAttribute("href"))); }
+    ok("rail: the active item follows the section in view, every section in turn", order.join(",") === rail.sections.map((s) => "#" + s).join(","), order.join(","));
+    await page.mouse.move(40, 450); await page.waitForTimeout(600);
+    const hover = await page.evaluate(() => [...document.querySelectorAll(".cs-rail-name")].map((n) => Math.round(n.getBoundingClientRect().width)));
+    ok("rail: names unfold on hover", hover.every((w) => w > 30), hover.join(","));
+    await page.click('.cs-rail-item[href="#booking"]');
+    const trace = await page.evaluate(async () => { const out = []; const t0 = performance.now(); await new Promise((r) => { const tick = () => { out.push(Math.round(scrollY)); if (performance.now() - t0 < 2500) requestAnimationFrame(tick); else r(); }; requestAnimationFrame(tick); }); return out; });
+    const landed = await page.evaluate(() => ({ top: Math.round(document.querySelector("#booking").getBoundingClientRect().top), pad: Math.round(parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)), active: document.querySelector(".cs-rail-item--active")?.getAttribute("href") }));
+    ok("rail: a click glides to the section under the header and marks it active", [...new Set(trace)].length >= 10 && Math.abs(landed.top - landed.pad) <= 2 && landed.active === "#booking", `${[...new Set(trace)].length} positions, top ${landed.top} (header ${landed.pad}), active ${landed.active}`);
+    await page.mouse.move(720, 450);
+  }
 
   /* keyboard */
   await page.evaluate(() => scrollTo(0, 0));
   await page.keyboard.press("Tab");
   let reached = null; const seen = [];
-  for (let i = 0; i < 12 && !reached; i++) {
+  for (let i = 0; i < 24 && !reached; i++) {
     const f = await page.evaluate(() => { const a = document.activeElement; const c = getComputedStyle(a); return { cls: a.className?.toString() || a.tagName, outline: c.outlineStyle !== "none" && parseFloat(c.outlineWidth) > 0 }; });
     seen.push(f.cls);
     if (f.cls.includes("cs-back")) reached = f; else await page.keyboard.press("Tab");
@@ -209,6 +235,7 @@ for (const [w, h, mobile] of [[1024, 768, false], [768, 1024, true], [390, 844, 
     const rows = (sel) => new Set(qa(sel).map((e) => Math.round(e.getBoundingClientRect().top))).size;
     const vw = document.documentElement.clientWidth;
     return {
+      railShown: getComputedStyle(q(".cs-rail")).display !== "none",
       overflow: document.documentElement.scrollWidth - vw,
       spill: qa(".cs *").filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && !e.closest("dialog") && !e.closest(".cs-detail") && (r.right > vw + 1 || r.left < -1); }).slice(0, 3).map((e) => e.className),
       columnsRows: rows("#brief .cs-column"), statsRows: rows(".cs-stat"), flowRows: rows(".cs-flow-step"), galleryRows: rows(".cs-gallery li"),
@@ -221,6 +248,7 @@ for (const [w, h, mobile] of [[1024, 768, false], [768, 1024, true], [390, 844, 
   });
   const tag = `${w}px:`;
   ok(`${tag} no horizontal overflow, nothing outside the screen, no clipped text`, s.overflow === 0 && s.spill.length === 0 && s.clipped === 0, `overflow ${s.overflow}px, spill ${s.spill.join(",") || "none"}, clipped ${s.clipped}`);
+  ok(`${tag} rail ${w >= 1184 ? "shown" : "hidden (no margin for it)"}`, s.railShown === (w >= 1184), `shown ${s.railShown}`);
   if (w >= 900) ok(`${tag} columns kept side by side`, s.columnsRows === 1 && s.statsRows === 1 && s.flowRows === 1, `${s.columnsRows}/${s.statsRows}/${s.flowRows}`);
   else ok(`${tag} columns, figures and the booking flow stack in reading order; gallery in two`, s.columnsRows === 2 && s.statsRows === 3 && s.flowRows === 3 && s.galleryRows === 3, `${s.columnsRows}/${s.statsRows}/${s.flowRows}/${s.galleryRows}`);
   ok(`${tag} every caption starts at its image's left edge`, s.captionsAligned, "");

@@ -228,6 +228,24 @@ layout none of them can express.
   below, so a phone never gets a forced break.
 - Natural scrolling: none of the homepage's reveals or guided landings.
 
+**Section rail** (`SectionRail.tsx`, added 2026-09-22 from the owner's
+brief and pleurat.com/work/mindpath as the reference). A fixed rail down
+the left, outside the frame, one line per top-level section: number,
+tick, name. At rest the names are folded (max-width 0) and the rail reads
+as ticks; hover or focus-within unfolds them, on a cream ground because
+at 1440 the margin is only 160px and the unfolded rail overlaps the
+frame's edge. The active line is ink with a longer tick (measured on the
+reference: 10px tracked caps, 18 to 30px tick, 0.25s colour). Active =
+the section whose top has most recently passed 34% down the screen,
+computed on scroll (rAF-throttled); clicks are ordinary hash anchors, so
+SmoothScroll glides them. Hidden (opacity 0, pointer-events none, links
+tabIndex -1) until the first section is near, and display: none under
+1184px. Each section's `nav` name in the content is the rail's label AND
+the label in the charcoal bar before that section ("01 OVERVIEW"), so
+the two cannot drift apart; `qa:case` checks that and the rail's whole
+behaviour. The rail and bar type is 11-12px by design (wayfinding chrome
+at the reference's scale); `qa:type` and `qa:case` exempt it.
+
 **Expanding an image** (`Zoomable.tsx`): a real `<button>` round the image
 and a native `<dialog>` opened with `showModal()`. The platform then does
 focus trapping, Escape, and returning focus to the trigger; a backdrop

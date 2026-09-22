@@ -53,6 +53,8 @@ export type CaseBlock =
       type: "section";
       id: string;
       label: string;
+      /** Short name for the side rail and the bar above the section ("Overview"). */
+      nav: string;
       heading: string[];
       intro?: string;
       /** "surface": the pale research ground. */
@@ -89,5 +91,6 @@ export interface CaseStudyData {
 
 export interface CaseStudyChrome {
   back: { label: string; href: string };
+  rail: { label: string };
   zoom: { open: string; close: string };
 }
