@@ -186,7 +186,7 @@ async function open(url, opts) {
 
   /* back to the projects */
   await page.locator(".cs-back").first().click();
-  await page.waitForURL("**/#work", { timeout: 15000 }); await page.waitForTimeout(2200);
+  await page.waitForURL("**/#work", { timeout: 15000 }); await page.waitForTimeout(3000);
   const landed = await page.evaluate(() => ({ top: Math.round(document.querySelector("#work").getBoundingClientRect().top), pad: Math.round(parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)), vh: innerHeight }));
   ok("Back to projects lands on the homepage's projects section", page.url().endsWith("/#work") && landed.top >= 0 && landed.top <= landed.pad + 4, `projects top ${landed.top}, header ${landed.pad}`);
   ok("1440: no horizontal overflow, no console errors", s.overflow === 0 && errors.length === 0, `${s.overflow}px ${errors.join(" | ")}`);

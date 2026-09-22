@@ -12,7 +12,8 @@
     "qa:scroll": "node qa/scroll.mjs",
     "qa:compare": "node qa/compare.mjs",
     "qa:type": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON qa/type.mjs",
-    "qa:case": "node qa/case.mjs"
+    "qa:case": "node qa/case.mjs",
+    "qa:splash": "node qa/splash.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

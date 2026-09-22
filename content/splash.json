@@ -1,0 +1,12 @@
+{
+  "video": {
+    "src": "/media/hero.mp4",
+    "poster": "/media/hero-poster.jpg",
+    "alt": "A desk with a wide monitor, keyboard, and a plant beside a window.",
+    "frame": { "w": 2176, "h": 928 },
+    "screen": {
+      "t0": { "cx": 50.02, "cy": 42.94, "w": 18.35, "h": 19.29 },
+      "t1": { "cx": 49.89, "cy": 42.35, "w": 20.44, "h": 21.55 }
+    }
+  }
+}

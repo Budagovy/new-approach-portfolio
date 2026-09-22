@@ -1,7 +1,9 @@
 # Yonatan Budagov portfolio - project rules
 
-A homepage built to match the owner's Figma frame, plus case-study pages
-under `/work/<slug>` (see "Case studies"). Next.js 16 (Turbopack),
+A homepage that opens with the splash (the desk video, the greeting on
+its monitor, the scroll that walks into the screen) and arrives on the
+page built to match the owner's Figma frame; plus case-study pages under
+`/work/<slug>` (see "Case studies"). Next.js 16 (Turbopack),
 React 19, Motion (`motion/react`), Lenis, Tailwind v4 (imported, barely
 used; the stylesheet is hand-written in `src/app/globals.css`).
 
@@ -15,9 +17,9 @@ section after the hero opens with a thin charcoal bar ("01 HOW I DO IT",
 "02 WHAT I DO", "03 WHO DOING IT"). Plain cream inside the frame, a faint
 horizontal grain outside it.
 
-`src/app/page.tsx` is the composition and reads in that order, inside
-`PageFrame`: the header, the bordered frame with its corner marks and the
-footer, shared by every route.
+`src/app/page.tsx` is the composition and reads in that order, wrapped in
+the splash (see "The splash"). Other routes use `PageFrame`: the header,
+the bordered frame with its corner marks and the footer.
 
 **Geometry scales; type sizes do not.** Two systems in `globals.css`,
 deliberately separate:
@@ -223,6 +225,59 @@ second mount in one session (only possible once the site had a second
 route) threw. The wrapper now sets `speed` and `asset-base` with
 `setAttribute`. Do not pass them as JSX props again.
 
+## The splash
+
+The homepage opens on the desk video with "Nice to meet you." on the
+monitor; scrolling pushes into the screen until the hero is the page.
+It was removed in the Figma rebuild (`b1d65e8`) on a misreading of the
+brief and the owner asked for it back: "why did you cancel the splash
+screen with the video we already developed? i didnt ask for it ... keep
+the home page as current version i like it, but add the splash screen".
+Restored in commit `3d5c...` (see git log) from `9675ac1`, on top of the
+current homepage without changing it. Do not remove it again.
+
+**How it sits round the page.** `SplashScreen` takes two slots. The
+children are the page's opening: `.splash-slot` (the header's space; the
+header itself is fixed and floats above the video, as before), then
+`.column.frame.frame--open` (the frame's top edge and side rules, the two
+top corner marks) holding `Hero`. `next` is everything after: the rest of
+the frame (`frame--rest`: side and bottom rules, bottom marks) with
+approach, projects, about and the footer. The splash renders the opening
+at viewport size inside the monitor's clip, scales it up with the scroll,
+and holds `next` directly beneath the opening for the whole pin (a
+sticky box marked `data-hold`), so the page is whole the moment the hero
+arrives and reads on with no seam. The two frame halves are one frame to
+the eye. The hero's own layout is untouched: it is the Figma frame's.
+
+**Things learned restoring it.**
+- The greeting is sized to read AS SEEN on the monitor (the stage is
+  shown scaled down onto it, ~0.28 at 1440): `clamp(2.75rem, 12vw,
+  11rem)`, about 48px on the screen. It is a picture on a monitor, not
+  page text; `qa:type` skips `.splash-screen`.
+- `CONTENT_WEIGHT` in `SplashScreen` is 0. The nudge that shrank the
+  stage to fit the hero's copy inside the monitor was for a hero visible
+  at rest; the monitor now shows the opaque greeting at rest, and on a
+  phone the shrink opened a strip of raw footage at each side.
+- The splash chooses pinned vs flat (reduced motion) in an EFFECT, never
+  in the render: the server cannot know the preference, and choosing in
+  the render was a hydration mismatch that had been there since the
+  first version.
+- `SmoothScroll` has `restingTop()` back: while the splash holds the page
+  beneath it, a section's rectangle is not where it rests, so landings
+  and anchor links use the resting position. Arriving with a hash (a case
+  study's "Back to projects" is a Link to `/#work`) is settled the same
+  way, on load and on every route change (`usePathname`), because the
+  browser has already jumped to the current rectangle.
+- `Hero` has no `id`; the splash section is `#top`.
+
+**Gates.** `npm run qa:splash` (the monitor fit against the bezel, the
+push, arrival, the hero content taking the click, the greeting fitting
+the monitor on a phone, reduced motion). One check in it, "panel sits
+inside the bezel", has failed since long before this work (a calibration
+in `content/splash.json` at the video's last frame) and is deliberately
+untouched. `qa:page` measures the homepage at the pin's release, where
+the hero is at native scale.
+
 ## Scrolling
 
 `SmoothScroll.tsx`, mounted in the root layout: Lenis inertia for wheel and
@@ -252,6 +307,7 @@ path keyed by platform, `QA_CHROME` overrides), then:
   target and the header nav lands on it; the column rule at 2544;
   stacked and overflow-free at 390 and 768; no console errors or hydration
   mismatches in either motion mode.
+- `npm run qa:splash`: the splash (above).
 - `npm run qa:case`: the case study (above): the card as one same-tab
   link, direct load and refresh, 404 for unknown slugs, the shared chrome,
   the approved copy both ways, section order, heading levels, colours,
@@ -281,15 +337,13 @@ or `page.route`).
 
 ## What was here before, and where it went
 
-Until the "match the Figma frame" commit the page opened with a splash: a
-desk video whose monitor showed a greeting, and scrolling zoomed into the
-monitor until the hero was the page; the hero's second line rotated through
-seven phrases; "My approach" was held in place while scroll revealed its
+Until the "match the Figma frame" commit the hero's second line rotated
+through seven phrases; "My approach" was held in place while scroll revealed its
 steps one by one, the next section kept in view beneath it. The frame has
-none of that ("without requiring an introductory scroll sequence", "show
-all four step titles and descriptions simultaneously", "replace the
-rotating phrases"), so the components, their content, their gates and the
-video were removed. It was careful work and is all in git: the last commit
+none of that ("show all four step titles and descriptions
+simultaneously", "replace the rotating phrases"), so those were removed.
+(The splash was removed then too, wrongly, and has been restored: see
+"The splash".) It was careful work and is all in git: the last commit
 with it is `9675ac1`, where the old CLAUDE.md also documents the hard
 parts (the monitor calibration, the single continuous hero, sticky holds
 and resting positions, the cover that must never clear before the room has

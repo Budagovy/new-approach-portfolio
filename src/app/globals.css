@@ -148,6 +148,119 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   white-space: nowrap;
 }
 
+/* --- Splash ------------------------------------------------------------- */
+/* The stage's grounds carry the same grain as the body, so the page arrives
+   on the picture it goes on with. */
+.splash { color: var(--ink); }
+/* The track sits above what follows it (.splash-next), which is held
+   under the hero, beneath the room, for the whole pin. */
+.splash-track { position: relative; z-index: 1; }
+.splash-next { position: relative; }
+.splash-next-stick { position: sticky; }
+.splash-stage {
+  position: sticky; top: 0;
+  height: 100dvh;
+  overflow: hidden;
+  /* No ground of its own: under a short hero the stage is a window onto
+     whatever is held beneath it once the room has faded. The room carries
+     the cream instead, for the moment before its footage paints. */
+}
+.splash-frame {
+  background: var(--bg);
+  background-image: repeating-linear-gradient(0deg, var(--grain) 0 1px, transparent 1px 3px);
+  position: absolute;
+  top: 50%; left: 50%;
+  translate: -50% -50%;
+  will-change: transform, opacity;
+}
+.splash-frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Clips to the monitor's current window. Sits at exactly inset:0 — never
+   moved or scaled itself — because the clip-path insets below are computed
+   in viewport-absolute pixels, which only stays correct as long as this
+   element's own local (0,0) is the viewport's (0,0). The transform that
+   actually grows the hero lives one level down, on .splash-hero-stage,
+   specifically so it never has to share an element with this clip. */
+.splash-hero {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  will-change: clip-path;
+}
+/* One hero instance, rendered at its natural full-page size always — the
+   splash stage's own size, i.e. the viewport less any scrollbar, the same
+   width every other section's page column is laid out in — then scaled
+   and positioned by SplashScreen to cover its parent's current clip
+   window. Scale never exceeds 1, so type is never magnified past its own
+   painted resolution — only ever shown at native size or smaller. */
+.splash-hero-stage {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  translate: -50% -50%;
+  color: var(--ink);
+  will-change: transform;
+}
+/* The cover, in two layers that clear together (opacity only) AFTER the
+   room has fully gone, to uncover what is held under a short hero: the
+   stage's ground behind the room, and the hero stage's foot under the
+   hero block. See coverOpacity in SplashScreen for why the order is
+   strict. */
+.splash-ground,
+.splash-foot {
+  position: absolute;
+  inset: 0;
+  background-color: var(--bg);
+  background-image: repeating-linear-gradient(0deg, var(--grain) 0 1px, transparent 1px 3px);
+  will-change: opacity;
+}
+
+/* The resting screen, laid over the hero inside the same stage: opaque, so
+   at rest the monitor shows only this; SplashScreen fades it out as the
+   push begins. */
+.splash-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  will-change: opacity;
+}
+
+/* --- Greeting (what the monitor shows at rest) ---------------------------- */
+.greeting {
+  padding: 0 1.5rem;
+  text-align: center;
+}
+/* Set at stage size and then shown scaled down onto the monitor (about
+   0.28 at 1440), so it is sized to read AS SEEN THERE: ~48px on the
+   screen. It is a picture on a monitor, not page text, and is not on the
+   page's type scale on purpose. */
+.greeting-line {
+  margin: 0;
+  font-size: clamp(2.75rem, 12vw, 11rem);
+  text-wrap: balance;
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  color: var(--ink-strong);
+}
+.greeting-emphasis { font-weight: 700; }
+.greeting-mark { color: var(--accent); font-weight: 700; }
+
+/* Reduced motion: the room above, then the page as it is. */
+.splash-flat { display: flex; flex-direction: column; }
+.splash-flat-media { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+
+/* The page's opening as the splash's slot: the header's space (the header
+   itself is fixed and floats above), then the frame's top edge and the
+   hero. What follows the hero is the `next` slot, held directly beneath. */
+.splash-slot { position: relative; padding-top: var(--header-h); }
+/* Two classes: .frame's own header margin is declared later in the file. */
+.frame.frame--open { margin-top: 0; border-bottom: 0; }
+.frame.frame--rest { margin-top: 0; border-top: 0; }
+
+
 /* --- Page frame --------------------------------------------------------- */
 /* The thin grey rule around everything under the header, plain cream
    inside, with a small orange mark in each corner. */

@@ -28,6 +28,7 @@ mkdirSync(OUT, { recursive: true });
 const fails = [];
 const ok = (n, p, d = "") => { console.log(`${p ? "PASS" : "FAIL"}  ${n.padEnd(64)} ${d}`); if (!p) fails.push(n); };
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
+const scrollY_ = (s) => s.scrollY;
 
 /* The frame's own numbers (px at 1440). */
 const FRAME = { column: [300, 1140], header: 64, bars: [617, 1186, 1756], footerTop: 2326, frameBottom: 2524, height: 2568, heroHeadline: 37, sectionHeading: 20 };
@@ -38,12 +39,18 @@ const probe = () => {
   const cs = (el) => getComputedStyle(el);
   const accent = cs(document.documentElement).getPropertyValue("--accent").trim();
   const asRgb = (hex) => { const n = parseInt(hex.slice(1), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; };
+  /* Where an element rests once the splash's hold has let go (the same sum SmoothScroll uses). */
+  const resting = (el) => { let y = el.getBoundingClientRect().top + scrollY; for (let h = el.closest("[data-hold]"); h; h = h.parentElement ? h.parentElement.closest("[data-hold]") : null) { if (getComputedStyle(h).position !== "sticky") continue; y += h.parentElement.getBoundingClientRect().bottom - h.getBoundingClientRect().bottom; } return y; };
+  const docR = (el) => { const r = el.getBoundingClientRect(), top = resting(el); return { top: Math.round(top), bottom: Math.round(top + r.height), left: Math.round(r.left), right: Math.round(r.right), w: Math.round(r.width), h: Math.round(r.height) }; };
+  const o = (sel) => { const e = q(sel); return e ? +(+cs(e).opacity).toFixed(2) : null; };
   return {
+    scrollY: Math.round(scrollY),
+    splash: { room: o(".splash-frame"), greeting: o(".splash-screen"), scale: (() => { const t = q(".splash-hero-stage") && cs(q(".splash-hero-stage")).transform; return !t || t === "none" ? 1 : +t.match(/matrix\(([^,]+)/)[1]; })() },
     accent: asRgb(accent),
     order: qa("header.site-header, #top, #approach, #work, #about, #contact").map((e) => e.id || "header"),
-    frame: doc(q(".frame")), header: doc(q(".site-header")), headerRow: doc(q(".site-header-row")),
-    bars: qa(".section-bar").map((b) => ({ ...doc(b), text: [...b.children].map((c) => c.textContent.trim()).join(" "), bg: cs(b).backgroundColor })),
-    hero: doc(q(".hero")), footer: doc(q(".footer")), docH: document.documentElement.scrollHeight,
+    frame: docR(q(".frame--rest")), header: doc(q(".site-header")), headerRow: doc(q(".site-header-row")),
+    bars: qa(".section-bar").map((b) => ({ ...docR(b), text: [...b.children].map((c) => c.textContent.trim()).join(" "), bg: cs(b).backgroundColor })),
+    hero: doc(q(".hero")), footer: docR(q(".footer")), docH: document.documentElement.scrollHeight,
     marks: qa(".frame-mark").length,
     name: doc(q(".site-header-name")), group: doc(q(".site-header-group")),
     navVisible: cs(q(".site-header-nav")).display !== "none",
@@ -59,8 +66,8 @@ const probe = () => {
     steps: qa(".approach-step").map((s) => ({ title: s.querySelector("h3").textContent.trim(), desc: s.querySelector("p").textContent.trim().length, opacity: +cs(s).opacity, marker: cs(s.querySelector(".approach-marker")).backgroundColor, cx: Math.round(s.querySelector(".approach-marker").getBoundingClientRect().left + s.querySelector(".approach-marker").getBoundingClientRect().width / 2), top: Math.round(s.getBoundingClientRect().top) })),
     bar: cs(document.documentElement).getPropertyValue("--bar").trim(),
     cards: qa(".project-item").map((li) => { const m = li.querySelector(".project-media").getBoundingClientRect(), img = li.querySelector("img"), t = li.querySelector(".project-title").getBoundingClientRect(); return { title: li.querySelector(".project-title").textContent, tag: li.querySelector(".project-tag").textContent, left: Math.round(m.left), right: Math.round(m.right), top: Math.round(m.top), aspect: +(m.width / m.height).toFixed(3), loaded: img.complete && img.naturalWidth > 0, captionLeft: Math.round(t.left), opacity: +cs(li).opacity }; }),
-    about: { photo: doc(q(".about-photo")), bio: doc(q(".about-bio")), hello: { text: q(".about-hello").textContent, color: cs(q(".about-hello")).color }, paragraphs: qa(".about-bio p").length, photoLoaded: q(".about-photo img").complete && q(".about-photo img").naturalWidth > 0 },
-    foot: { labels: qa(".footer-label").map((l) => l.textContent.trim()), mail: q(".footer-email").getAttribute("href"), copyright: q(".footer-copyright").textContent.trim(), character: doc(q(".footer-character")), characterLoaded: q(".footer-character").complete && q(".footer-character").naturalWidth > 0, deadLinks: qa(".footer a").filter((a) => !a.getAttribute("href") || a.getAttribute("href") === "#").length },
+    about: { photo: docR(q(".about-photo")), bio: docR(q(".about-bio")), hello: { text: q(".about-hello").textContent, color: cs(q(".about-hello")).color }, paragraphs: qa(".about-bio p").length, photoLoaded: q(".about-photo img").complete && q(".about-photo img").naturalWidth > 0 },
+    foot: { labels: qa(".footer-label").map((l) => l.textContent.trim()), mail: q(".footer-email").getAttribute("href"), copyright: q(".footer-copyright").textContent.trim(), character: docR(q(".footer-character")), characterLoaded: q(".footer-character").complete && q(".footer-character").naturalWidth > 0, deadLinks: qa(".footer a").filter((a) => !a.getAttribute("href") || a.getAttribute("href") === "#").length },
     links: qa('a[href^="#"]').map((a) => a.getAttribute("href")).filter((h, i, all) => all.indexOf(h) === i).map((h) => ({ href: h, exists: !!document.getElementById(h.slice(1)) })),
     overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   };
@@ -84,16 +91,20 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
 {
   const { ctx, page, errors } = await open({ viewport: { width: 1440, height: 900 } });
   const before = await page.evaluate(probe);
-  ok("opens on the hero: no intro to scroll through", near(before.hero.top, before.header.h + 1, 2), `hero top ${before.hero.top}, header ${before.header.h}`);
+  ok("opens on the splash: the room, the greeting on its monitor", before.splash.room === 1 && before.splash.greeting === 1, JSON.stringify(before.splash));
   ok("below the fold waits to be seen (reveals)", before.cards.every((c) => c.opacity === 0), JSON.stringify(before.cards.map((c) => c.opacity)));
   await walk(page);
+  /* The page proper is measured at the pin's release: the hero at native scale at the top and
+     everything after it resting where the page goes on. */
+  await page.evaluate(() => scrollTo(0, document.querySelector(".splash-track").offsetHeight - innerHeight)); await page.waitForTimeout(1800);
   const s = await page.evaluate(probe);
+  ok("hero arrived: room and greeting gone, hero at native scale under the header", s.splash.room === 0 && s.splash.greeting === 0 && near(s.splash.scale, 1, 0.01) && near(s.hero.top - scrollY_(s), s.header.h + 1, 2), JSON.stringify({ ...s.splash, heroTop: s.hero.top - scrollY_(s), header: s.header.h }));
 
   ok("order: header, hero, approach, projects, about, footer", s.order.join(",") === "header,top,approach,work,about,contact", s.order.join(","));
   const u = s.frame.w / 840; // one frame pixel
   ok("column: 1120 at a 1440 window (its floor), centred", near(s.frame.w, 1120, 2) && near(s.frame.left + s.frame.right, 1440 - 15, 18), `${s.frame.left}..${s.frame.right} (${s.frame.w})`);
   ok("header 64 frame-px tall, its row in the same column", near(s.header.h, 64 * u, 2) && near(s.headerRow.left, s.frame.left, 1) && near(s.headerRow.right, s.frame.right, 1), `h ${s.header.h} (64u = ${(64 * u).toFixed(0)})`);
-  ok("hero is the frame's 553 tall; sections at least that, in order, no gaps", near(s.bars[0].top - s.hero.top, 553 * u, 6) && s.bars[1].top - s.bars[0].bottom >= 553 * u - 2 && s.bars[2].top - s.bars[1].bottom >= 553 * u - 2 && s.footer.top - s.bars[2].bottom >= 553 * u - 2, `hero ${s.bars[0].top - s.hero.top}, approach ${s.bars[1].top - s.bars[0].bottom}, projects ${s.bars[2].top - s.bars[1].bottom}, about ${s.footer.top - s.bars[2].bottom} (553u = ${(553 * u).toFixed(0)})`);
+  ok("hero is the frame's 553 tall; sections at least that, in order, no gaps", near(s.hero.h, 553 * u, 6) && s.bars[1].top - s.bars[0].bottom >= 553 * u - 2 && s.bars[2].top - s.bars[1].bottom >= 553 * u - 2 && s.footer.top - s.bars[2].bottom >= 553 * u - 2, `hero ${s.hero.h}, approach ${s.bars[1].top - s.bars[0].bottom}, projects ${s.bars[2].top - s.bars[1].bottom}, about ${s.footer.top - s.bars[2].bottom} (553u = ${(553 * u).toFixed(0)})`);
   ok("bars span the frame, charcoal, labelled as in the frame", s.bars.every((b) => near(b.w, s.frame.w - 2, 3)) && s.bars.map((b) => b.text.toUpperCase()).join("|") === "01 HOW I DO IT|02 WHAT I DO|03 WHO DOING IT", s.bars.map((b) => b.text).join(" | "));
   ok("footer closes the frame", near(s.footer.bottom, s.frame.bottom, 3), `footer bottom ${s.footer.bottom}, frame bottom ${s.frame.bottom}`);
   ok("four orange corner marks", s.marks === 4, `${s.marks}`);
@@ -129,8 +140,8 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
   for (const [label, id] of [["About Me", "about"], ["Contact", "contact"], ["Projects", "work"], ["Welcome", "top"]]) {
     await page.click(`.site-header a:text-is("${label}")`);
     await page.waitForTimeout(2300);
-    const r = await page.evaluate((id) => { const el = document.getElementById(id), pad = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop); const max = document.documentElement.scrollHeight - innerHeight; return { top: Math.round(el.getBoundingClientRect().top), pad: Math.round(pad), atEnd: Math.round(scrollY) >= Math.round(max) - 1, visible: el.getBoundingClientRect().top < innerHeight - 40, hash: location.hash }; }, id);
-    ok(`nav "${label}" lands on #${id}`, (near(r.top, r.pad, 2) || (r.atEnd && r.visible)) && (id === "top" || r.hash === `#${id}`), `top ${r.top} (header ${r.pad})${r.atEnd ? ", page end" : ""}`);
+    const r = await page.evaluate((id) => { const el = document.getElementById(id), pad = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop); const max = document.documentElement.scrollHeight - innerHeight; return { top: Math.round(el.getBoundingClientRect().top), pad: Math.round(pad), atEnd: Math.round(scrollY) >= Math.round(max) - 1, atTop: Math.round(scrollY) === 0, visible: el.getBoundingClientRect().top < innerHeight - 40, hash: location.hash }; }, id);
+    ok(`nav "${label}" lands on #${id}`, (id === "top" ? r.atTop : (near(r.top, r.pad, 2) || (r.atEnd && r.visible))) && (id === "top" || r.hash === `#${id}`), `top ${r.top} (header ${r.pad})${r.atEnd ? ", page end" : ""}${r.atTop ? ", page top" : ""}`);
   }
   await page.screenshot({ path: `${OUT}page-1440.png` });
   ok("1440: no horizontal overflow, no console errors", s.overflow === 0 && errors.length === 0, `${s.overflow}px ${errors.join(" | ")}`);
@@ -141,8 +152,9 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
 {
   const { ctx, page, errors } = await open({ viewport: { width: 2544, height: 1276 } });
   await walk(page);
+  await page.evaluate(() => scrollTo(0, document.querySelector(".splash-track").offsetHeight - innerHeight)); await page.waitForTimeout(1800);
   const s = await page.evaluate(probe);
-  ok("2544: column is the frame's 58.33% again; geometry scales, type does not", near(s.frame.w, 2544 * 0.58333, 4) && s.headlineSize === 56 && s.headings[0].size === 26 && near(s.bars[0].top - s.hero.top, 553 * (s.frame.w / 840), 6), `column ${s.frame.w}, headline ${s.headlineSize}px, hero ${s.bars[0].top - s.hero.top}px`);
+  ok("2544: column is the frame's 58.33% again; geometry scales, type does not", near(s.frame.w, 2544 * 0.58333, 4) && s.headlineSize === 56 && s.headings[0].size === 26 && near(s.hero.h, 553 * (s.frame.w / 840), 6), `column ${s.frame.w}, headline ${s.headlineSize}px, hero ${s.hero.h}px`);
   ok("2544: no overflow, no console errors", s.overflow === 0 && errors.length === 0, `${s.overflow}px ${errors.join(" | ")}`);
   await ctx.close();
 }
@@ -166,7 +178,7 @@ for (const [w, h] of [[390, 844], [768, 1024]]) {
   const { ctx, page, errors } = await open({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
   await walk(page);
   const s = await page.evaluate(probe);
-  ok("reduced motion: all content shown, no hydration mismatch", s.steps.every((st) => st.opacity === 1) && s.cards.every((c) => c.opacity === 1) && !errors.some((e) => /hydrat/i.test(e)), errors.join(" | "));
+  ok("reduced motion: flat splash (room above, page below), all content shown, no hydration mismatch", (await page.locator(".splash-flat").count()) === 1 && s.steps.every((st) => st.opacity === 1) && s.cards.every((c) => c.opacity === 1) && !errors.some((e) => /hydrat/i.test(e)), errors.join(" | "));
   await ctx.close();
 }
 

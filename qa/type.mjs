@@ -42,8 +42,10 @@ const audit = () => {
   const out = [];
   const visit = (root) => {
     for (const el of root.querySelectorAll("*")) {
-      if (el.shadowRoot) visit(el.shadowRoot);
+      if (el.shadowRoot && el.tagName !== "NEXTJS-PORTAL") visit(el.shadowRoot);
       if (["SCRIPT", "STYLE", "NEXTJS-PORTAL"].includes(el.tagName) || el.closest?.("nextjs-portal")) continue;
+      /* The monitor's resting greeting is a picture shown scaled onto the monitor, not page text. */
+      if (el.closest?.(".splash-screen")) continue;
       const text = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join("").trim();
       if (!text) continue;
       const cs = getComputedStyle(el), r = el.getBoundingClientRect();

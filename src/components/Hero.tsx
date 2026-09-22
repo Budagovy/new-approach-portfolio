@@ -17,7 +17,7 @@ export interface HeroData {
  */
 export function Hero({ data, experience }: { data: HeroData; experience: CityStripExperience[] }) {
   return (
-    <section id="top" className="hero">
+    <section className="hero">
       <div className="hero-copy">
         <span className="hero-badge">{data.badge}</span>
         <h1 className="hero-headline">
