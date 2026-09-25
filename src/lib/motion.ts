@@ -96,6 +96,21 @@ export const GREETING = {
 } as const;
 
 /**
+ * "My approach", held in view while its four milestones fill along the
+ * timeline, one at a time and in order.
+ */
+export const APPROACH = {
+  /**
+   * The held sequence's scroll length, in viewport heights, shared equally
+   * between the milestones: 1.6 gives each one 0.4 of a screen, about four
+   * wheel ticks — long enough to watch a bar fill, short enough that the
+   * section is not a chore to get past. It is the section's own padding,
+   * so changing it changes the sequence and nothing else.
+   */
+  scrubVh: 1.6,
+} as const;
+
+/**
  * Guided scrolling: a gentle assist that settles a wheel or trackpad
  * scroll onto the next section's landing, never a lock. The rules that
  * keep it from feeling rigid:

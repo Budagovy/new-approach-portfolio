@@ -53,6 +53,11 @@ async function open(url, opts) {
 /* ---------- from the homepage: the card ---------- */
 {
   const { ctx, page, errors } = await open("/", { viewport: { width: 1440, height: 900 } });
+  /* The cards are below the fold and load lazily, further down now that My approach is held
+     for its sequence: bring them into view and let the cover load before measuring it. */
+  await page.evaluate(() => document.querySelector(".projects").scrollIntoView());
+  await page.waitForFunction(() => [...document.querySelectorAll(".project-media img")].every((i) => i.complete && i.naturalWidth > 0), null, { timeout: 15000 });
+  await page.waitForTimeout(1500);
   const card = await page.evaluate(() => {
     const li = [...document.querySelectorAll(".project-item")].find((l) => l.textContent.includes("Share the Moment"));
     if (!li) return null;
@@ -75,7 +80,6 @@ async function open(url, opts) {
   /* The phone stands in the middle of the cover: the crop takes an even slice off each side
      and none of the height, so it stays whole. */
   ok("the crop keeps the middle of the cover, where the phone is (no zoom, sides trimmed evenly)", card.zoom === 1 && card.fills && card.keptX >= 80 && card.natural > card.box, `${card.keptX}% of the width kept, zoom ${card.zoom}, cover ${card.natural} in a ${card.box} crop`);
-  await page.evaluate(() => document.querySelector(".projects").scrollIntoView()); await page.waitForTimeout(1500);
   await page.click(".project-item:nth-child(2) a .project-title");
   await page.waitForURL("**" + PATH, { timeout: 15000 });
   await page.waitForTimeout(800);

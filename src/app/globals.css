@@ -439,6 +439,11 @@ portfolio-city-strip {
 }
 
 /* --- My approach ---------------------------------------------------------- */
+/* The block that is held in view while the milestones fill. The section
+   around it is the track: its padding is the sequence's scroll length
+   (Approach.tsx sets both that and this offset, which drops to the foot of
+   the screen where the block is taller than one). */
+.approach-pin { position: sticky; top: var(--header-h); }
 .approach-body { padding-top: calc(73 * var(--u)); padding-bottom: calc(60 * var(--u)); }
 .approach-timeline {
   position: relative;
@@ -459,13 +464,32 @@ portfolio-city-strip {
   grid-template-columns: repeat(4, 1fr);
 }
 .approach-step {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   padding-inline: calc(7 * var(--u));
 }
+/* This milestone's length of the rule, filled 0 to 1 by --p as the section
+   is held. It lies along the rule itself, which stays where it is beneath
+   it; the circles keep their place over both. */
+.approach-bar {
+  position: absolute;
+  top: max(calc(12 * var(--u)), 1rem);
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(var(--p, 0));
+  transform-origin: left center;
+}
+/* The rule runs the frame's full width and the steps are inset from it, so
+   the first and last milestones reach out to its ends. */
+.approach-step:first-child .approach-bar { left: calc(-10 * var(--u)); }
+.approach-step:last-child .approach-bar { right: calc(-10 * var(--u)); }
 .approach-marker {
+  position: relative;
   display: grid;
   place-items: center;
   width: max(calc(24 * var(--u)), 2rem);
@@ -648,6 +672,20 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
   /* A vertical timeline: the rule runs down the left through the circles. */
   .approach-timeline { margin-top: 44px; }
   .approach-line { inset: 0 auto 0 calc(12 * var(--u)); width: 1px; height: auto; }
+  /* The milestones' fill turns with it: down the same line, each one
+     carrying on through the gap to the next so the fill is unbroken. */
+  .approach-bar {
+    top: 0;
+    bottom: -30px;
+    left: calc(12 * var(--u));
+    right: auto;
+    width: 1px;
+    height: auto;
+    transform: scaleY(var(--p, 0));
+    transform-origin: center top;
+  }
+  .approach-step:first-child .approach-bar { left: calc(12 * var(--u)); }
+  .approach-step:last-child .approach-bar { right: auto; bottom: 0; }
   .approach-steps { margin-inline: 0; grid-template-columns: 1fr; row-gap: 30px; }
   .approach-step {
     display: grid;
