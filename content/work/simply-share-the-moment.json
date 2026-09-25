@@ -1,0 +1,399 @@
+{
+  "slug": "simply-share-the-moment",
+  "meta": {
+    "title": "Simply — Share the Moment - Yonatan Budagov",
+    "description": "I designed the child and parent experience for Share the Moment, working within a POD team. I proposed the Motivation Booster to bring a parent's encouragement into difficult moments in Course 2."
+  },
+  "hero": {
+    "eyebrow": "Simply Piano / Share the Moment",
+    "heading": [
+      "A little encouragement.",
+      "Right when it matters."
+    ],
+    "lede": [
+      "I designed the child and parent experience for Share the Moment, working within a POD team. I proposed the Motivation Booster to bring a parent’s encouragement into difficult moments in Course 2, where children were losing motivation and churn was higher."
+    ],
+    "facts": [
+      {
+        "label": "My role",
+        "value": "Senior Product Designer in a POD team"
+      },
+      {
+        "label": "Working with",
+        "value": "PM, developer & music specialist"
+      },
+      {
+        "label": "Project",
+        "value": "Mobile & iPad"
+      }
+    ],
+    "plate": {
+      "caption": "Motivation Booster brings the parent into the child’s practice experience.",
+      "items": [
+        {
+          "src": "/work/simply-share-the-moment/practice-booster.webp",
+          "width": 2400,
+          "height": 1832,
+          "alt": "Simply Piano practice screen on an iPad: sheet music above a keyboard, with the parent's avatar and Super Dad Cover! shown over the note the child is playing"
+        }
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "problem",
+      "label": "The problem & the solution",
+      "nav": "The problem & the solution",
+      "heading": [
+        "Help children keep going",
+        "when practice gets difficult."
+      ],
+      "blocks": [
+        {
+          "type": "columns",
+          "items": [
+            {
+              "label": "The problem",
+              "labelTone": "accent",
+              "title": "Motivation fell. Churn increased.",
+              "text": "Children were losing motivation as they progressed through the course. Churn increased along the journey, particularly in Course 2. Parents wanted to help, but could not stay beside the piano or constantly check their phones."
+            },
+            {
+              "label": "The solution",
+              "labelTone": "accent",
+              "title": "Encouragement that reaches the moment of difficulty.",
+              "text": "Share the Moment connects a child’s achievement with a quick parent response. I proposed Motivation Booster so encouragement sent earlier could become tangible during a difficult moment in the next practice session."
+            }
+          ]
+        },
+        {
+          "type": "steps",
+          "label": "How the motivation flow works",
+          "columns": 4,
+          "items": [
+            {
+              "title": "Share an achievement",
+              "text": "The child earns three stars and shares the result with a parent."
+            },
+            {
+              "title": "Send encouragement",
+              "text": "The parent opens the link and sends a Motivation Booster."
+            },
+            {
+              "title": "Support during practice",
+              "text": "In the next practice session, the booster forgives one mistake."
+            },
+            {
+              "title": "Keep learning",
+              "text": "Further mistakes receive the app’s usual feedback and retry rules."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "evidence",
+      "label": "Evidence & opportunity",
+      "nav": "Evidence & opportunity",
+      "heading": [
+        "Why we focused on Course 2."
+      ],
+      "intro": "Simply’s data showed higher churn in Course 2. In conversations with children and parents, we heard both sides of the problem: children needed encouragement when practice became difficult, while parents wanted to help without having to stay by the piano or check their phones constantly.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "I used these findings, competitor research and the team’s existing hypotheses to explore how a brief response from a parent could support the child later, during practice."
+        },
+        {
+          "type": "statement",
+          "label": "Core hypothesis",
+          "text": "If parental encouragement reaches children at moments of difficulty, they will be more likely to keep practicing, helping reduce churn in Course 2 without requiring parents to stay continuously available."
+        }
+      ]
+    },
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "child",
+      "label": "Child POV / Sharing an achievement",
+      "nav": "Child POV",
+      "heading": [
+        "Earn three stars.",
+        "Share a moment worth celebrating."
+      ],
+      "intro": "Share the Moment is available only after the child completes a song with three stars. I kept sharing in a modal on the results screen, so the child could send the achievement without leaving the learning flow.",
+      "blocks": [
+        {
+          "type": "prose",
+          "text": [
+            {
+              "kind": "title",
+              "text": [
+                "Connect the sharing button to the reward."
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "I gave the main sharing button the same yellow as the stars. This makes it stand out and connects sharing with the achievement the child has just earned. I wanted the button to feel like a special invitation to show a parent something worth celebrating."
+            }
+          ]
+        },
+        {
+          "type": "plate",
+          "caption": "Child POV: a three-star result unlocks sharing; the yellow CTA connects the action to the achievement.",
+          "items": [
+            {
+              "src": "/work/simply-share-the-moment/level-end.webp",
+              "width": 2400,
+              "height": 1832,
+              "alt": "Level-end screen on an iPad: three stars over Song Competed, the Frozen Heart song title, notes, rhythm and assists scores, and a yellow Share With Dad! button above Try again and Play"
+            }
+          ]
+        },
+        {
+          "type": "prose",
+          "text": [
+            {
+              "kind": "title",
+              "text": [
+                "Built on the product’s design system."
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "I used Simply’s existing product design system so the feature would feel familiar. The hierarchy and yellow sharing button give the achievement more emphasis within that system."
+            },
+            {
+              "kind": "title",
+              "text": [
+                "Adjust the sharing experience for each age group."
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "For ages 6–10, I emphasized the song artwork, recognizable parent identity and emoji expression. For ages 10–14, I added an optional message and adjusted the tone to give older children more room for self-expression."
+            }
+          ]
+        },
+        {
+          "type": "plate",
+          "caption": "Ages 6–10: visual sharing. Ages 10–14: optional personal expression.",
+          "items": [
+            {
+              "src": "/work/simply-share-the-moment/share-young.webp",
+              "width": 2400,
+              "height": 1832,
+              "alt": "Sharing modal for younger children on an iPad: Share The Moment over the Frozen song artwork, a row of emoji and a Share With Dad button"
+            },
+            {
+              "src": "/work/simply-share-the-moment/share-older.webp",
+              "width": 2400,
+              "height": 1832,
+              "alt": "Sharing modal for older children on an iPad: You nailed it! with the Frozen Heart song, an optional message field, a row of emoji and a Share button"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "parent",
+      "label": "Key decision / Parent experience",
+      "nav": "Parent experience",
+      "heading": [
+        "A small action for the parent.",
+        "A meaningful response for the child."
+      ],
+      "intro": "The parent receives an email with the achievement and opens a mobile web flow. No app installation is required. They can choose an emoji, a message, a new song or a Motivation Booster, then confirm their response.",
+      "blocks": [
+        {
+          "type": "mediaText",
+          "side": "right",
+          "plate": {
+            "caption": "Parent POV: four response options, with Motivation connecting encouragement to practice.",
+            "items": [
+              {
+                "src": "/work/simply-share-the-moment/parent-options.webp",
+                "width": 1600,
+                "height": 1973,
+                "alt": "The parent's mobile web flow on a phone, with the four response cards floating around it: Send Motivation, Send Text, Send Emoji and Send New Song"
+              }
+            ]
+          },
+          "text": [
+            {
+              "kind": "title",
+              "text": [
+                "Four ways to say",
+                "“I’m here for you.”"
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "An emoji, a personal message, a new song or a Motivation Booster: each option gives the parent a different way to encourage their child."
+            },
+            {
+              "kind": "paragraph",
+              "text": "Motivation brings that support into the next practice session, at the moment the child encounters difficulty."
+            }
+          ]
+        },
+        {
+          "type": "plate",
+          "width": 70,
+          "caption": "Achievement preview → choose Motivation → confirm → response sent.",
+          "items": [
+            {
+              "src": "/work/simply-share-the-moment/parent-flow.webp",
+              "width": 2400,
+              "height": 1101,
+              "alt": "The parent journey across four phones: the achievement email, the response options, the Motivation Booster confirmation and the sent confirmation"
+            }
+          ]
+        },
+        {
+          "type": "prose",
+          "text": [
+            {
+              "kind": "paragraph",
+              "text": "I wanted parents to understand the achievement and respond quickly. The preview provides context, and the confirmation shows what they are about to send."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "booster",
+      "label": "Key decision / Motivation Booster",
+      "nav": "Motivation Booster",
+      "heading": [
+        "Turn “keep going”",
+        "into support during practice."
+      ],
+      "intro": "The idea came from a familiar physical moment: a parent beside the piano saying, “That’s okay, keep going.” I wanted the child to feel that support through the interface even when the parent was elsewhere.",
+      "blocks": [
+        {
+          "type": "plate",
+          "caption": "The parent’s avatar makes the encouragement visible at the moment the booster activates.",
+          "items": [
+            {
+              "src": "/work/simply-share-the-moment/practice-booster.webp",
+              "width": 2400,
+              "height": 1832,
+              "alt": "The booster during practice on an iPad: the parent's avatar with Super Dad Cover! appears over the sheet music at the note the child is playing"
+            }
+          ]
+        },
+        {
+          "type": "prose",
+          "text": [
+            {
+              "kind": "title",
+              "text": [
+                "One forgiven mistake. The learning flow continues."
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "The booster forgives one mistake. If the child makes more mistakes, the app responds as usual: they may earn fewer stars or be asked to try the song again. How often a parent can send a booster depends on the segment and product rules."
+            },
+            {
+              "kind": "paragraph",
+              "text": "I proposed Motivation within our POD, then developed the idea with the product manager, developer and music specialist. We presented the direction to stakeholders as a team. The music specialists’ teaching expertise helped us assess whether forgiving an occasional mistake could support continued practice."
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "label": "The design trade-off",
+          "text": "The booster changes what happens after a mistake, so it needed limits. It helps once; further mistakes receive the usual response. That boundary was important to the balance between encouragement and learning."
+        }
+      ]
+    },
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "complete",
+      "label": "The complete experience",
+      "nav": "The complete experience",
+      "heading": [
+        "Help children recognize",
+        "and find their parent’s support."
+      ],
+      "intro": "I also designed parent identity setup and the child’s notification center. The parent’s name and avatar show who sent the encouragement. The notification center gives children a place to find messages and see that a booster is waiting.",
+      "blocks": [
+        {
+          "type": "plate",
+          "width": 70,
+          "caption": "The notification center brings parent encouragement back into the child’s iPad experience.",
+          "items": [
+            {
+              "src": "/work/simply-share-the-moment/notification-center.webp",
+              "width": 2400,
+              "height": 1819,
+              "alt": "The child's home screen on an iPad: the course map with Piano Basics, and the notification center listing reminders, completed songs and the boosters a parent has sent"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "outcome",
+      "label": "Validation, rollout & learning",
+      "nav": "Validation & learning",
+      "heading": [
+        "What we observed.",
+        "What I learned."
+      ],
+      "intro": "We tested the solution with users before development. The feature launched to 10% of users first, then rolled out gradually.",
+      "blocks": [
+        {
+          "type": "prose",
+          "text": [
+            {
+              "kind": "title",
+              "text": [
+                "Directional results"
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "The team reported fewer subscription cancellations, with no decline observed in student progress or learning quality. I no longer have the exact figures or comparison details, so I can report the direction of those findings, but cannot quantify the impact or attribute it to the booster alone."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "label": "What I learned",
+          "heading": [
+            "Timing is part of the support."
+          ],
+          "text": "The main lesson for me was that a parent does not have to be present for their encouragement to feel present. Designing both sides of the experience let me connect a short parent action with a difficult moment later in practice. Working with the POD helped me decide how that support should behave and where it should stop."
+        }
+      ]
+    }
+  ]
+}

@@ -785,6 +785,7 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
   gap: clamp(1rem, 5vw, 5rem);
 }
 .cs-hero-phones .cs-caption { text-align: center; }
+.cs-hero-plate { margin-top: clamp(3rem, 5vw, 4.5rem); }
 /* The fan: three phones of one size overlapping by a quarter, each in
    front of the one to its left, with a soft shadow so the overlaps read
    (the shadow is CSS, on the cutout's own edge; no tray). */
@@ -819,6 +820,12 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 .cs-figure-frame { border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--cs-line); }
 .cs-figure img { display: block; width: 100%; height: auto; }
 .cs-figure .cs-label { margin-top: 1rem; }
+/* A plate: artwork that brings its own device, on the cream with no border
+   and no tray. One image is set narrower than the column and centred; a row
+   of them fills it. The caption sits under the row, at its left edge. */
+.cs-plate { margin: 0 auto; width: min(100%, var(--plate-w, 53rem)); }
+.cs-plate-row { display: grid; grid-template-columns: repeat(var(--plate-cols, 1), minmax(0, 1fr)); gap: clamp(1rem, 2.5vw, 2.25rem); align-items: end; }
+.cs-plate img { display: block; width: 100%; height: auto; }
 
 /* Sections */
 .cs-section { padding: var(--cs-section) var(--cs-pad); }
@@ -886,7 +893,7 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 .cs-rail-number { min-width: 2ch; }
 .cs-rail-tick { display: block; flex: none; width: 1rem; height: 1px; background: currentColor; transition: width 300ms var(--ease); }
 .cs-rail-name { max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0; transition: max-width 400ms var(--ease), opacity 300ms ease; }
-.cs-rail:hover .cs-rail-name, .cs-rail:focus-within .cs-rail-name { max-width: 12rem; opacity: 1; }
+.cs-rail:hover .cs-rail-name, .cs-rail:focus-within .cs-rail-name { max-width: 15rem; opacity: 1; }
 .cs-rail:hover, .cs-rail:focus-within { background: var(--bg); box-shadow: 0 0 0 0.5rem var(--bg); }
 .cs-rail-item:hover { color: var(--ink-strong); }
 .cs-rail-item--active { color: var(--ink-strong); }
@@ -934,9 +941,17 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 .cs-callout .cs-h3 { margin-top: 1.25rem; color: var(--bg); }
 .cs-callout .cs-p { margin-top: 1.25rem; max-width: 58ch; color: var(--bg); opacity: 0.86; }
 
-.cs-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--cs-gap); }
+.cs-steps { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: var(--cs-gap); }
 .cs-step { display: flex; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--cs-line); font-size: var(--fs-body); line-height: 1.4; color: var(--ink-strong); }
 .cs-step-number { font-size: var(--fs-small); line-height: calc(1.4 * 17 / 14); color: var(--muted); font-variant-numeric: tabular-nums; }
+/* A titled step: the number above its title, then what happens in it. */
+.cs-step--titled { display: block; }
+.cs-step-title { margin: 0.75rem 0 0; font-size: var(--fs-body); font-weight: 700; line-height: 1.3; color: var(--ink-strong); }
+.cs-step--titled .cs-p { margin-top: 0.75rem; }
+
+/* A statement set large: the project's hypothesis, a principle. */
+.cs-statement-block > .cs-label + .cs-statement { margin-top: 1.25rem; }
+.cs-statement { max-width: 50ch; font-size: var(--fs-title); font-weight: 700; line-height: 1.3; letter-spacing: -0.02em; color: var(--ink-strong); text-wrap: pretty; }
 
 /* The booking flow: three steps across. Each step is one list item
    (phone, title, detail, label, text: the right reading order when they
@@ -998,6 +1013,8 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 @media (max-width: 899px) {
   .cs-line { display: inline; }
   .cs-head--split, .cs-columns, .cs-media-text, .cs-media-text--phones, .cs-stats, .cs-steps, .cs-aside, .cs-facts { grid-template-columns: minmax(0, 1fr); }
+  /* Plates read one under the other, in the order they are written. */
+  .cs-plate-row { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
   .cs-head--split { align-items: start; }
   .cs-media-text--right .cs-media { order: 0; }
   .cs-phone-pair { justify-content: start; }

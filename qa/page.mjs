@@ -133,7 +133,7 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
   ok("approach: rule across the whole frame, circles evenly spaced", near(s.line.w, s.frame.w - 2, 3) && near(s.steps[1].cx - s.steps[0].cx, 205 * u, 3) && near(s.steps[3].cx - s.steps[2].cx, 205 * u, 3), `line ${s.line.w}, circles ${s.steps.map((st) => st.cx).join(", ")}`);
 
   ok("projects: three equal 2:3 crops in a row, 5px gaps, images loaded", s.cards.length === 3 && s.cards.every((c) => near(c.aspect, 0.667, 0.01) && c.loaded && c.top === s.cards[0].top) && near(s.cards[1].left - s.cards[0].right, 5 * u, 1.5), JSON.stringify(s.cards.map((c) => [c.left, c.right])));
-  ok("projects: order kept, captions left-aligned under each", s.cards.map((c) => c.title).join(",") === "Second Office,Travelito,Joyn" && s.cards.every((c) => c.captionLeft === c.left && c.tag), s.cards.map((c) => c.title).join(","));
+  ok("projects: order kept, captions left-aligned under each", s.cards.map((c) => c.title).join(",") === "Second Office,Simply — Share the Moment,Joyn" && s.cards.every((c) => c.captionLeft === c.left && c.tag), s.cards.map((c) => c.title).join(","));
   ok("projects: group centred, 670 frame-px wide", near(s.cards[2].right - s.cards[0].left, 670 * u, 3) && near((s.cards[0].left + s.cards[2].right) / 2, (s.frame.left + s.frame.right) / 2, 3), `${s.cards[0].left}..${s.cards[2].right}`);
 
   ok("about: photo left, biography right, orange introduction", s.about.photo.right < s.about.bio.left && s.about.hello.text === "Nice to meet you!" && s.about.hello.color === s.accent && s.about.paragraphs === 4 && s.about.photoLoaded, `photo ..${s.about.photo.right}, bio ${s.about.bio.left}..`);

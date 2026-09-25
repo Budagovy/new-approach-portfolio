@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Blocks, Lines, Phone } from "./Blocks";
+import { Blocks, Lines, Phone, Plate } from "./Blocks";
 import { SectionRail } from "./SectionRail";
 import type { CaseStudyChrome, CaseStudyData } from "./types";
 
@@ -38,9 +38,14 @@ export function CaseStudy({ data, chrome }: { data: CaseStudyData; chrome: CaseS
           ))}
         </dl>
 
-        <div className={data.hero.phonesLayout === "fan" ? "cs-hero-phones cs-hero-phones--fan" : "cs-hero-phones"}>
-          {data.hero.phones.map((phone) => <Phone key={phone.src} phone={phone} labels={chrome.zoom} />)}
-        </div>
+        {/* A phone project opens on its screens side by side; a tablet one on
+            a single screen in its frame. */}
+        {data.hero.phones && (
+          <div className={data.hero.phonesLayout === "fan" ? "cs-hero-phones cs-hero-phones--fan" : "cs-hero-phones"}>
+            {data.hero.phones.map((phone) => <Phone key={phone.src} phone={phone} labels={chrome.zoom} />)}
+          </div>
+        )}
+        {data.hero.plate && <div className="cs-hero-plate"><Plate plate={data.hero.plate} labels={chrome.zoom} /></div>}
       </header>
 
       <Blocks blocks={data.blocks} labels={chrome.zoom} />

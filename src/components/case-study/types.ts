@@ -23,6 +23,19 @@ export interface CasePhone extends CaseImage {
   lead?: boolean;
 }
 
+/**
+ * One or more images on the page's own ground, side by side, under a single
+ * sentence caption aligned with the first image's left edge. The artwork
+ * carries its own device (a tablet frame, a phone in a composition), so
+ * nothing is drawn around it here.
+ */
+export interface CasePlate {
+  items: CaseImage[];
+  caption?: string;
+  /** Width of a single image, in rem; a row of several always fills the column. */
+  width?: number;
+}
+
 /** A detail view: the same screen enlarged around a point of interest. */
 export interface CaseDetail {
   src: string;
@@ -65,11 +78,17 @@ export type CaseBlock =
     }
   | { type: "columns"; items: { label: string; labelTone?: "accent"; title?: string; text: string }[] }
   | { type: "note"; label?: string; text: string }
+  /** A subhead and its paragraphs, with no image beside them. */
+  | { type: "prose"; text: CaseText[] }
+  | ({ type: "plate" } & CasePlate)
+  /** A short statement set large: a hypothesis, a principle. */
+  | { type: "statement"; label?: string; text: string }
   | { type: "stats"; items: { value: string; text: string }[] }
   | { type: "quote"; text: string; source: string }
-  | { type: "mediaText"; side: "left" | "right"; figure?: CaseImage; phones?: CasePhone[]; text: CaseText[] }
+  | { type: "mediaText"; side: "left" | "right"; figure?: CaseImage; phones?: CasePhone[]; plate?: CasePlate; text: CaseText[] }
   | { type: "callout"; label: string; heading: string[]; text?: string }
-  | { type: "steps"; label?: string; items: string[] }
+  /** Numbered steps across a row; an item may carry its own title. */
+  | { type: "steps"; label?: string; columns?: number; items: (string | { title: string; text: string })[] }
   | { type: "flow"; items: { phone: CasePhone; title: string; detail: CaseDetail; label: string; text: string }[] }
   | { type: "gallery"; columns?: number; items: CasePhone[]; prototype?: CasePrototype }
   | { type: "aside"; label: string; text: string };
@@ -82,9 +101,11 @@ export interface CaseStudyData {
     heading: string[];
     lede: string[];
     facts: { label: string; value: string }[];
-    phones: CasePhone[];
+    /** A phone project opens on its screens; a tablet one on a single plate. */
+    phones?: CasePhone[];
     /** "fan": the phones overlap in a row, each a step in front of the last. */
     phonesLayout?: "fan";
+    plate?: CasePlate;
   };
   blocks: CaseBlock[];
 }

@@ -62,10 +62,10 @@ async function open(url, opts) {
     const li = [...document.querySelectorAll(".project-item")].find((l) => l.textContent.includes("Second Office"));
     const a = li.querySelector("a");
     return a && { href: a.getAttribute("href"), target: a.getAttribute("target"), wrapsImage: !!a.querySelector("img"), wrapsTitle: !!a.querySelector(".project-title"), links: li.querySelectorAll("a").length,
-      others: [...document.querySelectorAll(".project-item")].filter((l) => !l.textContent.includes("Second Office")).map((l) => l.querySelectorAll("a").length) };
+      others: [...document.querySelectorAll(".project-item")].filter((l) => !l.textContent.includes("Second Office")).map((l) => ({ title: l.querySelector(".project-title").textContent.trim(), href: l.querySelector("a")?.getAttribute("href") ?? null })) };
   });
   ok("Second Office card: one link around image and title, to the case study", !!card && card.href === PATH && card.wrapsImage && card.wrapsTitle && card.links === 1, JSON.stringify(card));
-  ok("same tab (no target); Travelito and Joyn not linked yet", card.target === null && card.others.every((n) => n === 0), `target ${card.target}, others ${card.others}`);
+  ok("same tab (no target); Simply leads to its own case study, Joyn not linked yet", card.target === null && card.others[0].href === "/work/simply-share-the-moment" && card.others[1].href === null, `target ${card.target}, others ${JSON.stringify(card.others)}`);
   await page.evaluate(() => document.querySelector(".projects").scrollIntoView()); await page.waitForTimeout(1500);
   await page.click(".project-item a .project-title");
   await page.waitForURL("**" + PATH, { timeout: 15000 });

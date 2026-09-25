@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { Zoomable } from "./Zoomable";
-import type { CaseBlock, CaseDetail, CaseImage, CasePhone, CasePrototype, CaseText } from "./types";
+import type { CaseBlock, CaseDetail, CaseImage, CasePhone, CasePlate, CasePrototype, CaseText } from "./types";
 
 type ZoomLabels = { open: string; close: string };
 
@@ -24,6 +24,24 @@ export function Phone({ phone, labels, captionClass = "cs-caption" }: { phone: C
     <figure className={phone.lead ? "cs-phone cs-phone--lead" : "cs-phone"}>
       <Zoomable image={phone} labels={labels} />
       {phone.caption && <figcaption className={captionClass}>{phone.caption}</figcaption>}
+    </figure>
+  );
+}
+
+/**
+ * Artwork that already carries its own device: a screen inside a tablet
+ * frame, or a composition built around a phone. It stands on the cream with
+ * no border and no tray, and a row of them shares one caption, set at the
+ * first image's left edge.
+ */
+export function Plate({ plate, labels }: { plate: CasePlate; labels: ZoomLabels }) {
+  const style = { "--plate-cols": plate.items.length, "--plate-w": plate.items.length > 1 ? "100%" : `${plate.width ?? 53}rem` } as CSSProperties;
+  return (
+    <figure className="cs-plate" style={style}>
+      <div className="cs-plate-row">
+        {plate.items.map((image) => <Zoomable key={image.src} image={image} labels={labels} />)}
+      </div>
+      {plate.caption && <figcaption className="cs-caption">{plate.caption}</figcaption>}
     </figure>
   );
 }
@@ -144,6 +162,20 @@ function Block({ block, labels, bar }: { block: CaseBlock; labels: ZoomLabels; b
         </div>
       );
 
+    case "prose":
+      return <Text items={block.text} />;
+
+    case "plate":
+      return <Plate plate={block} labels={labels} />;
+
+    case "statement":
+      return (
+        <div className="cs-statement-block">
+          {block.label && <p className="cs-label">{block.label}</p>}
+          <p className="cs-statement">{block.text}</p>
+        </div>
+      );
+
     case "stats":
       return (
         <ul className="cs-stats">
@@ -170,6 +202,7 @@ function Block({ block, labels, bar }: { block: CaseBlock; labels: ZoomLabels; b
         <div className={`cs-media-text cs-media-text--${block.side}${block.phones ? " cs-media-text--phones" : ""}`}>
           <div className="cs-media">
             {block.figure && <Figure image={block.figure} labels={labels} />}
+            {block.plate && <Plate plate={block.plate} labels={labels} />}
             {block.phones && (
               <div className="cs-phone-pair">
                 {block.phones.map((phone) => <Phone key={phone.src} phone={phone} labels={labels} captionClass="cs-label" />)}
@@ -193,13 +226,21 @@ function Block({ block, labels, bar }: { block: CaseBlock; labels: ZoomLabels; b
       return (
         <div className="cs-steps-block">
           {block.label && <p className="cs-label">{block.label}</p>}
-          <ol className="cs-steps">
-            {block.items.map((item, i) => (
-              <li key={item} className="cs-step">
-                <span className="cs-step-number" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
-                <span>{item}</span>
-              </li>
-            ))}
+          <ol className="cs-steps" style={{ "--cols": block.columns ?? 3 } as CSSProperties}>
+            {block.items.map((item, i) => {
+              const number = <span className="cs-step-number" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>;
+              /* A step is either one line beside its number, or a titled step
+                 with the number above: the same list, two densities. */
+              return typeof item === "string" ? (
+                <li key={item} className="cs-step">{number}<span>{item}</span></li>
+              ) : (
+                <li key={item.title} className="cs-step cs-step--titled">
+                  {number}
+                  <h3 className="cs-step-title">{item.title}</h3>
+                  <p className="cs-p">{item.text}</p>
+                </li>
+              );
+            })}
           </ol>
         </div>
       );
