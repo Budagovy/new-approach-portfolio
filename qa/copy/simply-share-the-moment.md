@@ -136,7 +136,7 @@ We tested the solution with users before development. The feature launched to 10
 
 Directional results
 
-The team reported fewer subscription cancellations, with no decline observed in student progress or learning quality. I no longer have the exact figures or comparison details, so I can report the direction of those findings, but cannot quantify the impact or attribute it to the booster alone.
+Over an approximately three-month test, users with access to Share the Moment showed higher retention and fewer subscription cancellations than the control group. This result applies to the entire Share the Moment feature, including all parent response options—not just the Motivation Booster.
 
 WHAT I LEARNED
 
