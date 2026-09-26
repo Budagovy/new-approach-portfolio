@@ -499,8 +499,13 @@ portfolio-city-strip {
   color: var(--bg);
   font-family: var(--mono);
   font-size: var(--fs-small);
+  /* Lights as the milestone before it finishes (Approach.tsx). Short
+     enough to read as part of the same movement as the bar that just
+     filled, not an effect of its own. */
+  transition: background-color 260ms var(--ease);
 }
 .approach-marker--active { background: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .approach-marker { transition: none; } }
 .approach-step-title {
   margin-top: calc(14 * var(--u));
   font-size: var(--fs-body);

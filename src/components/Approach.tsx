@@ -28,7 +28,7 @@ const clamp = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
  * The section is held in view while its milestones fill, one at a time
  * and in order. It is a plain sticky pin, scrubbed by the real scroll
  * position: the section is the track, the block inside it sticks, and the
- * extra scroll length the sequence needs is the track's own padding
+ * extra scroll length the sequence needs is a spacer after it
  * (APPROACH.scrubVh), so it is scoped to this section and nothing else on
  * the page moves. Nothing is locked and nothing runs on a clock: the fill
  * is read from where the page is this frame, so it stops the instant the
@@ -38,7 +38,10 @@ const clamp = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
  * accent, lying under the circles (the rule itself is untouched beneath
  * it). Progress p over the held length is shared out between them: bar i
  * runs from p = i/n to (i+1)/n, so the next one starts only once the one
- * before it is full, and the ones behind stay full.
+ * before it is full, and the ones behind stay full. Each circle lights in
+ * the accent as the bar before it completes — the first is lit at rest, as
+ * it always was — so the sequence ends with all four of them lit and the
+ * timeline filled end to end.
  *
  * Where the block is taller than the screen (narrow phones, landscape) it
  * sticks by its bottom instead, so the fourth milestone is on screen while
@@ -49,6 +52,7 @@ export function Approach({ data }: { data: ApproachData }) {
   const trackRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const barsRef = useRef<(HTMLSpanElement | null)[]>([]);
+  const markersRef = useRef<(HTMLSpanElement | null)[]>([]);
   /* The server cannot know the reader's motion preference, so it renders
      the held version and an effect turns it off: deciding this in the
      render itself was a hydration mismatch twice elsewhere on this page. */
@@ -67,9 +71,17 @@ export function Approach({ data }: { data: ApproachData }) {
     const pin = pinRef.current;
     if (!track || !pin) return;
     const bars = barsRef.current.filter((b): b is HTMLSpanElement => !!b);
-    const fill = (i: number, v: number) => bars[i]?.style.setProperty("--p", v.toFixed(4));
+    const markers = markersRef.current;
+    /* Four decimals is finer than a pixel of bar at any width, and it is
+       the same number the circle above reads, so a circle and the bar that
+       lights it can never disagree about when the milestone is complete. */
+    const round = (v: number) => +clamp(v).toFixed(4);
+    const fill = (i: number, v: number) => bars[i]?.style.setProperty("--p", String(v));
+    /* A milestone's circle lights as the one before it finishes: the first
+       is lit from the start, so by the end of the sequence all four are. */
+    const light = (i: number, on: boolean) => markers[i]?.classList.toggle("approach-marker--active", on);
     if (!held) {
-      bars.forEach((_, i) => fill(i, 1));
+      bars.forEach((_, i) => { fill(i, 1); light(i, true); });
       return;
     }
 
@@ -93,7 +105,11 @@ export function Approach({ data }: { data: ApproachData }) {
     const update = () => {
       raf = 0;
       const p = run > 0 ? clamp((top - track.getBoundingClientRect().top) / run) : 0;
-      for (let i = 0; i < bars.length; i++) fill(i, clamp(p * bars.length - i));
+      const filled = bars.map((_, i) => round(p * bars.length - i));
+      for (let i = 0; i < bars.length; i++) {
+        fill(i, filled[i]);
+        light(i, i === 0 || filled[i - 1] === 1);
+      }
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
     const onResize = () => { measure(); onScroll(); };
@@ -132,7 +148,11 @@ export function Approach({ data }: { data: ApproachData }) {
                   {/* This milestone's length of the rule. Before the circle in
                       the markup so the circle stays over it, as the rule is. */}
                   <span className="approach-bar" aria-hidden="true" ref={(el) => { barsRef.current[i] = el; }} />
-                  <span className={i === 0 ? "approach-marker approach-marker--active" : "approach-marker"} aria-hidden="true">
+                  <span
+                    ref={(el) => { markersRef.current[i] = el; }}
+                    className={i === 0 ? "approach-marker approach-marker--active" : "approach-marker"}
+                    aria-hidden="true"
+                  >
                     {number(i)}
                   </span>
                   <h3 className="approach-step-title">{step.title}</h3>

@@ -6,6 +6,10 @@
    stay filled, and the section only lets go once 04 is at 100%. Scrolling back up empties
    them 04 -> 03 -> 02 -> 01.
 
+   Each milestone's circle lights in the accent as the bar before it completes — 01 is lit
+   from the start, as it always was — so all four are lit before the reader carries on, and
+   they go out again in reverse on the way back up.
+
    It is scroll-linked, not timed: standing still leaves the bars exactly where they are, and
    the page is never locked (an ordinary scrollTo moves it as far as it is asked to). Entry
    and exit do not move anything: the bars lie along the existing rule, the steps keep their
@@ -30,6 +34,7 @@ mkdirSync(OUT, { recursive: true });
 const fails = [];
 const ok = (n, p, d = "") => { console.log(`${p ? "PASS" : "FAIL"}  ${n.padEnd(68)} ${d}`); if (!p) fails.push(n); };
 const TITLES = ["Understand & focus", "Explore & design", "Prototype & refine", "Ship & improve"];
+const ACCENT = "rgb(243, 180, 74)";
 
 const browser = await chromium.launch({ executablePath: CHROME, headless: true });
 
@@ -51,8 +56,13 @@ const geometry = (page) => page.evaluate(() => {
 const sample = (page) => page.evaluate(() => {
   const pin = document.querySelector(".approach-pin");
   const bars = [...document.querySelectorAll(".approach-bar")];
+  const markers = [...document.querySelectorAll(".approach-marker")];
   return {
-    bars: bars.map((b) => +(+b.style.getPropertyValue("--p") || 0).toFixed(3)),
+    /* Four decimals: the precision the section itself works in, so a bar rounded here
+       cannot look full while its circle is not yet lit. */
+    bars: bars.map((b) => +(+b.style.getPropertyValue("--p") || 0).toFixed(4)),
+    lit: markers.map((m) => m.classList.contains("approach-marker--active")),
+    colours: markers.map((m) => getComputedStyle(m).backgroundColor),
     pinScreenTop: Math.round(pin.getBoundingClientRect().top),
     pinScreenBottom: Math.round(pin.getBoundingClientRect().bottom),
     stepTops: [...document.querySelectorAll(".approach-step")].map((s) => Math.round(s.getBoundingClientRect().top)),
@@ -82,7 +92,7 @@ const at = async (page, y, wait = 90) => { await page.evaluate((v) => scrollTo(0
   ok("the sequence's scroll length is this section's own, about 1.6 screens", Math.abs(g.run - 1.6 * g.vh) <= 2, `${g.run}px of a ${g.vh}px screen`);
 
   const before = await at(page, start - 300);
-  ok("before the section: every bar empty", before.bars.every((b) => b === 0), before.bars.join(", "));
+  ok("before the section: every bar empty, only the first circle lit", before.bars.every((b) => b === 0) && before.lit.join(",") === "true,false,false,false", `${before.bars.join(", ")} / lit ${before.lit.join(",")}`);
 
   /* Let the section's own reveal (the steps' fade and rise) finish first: it runs once, on
      entry, and is not what this gate is measuring. */
@@ -100,6 +110,13 @@ const at = async (page, y, wait = 90) => { await page.evaluate((v) => scrollTo(0
   const quarters = [0.25, 0.5, 0.75].map((f) => walk[Math.round(f * 40)].bars);
   ok("the four share the run equally: 01 full at a quarter, 02 at a half, 03 at three quarters", quarters[0][0] === 1 && quarters[0][1] <= 0.02 && quarters[1][1] === 1 && quarters[1][2] <= 0.02 && quarters[2][2] === 1 && quarters[2][3] <= 0.02, quarters.map((q) => q.join(",")).join(" | "));
 
+  /* The circles light as the bars before them finish. */
+  const litInStep = walk.every((s) => s.lit.every((on, i) => on === (i === 0 || s.bars[i - 1] === 1)));
+  ok("each circle lights exactly as the bar before it completes", litInStep, walk.filter((s) => !s.lit.every((on, i) => on === (i === 0 || s.bars[i - 1] === 1))).slice(0, 2).map((s) => `${s.bars.join(",")} -> ${s.lit.join(",")}`).join(" | ") || "all samples");
+  const litOrder = [1, 2, 3].map((i) => walk.findIndex((s) => s.lit[i]));
+  ok("they light in order, 02 then 03 then 04, none of them early", litOrder.every((n, i) => n > 0 && (i === 0 || n > litOrder[i - 1])) && walk[0].lit.join(",") === "true,false,false,false", `first lit at samples ${litOrder.join(", ")} of 40`);
+  ok("all four circles are lit in the accent by the end of the sequence", walk.at(-1).lit.every(Boolean) && walk.at(-1).colours.every((c) => c === ACCENT), `${walk.at(-1).lit.join(",")} / ${[...new Set(walk.at(-1).colours)].join(" ")}`);
+
   /* Pinned throughout, and only then let go. */
   const pinned = walk.every((s) => Math.abs(s.pinScreenTop - g.pinTop) <= 1);
   ok("the section stays pinned for the whole sequence", pinned, `tops ${[...new Set(walk.map((s) => s.pinScreenTop))].join(",")} (rests at ${g.pinTop})`);
@@ -107,6 +124,7 @@ const at = async (page, y, wait = 90) => { await page.evaluate((v) => scrollTo(0
   ok("nothing inside it moves while it is held, and the four steps stay level", stepsStill, "");
   const after = await at(page, start + g.run + 400);
   ok("only once 04 is full does it let go and the page carry on", after.bars.every((b) => b === 1) && after.pinScreenTop < g.pinTop - 380, `bars ${after.bars.join(",")}, top ${after.pinScreenTop}`);
+  ok("past it, all four milestones stay lit", after.lit.every(Boolean), after.lit.join(","));
   const justBefore = await at(page, start + g.run - 8);
   ok("a hair before the end it is still pinned and 04 is not yet full", Math.abs(justBefore.pinScreenTop - g.pinTop) <= 1 && justBefore.bars[3] < 1 && justBefore.bars[3] > 0.9, `top ${justBefore.pinScreenTop}, 04 at ${justBefore.bars[3]}`);
 
@@ -120,6 +138,8 @@ const at = async (page, y, wait = 90) => { await page.evaluate((v) => scrollTo(0
     return gone > 0 && gone < next;
   });
   ok("scrolling up reverses it: 04 empties, then 03, 02, 01", emptiesInReverse && emptyOrder && back.at(-1).bars.every((b) => b === 0), back.at(-1).bars.join(","));
+  const outOrder = [3, 2, 1].map((i) => back.findIndex((s) => !s.lit[i]));
+  ok("the circles go out in reverse too, and 01 stays lit", outOrder.every((n, i) => n > 0 && (i === 0 || n > outOrder[i - 1])) && back.at(-1).lit.join(",") === "true,false,false,false", `out at samples ${outOrder.join(", ")}; ends ${back.at(-1).lit.join(",")}`);
 
   /* Scroll-linked, not timed. */
   const held = await at(page, start + g.run * 0.4, 120);
@@ -162,6 +182,7 @@ for (const [w, h, mobile] of [[1024, 768, false], [768, 1024, true], [390, 844, 
   const walk = [];
   for (let i = 0; i <= 16; i++) walk.push(await at(page, start + (g.run * i) / 16));
   ok(`${tag} pinned throughout, bars fill in order and finish full`, walk.every((s) => Math.abs(s.pinScreenTop - g.pinTop) <= 1) && walk.every((s) => s.bars.every((b, i) => i === 0 || b === 0 || s.bars[i - 1] === 1)) && walk.at(-1).bars.every((b) => b === 1), `top ${g.pinTop}, ends ${walk.at(-1).bars.join(",")}`);
+  ok(`${tag} the circles light with them and all four end lit`, walk.every((s) => s.lit.every((on, i) => on === (i === 0 || s.bars[i - 1] === 1))) && walk.at(-1).lit.every(Boolean), walk.at(-1).lit.join(","));
   /* Where the block is taller than the screen it rests against its foot, so the last
      milestone is on screen while it fills. */
   ok(`${tag} all four milestones are on screen while they fill`, walk.every((s) => s.pinScreenTop >= -1 || s.pinScreenBottom <= g.vh + 1), `pin ${g.pinH}px in a ${g.vh}px screen, rests at ${g.pinTop}`);
@@ -179,9 +200,9 @@ for (const [w, h, mobile] of [[1024, 768, false], [768, 1024, true], [390, 844, 
   await page.waitForTimeout(900);
   const s = await page.evaluate(() => {
     const section = document.querySelector("#approach"), pin = document.querySelector(".approach-pin");
-    return { spacers: document.querySelectorAll(".approach-run").length, run: Math.round(section.getBoundingClientRect().height - pin.offsetHeight), bars: [...document.querySelectorAll(".approach-bar")].map((b) => +(+b.style.getPropertyValue("--p") || 0)) };
+    return { spacers: document.querySelectorAll(".approach-run").length, run: Math.round(section.getBoundingClientRect().height - pin.offsetHeight), bars: [...document.querySelectorAll(".approach-bar")].map((b) => +(+b.style.getPropertyValue("--p") || 0)), lit: [...document.querySelectorAll(".approach-marker")].map((m) => m.classList.contains("approach-marker--active")) };
   });
-  ok("reduced motion: no added scroll length, the milestones simply read as complete", s.run === 0 && s.spacers === 0 && s.bars.every((b) => b === 1), `${s.spacers} spacers, run ${s.run}px, bars ${s.bars.join(",")}`);
+  ok("reduced motion: no added scroll length, every milestone complete and lit", s.run === 0 && s.spacers === 0 && s.bars.every((b) => b === 1) && s.lit.every(Boolean), `${s.spacers} spacers, run ${s.run}px, bars ${s.bars.join(",")}, lit ${s.lit.join(",")}`);
   await ctx.close();
 }
 
