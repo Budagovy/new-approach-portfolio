@@ -869,6 +869,21 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 .cs-plate { margin: 0 auto; width: min(100%, var(--plate-w, 53rem)); }
 .cs-plate-row { display: grid; grid-template-columns: repeat(var(--plate-cols, 1), minmax(0, 1fr)); gap: clamp(1rem, 2.5vw, 2.25rem); align-items: end; }
 .cs-plate img { display: block; width: 100%; height: auto; }
+/* A screen inside a device stands on the cream with a soft shadow under it —
+   the finish the Second Office phones are given, on their own cutout's edge,
+   with no tray behind them. */
+.cs-shot--device { filter: drop-shadow(0 18px 28px rgb(22 20 14 / 0.22)); }
+/* Figures side by side, each with its own caption; "level" sizes the columns
+   by the figures' proportions so they share a top and a bottom edge. */
+.cs-figures { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: var(--cs-gap) clamp(1.5rem, 4vw, 4rem); align-items: start; }
+.cs-figures--level { grid-template-columns: var(--tpl); }
+.cs-figures-item { margin: 0; }
+.cs-figures-item img { display: block; width: 100%; height: auto; }
+/* The enlarged part of the figure above it: set by HEIGHT, so two details
+   cropped to different widths are shown at the same scale. */
+.cs-figure-detail { width: auto; margin: 1.5rem auto 0; }
+.cs-figure-detail img { width: auto; height: clamp(3.25rem, 5.6vw, 5rem); border-radius: 0.75rem; }
+.cs-figures-item figcaption { margin-top: 1.25rem; }
 
 /* Sections */
 .cs-section { padding: var(--cs-section) var(--cs-pad); }
@@ -1056,8 +1071,10 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 @media (max-width: 899px) {
   .cs-line { display: inline; }
   .cs-head--split, .cs-columns, .cs-media-text, .cs-media-text--phones, .cs-stats, .cs-steps, .cs-aside, .cs-facts { grid-template-columns: minmax(0, 1fr); }
-  /* Plates read one under the other, in the order they are written. */
+  /* Plates and paired figures read one under the other, in the order they
+     are written (the level rule above is overridden here on purpose). */
   .cs-plate-row { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+  .cs-figures, .cs-figures--level { grid-template-columns: minmax(0, 1fr); }
   .cs-head--split { align-items: start; }
   .cs-media-text--right .cs-media { order: 0; }
   .cs-phone-pair { justify-content: start; }

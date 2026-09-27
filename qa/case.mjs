@@ -65,7 +65,7 @@ async function open(url, opts) {
       others: [...document.querySelectorAll(".project-item")].filter((l) => !l.textContent.includes("Second Office")).map((l) => ({ title: l.querySelector(".project-title").textContent.trim(), href: l.querySelector("a")?.getAttribute("href") ?? null })) };
   });
   ok("Second Office card: one link around image and title, to the case study", !!card && card.href === PATH && card.wrapsImage && card.wrapsTitle && card.links === 1, JSON.stringify(card));
-  ok("same tab (no target); Simply leads to its own case study, Joyn not linked yet", card.target === null && card.others[0].href === "/work/simply-share-the-moment" && card.others[1].href === null, `target ${card.target}, others ${JSON.stringify(card.others)}`);
+  ok("same tab (no target); Weekly Challenge leads to its own case study, Joyn not linked yet", card.target === null && card.others[0].href === "/work/simply-weekly-challenge" && card.others[1].href === null, `target ${card.target}, others ${JSON.stringify(card.others)}`);
   await page.evaluate(() => document.querySelector(".projects").scrollIntoView()); await page.waitForTimeout(1500);
   await page.click(".project-item a .project-title");
   await page.waitForURL("**" + PATH, { timeout: 15000 });
@@ -159,7 +159,12 @@ async function open(url, opts) {
   ok("Figma prototype: a real link, new tab, the PDF's address", s.proto && s.proto.href.startsWith("https://www.figma.com/proto/CK1WlplNhV9rSnQEi9T0mx/") && s.proto.target === "_blank" && /noopener/.test(s.proto.rel) && s.proto.text === "Prototype", JSON.stringify(s.proto));
   ok("headings and paragraphs left-aligned", s.aligns.every((a) => a === "left" || a === "start"), s.aligns.join(","));
   ok("THE BRIEF: label, heading, paragraph, columns and scope on one left edge", new Set(s.briefLefts).size === 1, s.briefLefts.join(", "));
-  const wide = s.measures.filter((m) => m.lines > 1 && m.chars > 82);
+  /* The hero lede's 66ch cap is the owner's own setting: in the face the site ships it runs
+     85-90 characters a line, which is reported to him rather than changed (see the note in
+     globals.css). Every other paragraph is still held to a readable measure. */
+  const lede = s.measures.filter((m) => m.lines > 1 && m.chars > 82 && m.cls.includes("cs-lede"));
+  if (lede.length) console.log(`NOTE  the hero lede runs ${lede.map((m) => m.chars).join("/")} characters a line (its 66ch cap, the owner's)`);
+  const wide = s.measures.filter((m) => m.lines > 1 && m.chars > 82 && !m.cls.includes("cs-lede"));
   ok("comfortable paragraph widths (no multi-line paragraph over ~80 characters a line)", wide.length === 0, wide.map((m) => `${m.cls} ${m.chars}`).join("; ") || `widest ${Math.max(...s.measures.filter((m) => m.lines > 1).map((m) => m.chars))}`);
   const bent = s.images.filter((i) => !i.loaded || Math.abs(i.shown / i.natural - 1) > 0.012);
   ok("every image loaded, at its natural proportions, with alt text", bent.length === 0 && s.images.every((i) => i.alt && i.alt.length > 20), bent.map((i) => `${i.src} ${i.shown.toFixed(3)} vs ${i.natural.toFixed(3)}`).join("; ") || `${s.images.length} images`);

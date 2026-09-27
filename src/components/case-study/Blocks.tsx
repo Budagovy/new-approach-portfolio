@@ -39,7 +39,7 @@ export function Plate({ plate, labels }: { plate: CasePlate; labels: ZoomLabels 
   return (
     <figure className="cs-plate" style={style}>
       <div className="cs-plate-row">
-        {plate.items.map((image) => <Zoomable key={image.src} image={image} labels={labels} />)}
+        {plate.items.map((image) => <Zoomable key={image.src} image={image} labels={labels} className={image.device ? "cs-shot--device" : undefined} />)}
       </div>
       {plate.caption && <figcaption className="cs-caption">{plate.caption}</figcaption>}
     </figure>
@@ -167,6 +167,26 @@ function Block({ block, labels, bar }: { block: CaseBlock; labels: ZoomLabels; b
 
     case "plate":
       return <Plate plate={block} labels={labels} />;
+
+    case "figures":
+      /* Level columns are the figures' own aspect ratios as fr units, which
+         is what makes two figures of different shapes end up the same
+         height; it goes through a custom property so the one-column rule
+         for narrow screens can still override it. */
+      return (
+        <div
+          className={block.level ? "cs-figures cs-figures--level" : "cs-figures"}
+          style={{ "--cols": block.columns ?? block.items.length, "--tpl": block.items.map((i) => `${(i.image.width / i.image.height).toFixed(4)}fr`).join(" ") } as CSSProperties}
+        >
+          {block.items.map((item) => (
+            <figure key={item.image.src} className="cs-figures-item">
+              <Zoomable image={item.image} labels={labels} className={item.image.device ? "cs-shot--device" : undefined} />
+              {item.detail && <Zoomable image={item.detail} labels={labels} className="cs-figure-detail" />}
+              {item.caption && <figcaption className="cs-caption">{item.caption}</figcaption>}
+            </figure>
+          ))}
+        </div>
+      );
 
     case "statement":
       return (

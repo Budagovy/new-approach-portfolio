@@ -1,0 +1,377 @@
+{
+  "slug": "simply-weekly-challenge",
+  "meta": {
+    "title": "Simply — Weekly Challenge - Yonatan Budagov",
+    "description": "I designed a recurring music challenge that gave children a reason to return at the weekend, shaping the challenge journey, progress and rewards and building the Figma template for new weekly themes."
+  },
+  "hero": {
+    "eyebrow": "Simply Piano / Weekly Challenge",
+    "heading": [
+      "A weekend worth",
+      "coming back for."
+    ],
+    "lede": [
+      "I designed a recurring music challenge that gave children a reason to return at the weekend. Working in a POD, I shaped the challenge journey, progress and rewards, and built the Figma template for new weekly themes."
+    ],
+    "facts": [
+      {
+        "label": "My role",
+        "value": "Senior Product Designer in a POD team"
+      },
+      {
+        "label": "Working with",
+        "value": "Product, development and music specialists"
+      },
+      {
+        "label": "Status",
+        "value": "Released to all users"
+      }
+    ],
+    "plate": {
+      "width": 43,
+      "caption": "Three songs, a weekend deadline and visible progress toward a music reward.",
+      "items": [
+        {
+          "src": "/work/simply-weekly-challenge/lobby-progress.webp",
+          "width": 1800,
+          "height": 890,
+          "alt": "The KPop Demon Hunters Challenge lobby on a phone held landscape: three song cards with star ratings, a two-day countdown, and progress reading 3/6 toward the music reward",
+          "device": true
+        }
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "problem",
+      "label": "The problem & the solution",
+      "nav": "The problem & the solution",
+      "heading": [
+        "Give practice a reason to happen again."
+      ],
+      "blocks": [
+        {
+          "type": "columns",
+          "items": [
+            {
+              "label": "The problem",
+              "labelTone": "accent",
+              "title": "Children stopped practicing. Parents cancelled subscriptions.",
+              "text": "We were seeing children disengage after Course 2. We wanted to give them something to look forward to and a reason to return for another practice session."
+            },
+            {
+              "label": "The solution",
+              "labelTone": "accent",
+              "title": "A weekly challenge built around music they love.",
+              "text": "Children play three songs within a familiar theme, earn a song package, and can keep improving toward a certificate. The event returns each week with new content."
+            }
+          ]
+        },
+        {
+          "type": "statement",
+          "label": "Our hypothesis",
+          "text": "A weekly event with familiar music, clear progress and relevant rewards could bring children back to practice and help reduce subscription cancellations."
+        }
+      ]
+    },
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "rewards",
+      "label": "Key decision / Rewards",
+      "nav": "Rewards",
+      "heading": [
+        "Make the music worth earning."
+      ],
+      "intro": "The reward we could offer was more music. I built the experience around that constraint: three challenging songs lead to a package of easier songs in a theme the child already enjoys. The reward gives them something new to play after the challenge.",
+      "blocks": [
+        {
+          "type": "columns",
+          "items": [
+            {
+              "label": "First goal",
+              "labelTone": "accent",
+              "title": "A song package.",
+              "text": "Earn at least two stars in each of the three songs. The music-note icon turns gold when this goal is reached."
+            },
+            {
+              "label": "Next goal",
+              "labelTone": "accent",
+              "title": "A certificate of achievement.",
+              "text": "The progress bar expands, keeping the earned music icon visible and adding a star for the certificate. Earning three stars per song completes the nine-star goal."
+            }
+          ]
+        },
+        {
+          "type": "plate",
+          "width": 43,
+          "caption": "The completed music reward stays visible when the progress bar opens the next goal.",
+          "items": [
+            {
+              "src": "/work/simply-weekly-challenge/next-goal.webp",
+              "width": 1800,
+              "height": 890,
+              "alt": "The challenge lobby with the expanded progress bar: 6/9, the earned gold music note kept in place and a star added for the certificate",
+              "device": true
+            }
+          ]
+        },
+        {
+          "type": "prose",
+          "text": [
+            {
+              "kind": "title",
+              "text": [
+                "Keep the path forward visible."
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "The music specialists and pedagogical advisers set the difficulty and completion thresholds. My job was to make those rules clear in the interface. Children can retry until the event ends; only their best result for each song counts, so progress reflects improvement."
+            }
+          ]
+        },
+        {
+          "type": "figures",
+          "items": [
+            {
+              "image": {
+                "src": "/work/simply-weekly-challenge/music-reward.webp",
+                "width": 1800,
+                "height": 890,
+                "alt": "The first milestone reached: every song rated two stars and the progress bar reading 6/6, with the rest of the lobby faded back",
+                "device": true
+              },
+              "detail": {
+                "src": "/work/simply-weekly-challenge/music-reward-bar.webp",
+                "width": 400,
+                "height": 150,
+                "alt": "The progress bar at 6/6, full, with the gold music-note badge at its end"
+              },
+              "caption": "First milestone: at least two stars in every song unlocks the music package."
+            },
+            {
+              "image": {
+                "src": "/work/simply-weekly-challenge/perfect-result.webp",
+                "width": 1800,
+                "height": 890,
+                "alt": "The final milestone reached: every song rated three stars and the progress bar reading 9/9, with the rest of the lobby faded back",
+                "device": true
+              },
+              "detail": {
+                "src": "/work/simply-weekly-challenge/perfect-result-bar.webp",
+                "width": 570,
+                "height": 150,
+                "alt": "The expanded progress bar at 9/9, with the gold music note kept in place and the certificate star earned at its end"
+              },
+              "caption": "Final milestone: three stars in every song unlocks the certificate, emailed to parents."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "experience",
+      "label": "Key decision / The weekly experience",
+      "nav": "The weekly experience",
+      "heading": [
+        "Make the challenge feel like an event."
+      ],
+      "intro": "I used the theme’s artwork and colors to give the event its own identity. In the lobby, the three songs sit at the center, with stars on each card and overall progress above. The child can see what to play and how close they are to the reward.",
+      "blocks": [
+        {
+          "type": "prose",
+          "text": [
+            {
+              "kind": "paragraph",
+              "text": "A countdown introduces the event before it starts. When it ends, the experience recognizes the child’s achievement and introduces the next challenge. This connects one weekend to the next."
+            }
+          ]
+        },
+        {
+          "type": "figures",
+          "level": true,
+          "items": [
+            {
+              "image": {
+                "src": "/work/simply-weekly-challenge/announcement.webp",
+                "width": 1800,
+                "height": 890,
+                "alt": "The countdown before the event on a phone held landscape: The Best of BTS Challenge, coming soon, with hours, minutes and seconds counting down",
+                "device": true
+              },
+              "caption": "Before the event: the theme and countdown give children something specific to return for."
+            },
+            {
+              "image": {
+                "src": "/work/simply-weekly-challenge/certificate.webp",
+                "width": 2000,
+                "height": 1280,
+                "alt": "The themed certificate of achievement for The Best of BTS Challenge, named Rising Star and signed by Simply's music director"
+              },
+              "caption": "After the final goal: a themed certificate makes the achievement shareable with the family."
+            }
+          ]
+        },
+        {
+          "type": "prose",
+          "text": [
+            {
+              "kind": "title",
+              "text": [
+                "A consistent structure across different themes."
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "The BTS and KPop Demon Hunters examples use the same challenge structure. Music and content specialists selected relevant themes and adapted the arrangements for each segment; I designed how the event, progress and rewards were presented."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "template",
+      "label": "Design system / Content production",
+      "nav": "Content production",
+      "heading": [
+        "One template, powered by AI.",
+        "A new theme each week."
+      ],
+      "intro": "A weekly feature also needs a repeatable way to make the next event. I created a Figma template with defined places for the challenge name, palette, artwork, song covers and icons. The team could change the theme while keeping the experience consistent.",
+      "blocks": [
+        {
+          "type": "figures",
+          "level": true,
+          "items": [
+            {
+              "image": {
+                "src": "/work/simply-weekly-challenge/template-palette.webp",
+                "width": 1800,
+                "height": 1130,
+                "alt": "A page from the Figma template: the theme's purple palette swatches beside a contrast check for a title, a button and the in-game background"
+              },
+              "caption": "Palette and contrast references from the working Figma template."
+            },
+            {
+              "image": {
+                "src": "/work/simply-weekly-challenge/template-artwork.webp",
+                "width": 1800,
+                "height": 1180,
+                "alt": "A page from the Figma template: where the theme's artwork sits, which solid colour to take from the palette, and a preview that stays fixed"
+              },
+              "caption": "Artwork placement and preview rules keep new themes within the same structure."
+            }
+          ]
+        },
+        {
+          "type": "prose",
+          "text": [
+            {
+              "kind": "paragraph",
+              "text": "The template specifies contrast checks for text, buttons and the in-game background. It also defines artwork placement and which elements stay fixed, including the gold treatment of earned badges. These rules give each theme room to change while keeping the interface recognizable."
+            },
+            {
+              "kind": "title",
+              "text": [
+                "Where AI fits into the workflow."
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "Our team built an AI-assisted workflow that reviews social trends, creates a moodboard and generates theme assets, then feeds them into the Figma template. My contribution was the template and its design rules, which give the generated assets a consistent place in the product."
+            }
+          ]
+        },
+        {
+          "type": "steps",
+          "columns": 3,
+          "items": [
+            {
+              "title": "Explore a theme",
+              "text": "Social research and moodboard"
+            },
+            {
+              "title": "Create the assets",
+              "text": "A coordinated visual theme"
+            },
+            {
+              "title": "Apply the template",
+              "text": "Artwork, colors and content in Figma"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bar"
+    },
+    {
+      "type": "section",
+      "id": "outcome",
+      "label": "Validation & outcome",
+      "nav": "Validation & outcome",
+      "heading": [
+        "More sessions.",
+        "Fewer cancellations."
+      ],
+      "intro": "We developed the concept within the POD, built an initial prototype and tested it with users before running a controlled test. Over approximately three months, the group with Weekly Challenge had more sessions and fewer subscription cancellations than the control group.",
+      "blocks": [
+        {
+          "type": "columns",
+          "items": [
+            {
+              "label": "Engagement",
+              "labelTone": "accent",
+              "title": "More sessions",
+              "text": "The feature group used the app more during the test."
+            },
+            {
+              "label": "Business outcome",
+              "labelTone": "accent",
+              "title": "Fewer subscription cancellations",
+              "text": "The feature group had fewer cancellations than the control group."
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Weekly Challenge was subsequently released to all users. Exact uplift figures are not available for this case study, so the results are reported directionally."
+        },
+        {
+          "type": "prose",
+          "text": [
+            {
+              "kind": "label",
+              "text": "What I learned"
+            },
+            {
+              "kind": "title",
+              "text": [
+                "Design the event and the way it repeats."
+              ]
+            },
+            {
+              "kind": "paragraph",
+              "text": "The challenge needed both a clear path for the child and a repeatable process for the team. Familiar music gave children a reason to join; visible progress and two distinct rewards gave them something to work toward. The template supported the next week’s experience without starting the design again."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

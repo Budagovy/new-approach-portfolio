@@ -1,6 +1,6 @@
 import type { CaseStudyData } from "@/components/case-study/types";
 import secondOffice from "../../content/work/second-office.json";
-import simply from "../../content/work/simply-share-the-moment.json";
+import weeklyChallenge from "../../content/work/simply-weekly-challenge.json";
 
 /**
  * The case studies the site has, by slug. To add one (Joyn):
@@ -11,5 +11,5 @@ import simply from "../../content/work/simply-share-the-moment.json";
  */
 export const caseStudies: Record<string, CaseStudyData> = {
   [secondOffice.slug]: secondOffice as CaseStudyData,
-  [simply.slug]: simply as CaseStudyData,
+  [weeklyChallenge.slug]: weeklyChallenge as CaseStudyData,
 };

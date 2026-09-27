@@ -16,6 +16,8 @@ export interface CaseImage {
   /** Meaningful for a product screen or a research board; "" for a decorative repeat. */
   alt: string;
   caption?: string;
+  /** A screen inside a device: it stands on the page with a soft shadow. */
+  device?: boolean;
 }
 
 export interface CasePhone extends CaseImage {
@@ -83,6 +85,13 @@ export type CaseBlock =
   | ({ type: "plate" } & CasePlate)
   /** A short statement set large: a hypothesis, a principle. */
   | { type: "statement"; label?: string; text: string }
+  /**
+   * Figures side by side, each with its own caption and an optional detail
+   * image beneath it (an enlarged part of the figure above). "level" sizes
+   * the columns by the figures' own proportions, so figures of different
+   * shapes line up on one top and one bottom edge.
+   */
+  | { type: "figures"; columns?: number; level?: boolean; items: { image: CaseImage; detail?: CaseImage; caption?: string }[] }
   | { type: "stats"; items: { value: string; text: string }[] }
   | { type: "quote"; text: string; source: string }
   | { type: "mediaText"; side: "left" | "right"; figure?: CaseImage; phones?: CasePhone[]; plate?: CasePlate; text: CaseText[] }
