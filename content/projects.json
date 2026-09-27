@@ -7,14 +7,14 @@
   "items": [
     {
       "title": "Second Office",
-      "tag": "App design",
+      "tag": "Fully App Design",
       "image": "/projects/second-office.webp",
       "zoom": 1.41,
       "href": "/work/second-office"
     },
     {
       "title": "Weekly Challenge",
-      "tag": "App design",
+      "tag": "Feature Design",
       "image": "/projects/simply-weekly-challenge.webp",
       "zoom": 1,
       "href": "/work/simply-weekly-challenge"
