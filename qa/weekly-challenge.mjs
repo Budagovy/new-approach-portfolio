@@ -72,9 +72,9 @@ async function open(url, opts) {
       zoom: +getComputedStyle(img).scale || 1 };
   }));
   const wc = cards[1];
-  ok("the middle project card is Simply - Weekly Challenge, with its own cover", wc.title === "Simply — Weekly Challenge" && wc.tag.toLowerCase() === "app design" && wc.src === "/projects/simply-weekly-challenge.webp" && wc.loaded && wc.nat >= 900, JSON.stringify({ title: wc.title, src: wc.src, nat: wc.nat }));
+  ok("the middle project card is Weekly Challenge, on the owner's own photograph", wc.title === "Weekly Challenge" && wc.tag.toLowerCase() === "app design" && wc.src === "/projects/simply-weekly-challenge.webp" && wc.loaded && wc.nat >= 700, JSON.stringify({ title: wc.title, src: wc.src, nat: wc.nat }));
   ok("one same-tab link around image and title, to the new case study", wc.links === 1 && wc.href === PATH && wc.target === null && wc.wrapsImage && wc.wrapsTitle, `${wc.href}, ${wc.links} link(s)`);
-  ok("the cover is cropped like the others: full width kept, no zoom, the device in the band", wc.zoom === 1 && wc.keptX >= 100 && Math.abs(wc.keptX - cards[0].keptX) < 1, `${wc.keptX}% of the width kept (Second Office ${cards[0].keptX}%), zoom ${wc.zoom}`);
+  ok("the photograph is all but exactly the 2:3 crop: nothing zoomed, nothing lost", wc.zoom === 1 && wc.keptX >= 99 && wc.keptX <= 101, `${wc.keptX}% of the width kept, zoom ${wc.zoom}`);
   ok("the other two cards are untouched: Second Office linked, Joyn not", cards[0].title === "Second Office" && cards[0].href === "/work/second-office" && cards[2].title === "Joyn" && cards[2].href === null, cards.map((c) => `${c.title}: ${c.href}`).join(" | "));
   ok("nothing on the homepage still points at the case study it replaced", await page.evaluate((old) => ![...document.querySelectorAll("a[href]")].some((a) => a.getAttribute("href").includes(old)), "share-the-moment"), "");
   await page.click(".project-item:nth-child(2) a .project-title");
