@@ -10,6 +10,10 @@
    from the start, as it always was — so all four are lit before the reader carries on, and
    they go out again in reverse on the way back up.
 
+   The next section stays in view the whole time: its charcoal bar sits directly under the held
+   block, on screen, at every width (the block rests higher on phones to leave room for it),
+   and lands in its own place, with no gap, as the block lets go.
+
    It is scroll-linked, not timed: standing still leaves the bars exactly where they are, and
    the page is never locked (an ordinary scrollTo moves it as far as it is asked to). Entry
    and exit do not move anything: the bars lie along the existing rule, the steps keep their
@@ -38,23 +42,25 @@ const ACCENT = "rgb(243, 180, 74)";
 
 const browser = await chromium.launch({ executablePath: CHROME, headless: true });
 
-/** The section's geometry, once the splash has let go. */
+/** The sequence's geometry, once the splash has let go. The track holds the block (this
+    section with the next one under it) and, after it, the scroll length. */
 const geometry = (page) => page.evaluate(() => {
-  const section = document.querySelector("#approach");
+  const track = document.querySelector(".approach-track");
   const pin = document.querySelector(".approach-pin");
   const top = parseFloat(getComputedStyle(pin).top) || 0;
   return {
-    absTop: Math.round(section.getBoundingClientRect().top + scrollY),
+    absTop: Math.round(track.getBoundingClientRect().top + scrollY),
     pinTop: Math.round(top),
-    pinH: pin.offsetHeight,
-    run: Math.round(section.getBoundingClientRect().height - pin.offsetHeight),
+    pinH: document.querySelector("#approach").offsetHeight,
+    run: Math.round(track.getBoundingClientRect().height - pin.offsetHeight),
     vh: innerHeight,
   };
 });
 
 /** What the reader sees at this scroll position. */
 const sample = (page) => page.evaluate(() => {
-  const pin = document.querySelector(".approach-pin");
+  /* the section itself: the top of the held block, with the next section under it */
+  const pin = document.querySelector("#approach");
   const bars = [...document.querySelectorAll(".approach-bar")];
   const markers = [...document.querySelectorAll(".approach-marker")];
   return {
@@ -65,6 +71,7 @@ const sample = (page) => page.evaluate(() => {
     colours: markers.map((m) => getComputedStyle(m).backgroundColor),
     pinScreenTop: Math.round(pin.getBoundingClientRect().top),
     pinScreenBottom: Math.round(pin.getBoundingClientRect().bottom),
+    nextBar: (() => { const b = document.querySelector("#tools .section-bar").getBoundingClientRect(); return { top: Math.round(b.top), bottom: Math.round(b.bottom) }; })(),
     stepTops: [...document.querySelectorAll(".approach-step")].map((s) => Math.round(s.getBoundingClientRect().top)),
     y: Math.round(scrollY),
   };
@@ -117,6 +124,12 @@ const at = async (page, y, wait = 90) => { await page.evaluate((v) => scrollTo(0
   ok("they light in order, 02 then 03 then 04, none of them early", litOrder.every((n, i) => n > 0 && (i === 0 || n > litOrder[i - 1])) && walk[0].lit.join(",") === "true,false,false,false", `first lit at samples ${litOrder.join(", ")} of 40`);
   ok("all four circles are lit in the accent by the end of the sequence", walk.at(-1).lit.every(Boolean) && walk.at(-1).colours.every((c) => c === ACCENT), `${walk.at(-1).lit.join(",")} / ${[...new Set(walk.at(-1).colours)].join(" ")}`);
 
+  /* The next section, in view under the held block the whole time. */
+  const peekOk = (x) => Math.abs(x.nextBar.top - x.pinScreenBottom) <= 1 && x.nextBar.bottom <= g.vh;
+  ok("the next section's bar sits right under the held block, on screen, all the way through", walk.every(peekOk), walk.filter((x) => !peekOk(x)).slice(0, 2).map((x) => `bar ${x.nextBar.top}..${x.nextBar.bottom} under block ${x.pinScreenBottom}, screen ${g.vh}`).join(" | ") || `bar at ${walk[0].nextBar.top}..${walk[0].nextBar.bottom} of ${g.vh} in all ${walk.length} samples`);
+  ok("it stays put while the milestones fill (the page under the block does not drift)", new Set(walk.map((x) => x.nextBar.top)).size === 1, [...new Set(walk.map((x) => x.nextBar.top))].join(","));
+  ok("it is held with the block, not drawn there: the page's real layout, nothing transformed", await page.evaluate(() => { const t = document.querySelector("#tools"); return !!t.closest(".approach-pin") && getComputedStyle(t).translate === "none" && getComputedStyle(t).transform === "none"; }), "");
+
   /* Pinned throughout, and only then let go. */
   const pinned = walk.every((s) => Math.abs(s.pinScreenTop - g.pinTop) <= 1);
   ok("the section stays pinned for the whole sequence", pinned, `tops ${[...new Set(walk.map((s) => s.pinScreenTop))].join(",")} (rests at ${g.pinTop})`);
@@ -151,14 +164,17 @@ const at = async (page, y, wait = 90) => { await page.evaluate((v) => scrollTo(0
   const sent = await at(page, start + g.run * 0.55, 200);
   ok("the page is never locked: it lands exactly where it is scrolled", Math.abs(sent.y - Math.round(start + g.run * 0.55)) <= 1, `asked ${Math.round(start + g.run * 0.55)}, at ${sent.y}`);
 
-  /* Entry and exit leave the rest of the page alone. */
+  /* Entry and exit leave the rest of the page alone: once the block has let go, the pair
+     scroll on together and the section after them follows at once. */
+  await at(page, start + g.run + 300, 200);
   const page_ = await page.evaluate(() => {
     const ids = [...document.querySelectorAll("#approach, #tools, #experience, #work, #about")].map((e) => e.id);
     const approach = document.querySelector("#approach").getBoundingClientRect();
     const next = document.querySelector("#tools").getBoundingClientRect();
-    return { ids, gap: Math.round(next.top - approach.bottom), overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+    const after = document.querySelector("#experience").getBoundingClientRect();
+    return { ids, gap: Math.round(next.top - approach.bottom), after: Math.round(after.top - next.bottom), overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth };
   });
-  ok("the next section (Tools & AI) still follows it directly, with no gap", page_.ids.join(",") === "approach,tools,experience,work,about" && page_.gap === 0, `gap ${page_.gap}px`);
+  ok("after it lets go, Tools & AI follows directly and Experience right after it, no gaps", page_.ids.join(",") === "approach,tools,experience,work,about" && page_.gap === 0 && page_.after === 0, `gaps ${page_.gap}px, ${page_.after}px`);
   ok("no horizontal overflow, no console errors", page_.overflow === 0 && errors.length === 0, `${page_.overflow}px ${errors.join(" | ")}`);
 
   await at(page, start + g.run * 0.5);
@@ -185,6 +201,7 @@ for (const [w, h, mobile] of [[1024, 768, false], [768, 1024, true], [390, 844, 
   ok(`${tag} the circles light with them and all four end lit`, walk.every((s) => s.lit.every((on, i) => on === (i === 0 || s.bars[i - 1] === 1))) && walk.at(-1).lit.every(Boolean), walk.at(-1).lit.join(","));
   /* Where the block is taller than the screen it rests against its foot, so the last
      milestone is on screen while it fills. */
+  ok(`${tag} the next section's bar stays in view right under the block throughout`, walk.every((x) => Math.abs(x.nextBar.top - x.pinScreenBottom) <= 1 && x.nextBar.bottom <= g.vh), `bar ${walk[0].nextBar.top}..${walk[0].nextBar.bottom} of ${g.vh}, block rests at ${g.pinTop}`);
   ok(`${tag} all four milestones are on screen while they fill`, walk.every((s) => s.pinScreenTop >= -1 || s.pinScreenBottom <= g.vh + 1), `pin ${g.pinH}px in a ${g.vh}px screen, rests at ${g.pinTop}`);
   const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   ok(`${tag} no horizontal overflow, no page errors`, over === 0 && errors.length === 0, `${over}px ${errors.join(" | ")}`);
@@ -199,7 +216,7 @@ for (const [w, h, mobile] of [[1024, 768, false], [768, 1024, true], [390, 844, 
   await page.goto(BASE, { waitUntil: "networkidle" });
   await page.waitForTimeout(900);
   const s = await page.evaluate(() => {
-    const section = document.querySelector("#approach"), pin = document.querySelector(".approach-pin");
+    const section = document.querySelector(".approach-track"), pin = document.querySelector(".approach-pin");
     return { spacers: document.querySelectorAll(".approach-run").length, run: Math.round(section.getBoundingClientRect().height - pin.offsetHeight), bars: [...document.querySelectorAll(".approach-bar")].map((b) => +(+b.style.getPropertyValue("--p") || 0)), lit: [...document.querySelectorAll(".approach-marker")].map((m) => m.classList.contains("approach-marker--active")) };
   });
   ok("reduced motion: no added scroll length, every milestone complete and lit", s.run === 0 && s.spacers === 0 && s.bars.every((b) => b === 1) && s.lit.every(Boolean), `${s.spacers} spacers, run ${s.run}px, bars ${s.bars.join(",")}, lit ${s.lit.join(",")}`);

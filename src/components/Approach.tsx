@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { RevealGroup, RevealItem } from "@/components/Reveal";
 import { SectionBar, type SectionLabel } from "@/components/SectionBar";
 import { SectionIntro } from "@/components/SectionIntro";
@@ -47,14 +47,28 @@ const clamp = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
  * it always was — so the sequence ends with all four of them lit and the
  * timeline filled end to end.
  *
+ * The next section stays in view under the held block, as every section
+ * shows the start of the next: it is passed in as `next` and held with
+ * this one, directly beneath it, so while the milestones fill the reader
+ * sees it waiting. When the hold lets go the pair scroll on together and
+ * the section after the next follows at once, because a sticky box lets go
+ * at the foot of its track, which is where the scroll length was. It is
+ * the browser's own sticky positioning: every section is where the page
+ * says it is at every moment, so anchors, find-in-page and keyboard focus
+ * land true. The scroll length, the progress and the bars are the same as
+ * without it.
+ *
  * Where the block is taller than the screen (narrow phones, landscape) it
- * sticks by its bottom instead, so the fourth milestone is on screen while
- * it fills. Under reduced motion there is no hold at all: no added scroll
- * length, and the milestones simply read as complete.
+ * rests against the foot of the screen, less APPROACH.peek, so the fourth
+ * milestone is on screen while it fills and the next section still shows
+ * beneath it. Under reduced motion there is no hold at all: no added
+ * scroll length, nothing held, and the milestones simply read as
+ * complete.
  */
-export function Approach({ data }: { data: ApproachData }) {
-  const trackRef = useRef<HTMLElement>(null);
+export function Approach({ data, next }: { data: ApproachData; next?: ReactNode }) {
+  const trackRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
+  const blockRef = useRef<HTMLElement>(null);
   const barsRef = useRef<(HTMLSpanElement | null)[]>([]);
   const markersRef = useRef<(HTMLSpanElement | null)[]>([]);
   /* The server cannot know the reader's motion preference, so it renders
@@ -73,7 +87,8 @@ export function Approach({ data }: { data: ApproachData }) {
   useEffect(() => {
     const track = trackRef.current;
     const pin = pinRef.current;
-    if (!track || !pin) return;
+    const block = blockRef.current;
+    if (!track || !pin || !block) return;
     const bars = barsRef.current.filter((b): b is HTMLSpanElement => !!b);
     const markers = markersRef.current;
     /* Four decimals is finer than a pixel of bar at any width, and it is
@@ -90,14 +105,15 @@ export function Approach({ data }: { data: ApproachData }) {
     }
 
     /* Measured, not read per frame: where the block comes to rest under the
-       fixed header (or, if it is taller than the screen, against the foot of
-       it), and how long the held sequence is — the track's padding, which is
-       in viewport heights and so changes with the window. */
+       fixed header (or, if it and the next section's peek do not fit under
+       it, against the foot of the screen less the peek), and how long the
+       held sequence is — the spacer, which is in viewport heights and so
+       changes with the window. */
     let top = 0;
     let run = 0;
     const measure = () => {
       const header = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-      top = Math.round(Math.min(header, window.innerHeight - pin.offsetHeight));
+      top = Math.round(Math.min(header, window.innerHeight - block.offsetHeight - APPROACH.peek));
       pin.style.top = `${top}px`;
       /* Whole pixels, from the same boxes the browser sticks by: a
          fractional run leaves the last bar a thousandth short of full at
@@ -136,42 +152,51 @@ export function Approach({ data }: { data: ApproachData }) {
   }, [held]);
 
   return (
-    <section id="approach" ref={trackRef} className="section approach" data-snap>
-      <div ref={pinRef} className="approach-pin">
-        <SectionBar label={data.label} />
-        <div className="section-body approach-body">
-          <SectionIntro heading={data.heading} intro={data.intro} />
+    /* The track: the held block, then the scroll length. The page's guided
+       landing is on the track, so it is the start of the sequence (the
+       block is a hold, and SmoothScroll takes a hold's content to rest
+       where the hold lets go). */
+    <div ref={trackRef} className="approach-track" data-snap>
+      {/* The held block: this section, and the start of the next one riding
+          directly under it (data-hold: see above). */}
+      <div ref={pinRef} className="approach-pin" data-hold>
+        <section id="approach" ref={blockRef} className="section approach">
+          <SectionBar label={data.label} />
+          <div className="section-body approach-body">
+            <SectionIntro heading={data.heading} intro={data.intro} />
 
-          <div className="approach-timeline">
-            <span className="approach-line" aria-hidden="true" />
-            <RevealGroup as="ol" className="approach-steps">
-              {data.steps.map((step, i) => (
-                <RevealItem as="li" key={step.title} className="approach-step">
-                  {/* This milestone's length of the rule. Before the circle in
-                      the markup so the circle stays over it, as the rule is. */}
-                  <span className="approach-bar" aria-hidden="true" ref={(el) => { barsRef.current[i] = el; }} />
-                  <span
-                    ref={(el) => { markersRef.current[i] = el; }}
-                    className={i === 0 ? "approach-marker approach-marker--active" : "approach-marker"}
-                    aria-hidden="true"
-                  >
-                    {number(i)}
-                  </span>
-                  <h3 className="approach-step-title">{step.title}</h3>
-                  <p className="approach-step-desc">{step.description}</p>
-                </RevealItem>
-              ))}
-            </RevealGroup>
+            <div className="approach-timeline">
+              <span className="approach-line" aria-hidden="true" />
+              <RevealGroup as="ol" className="approach-steps">
+                {data.steps.map((step, i) => (
+                  <RevealItem as="li" key={step.title} className="approach-step">
+                    {/* This milestone's length of the rule. Before the circle in
+                        the markup so the circle stays over it, as the rule is. */}
+                    <span className="approach-bar" aria-hidden="true" ref={(el) => { barsRef.current[i] = el; }} />
+                    <span
+                      ref={(el) => { markersRef.current[i] = el; }}
+                      className={i === 0 ? "approach-marker approach-marker--active" : "approach-marker"}
+                      aria-hidden="true"
+                    >
+                      {number(i)}
+                    </span>
+                    <h3 className="approach-step-title">{step.title}</h3>
+                    <p className="approach-step-desc">{step.description}</p>
+                  </RevealItem>
+                ))}
+              </RevealGroup>
+            </div>
           </div>
-        </div>
+        </section>
+        {next}
       </div>
       {/* The sequence's scroll length, and nothing else. A spacer, not
-          padding on the section: a sticky box may only travel inside its
+          padding on the track: a sticky box may only travel inside its
           parent's CONTENT box, which padding is not part of, so with
           padding here the block had nowhere to stick and simply scrolled
-          away. It sits after the block, inside this section, so the length
-          it adds is this section's own. */}
+          away. It sits after the block, inside the track, so the length it
+          adds is this sequence's own. */}
       {held && <div className="approach-run" aria-hidden="true" style={{ height: `${APPROACH.scrubVh * 100}vh` }} />}
-    </section>
+    </div>
   );
 }

@@ -43,8 +43,9 @@ export default function Home() {
         next={
           <div className="column frame frame--rest">
             <main>
-              <Approach data={approach as ApproachData} />
-              <Tools data={tools as ToolsData} />
+              {/* Tools & AI rides directly under My approach while its
+                  milestones fill, so the page plainly goes on (Approach.tsx). */}
+              <Approach data={approach as ApproachData} next={<Tools data={tools as ToolsData} />} />
               <Experience data={career as CareerData} />
               <Projects data={projects as ProjectsData} />
               <About data={about as AboutData} />

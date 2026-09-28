@@ -108,6 +108,15 @@ export const APPROACH = {
    * so changing it changes the sequence and nothing else.
    */
   scrubVh: 1.6,
+  /**
+   * How much of the next section, at least, stays in view under the held
+   * block, in px: its charcoal bar and a little of what follows, so the
+   * page plainly goes on. Where the screen has room to spare (most
+   * desktops) more of it shows; where the block is taller than the screen
+   * (phones) the block rests this much higher instead, its top tucked
+   * under the header and its milestones in view.
+   */
+  peek: 72,
 } as const;
 
 /**

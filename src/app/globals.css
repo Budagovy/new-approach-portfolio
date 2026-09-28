@@ -478,10 +478,12 @@ portfolio-city-strip {
 }
 
 /* --- My approach ---------------------------------------------------------- */
-/* The block that is held in view while the milestones fill. The section
-   around it is the track: its padding is the sequence's scroll length
-   (Approach.tsx sets both that and this offset, which drops to the foot of
-   the screen where the block is taller than one). */
+/* The block that is held in view while the milestones fill: this section,
+   and the start of the next one riding directly under it. A spacer after
+   the block, in the track around it, is the sequence's scroll length
+   (Approach.tsx sets that and this offset, which drops toward the foot of
+   the screen where this section and the next one's peek are taller than
+   it). */
 .approach-pin { position: sticky; top: var(--header-h); }
 .approach-body { padding-top: calc(64 * var(--u)); padding-bottom: calc(56 * var(--u)); }
 .approach-body .section-intro { padding-inline: calc(39 * var(--u)); }
