@@ -1,0 +1,41 @@
+{
+  "label": {
+    "index": "02",
+    "text": "Tools & AI"
+  },
+  "heading": [
+    "How I use AI & Tools",
+    "to bring ideas to life"
+  ],
+  "intro": "I combine AI, design, and code to explore ideas, test them early, and turn them into working experiences.",
+  "items": [
+    {
+      "name": "Cursor",
+      "icon": "/tools/cursor.webp"
+    },
+    {
+      "name": "Claude",
+      "icon": "/tools/claude.webp"
+    },
+    {
+      "name": "Figma",
+      "icon": "/tools/figma.webp"
+    },
+    {
+      "name": "OpenAI",
+      "icon": "/tools/openai.webp"
+    },
+    {
+      "name": "Vercel",
+      "icon": "/tools/vercel.webp"
+    },
+    {
+      "name": "GitHub",
+      "icon": "/tools/github.webp"
+    },
+    {
+      "name": "Supabase",
+      "icon": "/tools/supabase.webp"
+    }
+  ]
+}

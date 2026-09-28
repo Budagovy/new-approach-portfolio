@@ -14,7 +14,8 @@ export interface Project {
 
 export interface ProjectsData {
   label: SectionLabel;
-  heading: string;
+  /** Shown above the cards when set. The updated frame has none: the cards open the section. */
+  heading?: string;
   items: Project[];
 }
 
@@ -31,9 +32,15 @@ export function Projects({ data }: { data: ProjectsData }) {
     <section id="work" className="section projects" data-snap>
       <SectionBar label={data.label} />
       <div className="section-body projects-body">
-        <RevealItem as="h2" className="section-heading" alone>
-          {data.heading}
-        </RevealItem>
+        {data.heading ? (
+          <RevealItem as="h2" className="section-heading" alone>
+            {data.heading}
+          </RevealItem>
+        ) : (
+          /* The bar above is decorative (aria-hidden), so the section is
+             still named for a screen reader. */
+          <h2 className="visually-hidden">{data.label.text}</h2>
+        )}
 
         <RevealGroup as="ol" className="projects-grid">
           {data.items.map((project) => {

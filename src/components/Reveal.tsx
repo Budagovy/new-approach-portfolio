@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import { EASE, REVEAL } from "@/lib/motion";
 
@@ -38,13 +38,13 @@ export function RevealGroup({ as = "div", className, children }: { as?: Tag; cla
   );
 }
 
-export function RevealItem({ as = "div", className, children, alone = false }: { as?: Tag; className?: string; children: ReactNode; alone?: boolean }) {
+export function RevealItem({ as = "div", className, children, alone = false, style }: { as?: Tag; className?: string; children: ReactNode; alone?: boolean; style?: CSSProperties }) {
   const reduce = !!useReducedMotion();
   const Component = motion[as];
   /* Inside a group the parent drives the variant; alone, it watches its own entry. */
   const own = alone ? { initial: "hidden", whileInView: "shown", viewport } : {};
   return (
-    <Component className={className} variants={itemVariants(reduce)} {...own}>
+    <Component className={className} style={style} variants={itemVariants(reduce)} {...own}>
       {children}
     </Component>
   );

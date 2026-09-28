@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RevealGroup, RevealItem } from "@/components/Reveal";
 import { SectionBar, type SectionLabel } from "@/components/SectionBar";
+import { SectionIntro } from "@/components/SectionIntro";
 import { APPROACH } from "@/lib/motion";
 
 export interface ApproachStep {
@@ -12,7 +13,9 @@ export interface ApproachStep {
 
 export interface ApproachData {
   label: SectionLabel;
-  heading: string;
+  /** Two lines: the first in ink, the second in grey (SectionIntro). */
+  heading: string[];
+  intro: string;
   steps: ApproachStep[];
 }
 
@@ -20,10 +23,11 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
 const clamp = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 /**
- * "My approach", per the Figma frame: a small centred heading, then a
- * thin timeline across the whole frame with four evenly spaced numbered
- * circles, the first orange and the rest charcoal, and all four steps'
- * titles and descriptions shown together under them.
+ * "My approach", per the updated homepage frame: the section's opening (a
+ * two-line headline and a sentence, left-aligned), then a thin timeline
+ * across the whole frame with four evenly spaced numbered circles, the
+ * first orange and the rest charcoal, and all four steps' titles and
+ * descriptions shown together under them.
  *
  * The section is held in view while its milestones fill, one at a time
  * and in order. It is a plain sticky pin, scrubbed by the real scroll
@@ -136,9 +140,7 @@ export function Approach({ data }: { data: ApproachData }) {
       <div ref={pinRef} className="approach-pin">
         <SectionBar label={data.label} />
         <div className="section-body approach-body">
-          <RevealItem as="h2" className="section-heading" alone>
-            {data.heading}
-          </RevealItem>
+          <SectionIntro heading={data.heading} intro={data.intro} />
 
           <div className="approach-timeline">
             <span className="approach-line" aria-hidden="true" />

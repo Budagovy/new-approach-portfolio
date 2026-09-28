@@ -1,6 +1,13 @@
 {
-  "label": { "index": "01", "text": "How I do it" },
-  "heading": "My approach",
+  "label": {
+    "index": "01",
+    "text": "My approach"
+  },
+  "heading": [
+    "My approach to",
+    "designing better products"
+  ],
+  "intro": "I find the right problem, explore the options, and refine the solution through launch and beyond.",
   "steps": [
     {
       "title": "Understand & focus",

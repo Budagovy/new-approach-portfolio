@@ -48,6 +48,8 @@ const audit = () => {
       if (el.closest?.(".splash-screen")) continue;
       /* Case-study wayfinding chrome (the section rail, bar labels) is at the reference's 10-12px, by design. */
       if (el.closest?.(".cs-rail, .cs-bar")) continue;
+      /* Text for a screen reader alone (clipped to nothing) is not page type. */
+      if (el.closest?.(".visually-hidden")) continue;
       const text = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join("").trim();
       if (!text) continue;
       const cs = getComputedStyle(el), r = el.getBoundingClientRect();
@@ -60,7 +62,7 @@ const audit = () => {
       const contrast = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
       const large = size >= 24 || (size >= 18.66 && weight >= 700);
       const lh = cs.lineHeight === "normal" ? null : parseFloat(cs.lineHeight) / size;
-      out.push({ who: (el.className && el.className.toString().split(" ")[0]) || el.tagName.toLowerCase(), tag: el.tagName.toLowerCase(), text: text.slice(0, 34), size: +size.toFixed(2), weight, lh: lh && +lh.toFixed(2), tracking: cs.letterSpacing, contrast: +contrast.toFixed(2), need: large ? 3 : 4.5, lines: lh ? Math.round(r.height / (lh * size)) : 1, chars: text.length, w: Math.round(r.width) });
+      out.push({ who: (el.className && el.className.toString().split(" ")[0]) || el.tagName.toLowerCase(), tag: el.tagName.toLowerCase(), hero: !!el.closest?.(".hero-headline"), text: text.slice(0, 34), size: +size.toFixed(2), weight, lh: lh && +lh.toFixed(2), tracking: cs.letterSpacing, contrast: +contrast.toFixed(2), need: large ? 3 : 4.5, lines: lh ? Math.round(r.height / (lh * size)) : 1, chars: text.length, w: Math.round(r.width) });
     }
   };
   visit(document);
@@ -79,7 +81,7 @@ for (const [w, h, mobile] of [[1440, 900, false], [1920, 1080, false], [2544, 12
   await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(500);
   const items = await page.evaluate(audit);
   const tag = `${w}px:`;
-  const display = items.filter((i) => i.who === "hero-headline" || i.who === "hero-emphasis" || (i.tag === "span" && i.size > 30));
+  const display = items.filter((i) => i.hero);
   const rest = items.filter((i) => !display.includes(i));
 
   const off = rest.filter((i) => !SCALE.some((s) => Math.abs(i.size - s) < 0.05));

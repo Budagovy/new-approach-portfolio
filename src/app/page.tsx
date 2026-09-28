@@ -4,6 +4,8 @@ import { SplashScreen, type SplashData } from "@/components/SplashScreen";
 import { MonitorGreeting, type MonitorGreetingData } from "@/components/MonitorGreeting";
 import { Hero, type HeroData } from "@/components/Hero";
 import { Approach, type ApproachData } from "@/components/Approach";
+import { Tools, type ToolsData } from "@/components/Tools";
+import { Experience, type CareerData } from "@/components/Experience";
 import { Projects, type ProjectsData } from "@/components/Projects";
 import { About, type AboutData } from "@/components/About";
 import type { CityStripExperience } from "@/components/CityStrip";
@@ -14,14 +16,17 @@ import greeting from "../../content/greeting.json";
 import hero from "../../content/hero.json";
 import experience from "../../content/experience.json";
 import approach from "../../content/approach.json";
+import tools from "../../content/tools.json";
+import career from "../../content/career.json";
 import projects from "../../content/projects.json";
 import about from "../../content/about.json";
 
 /* The homepage: the splash first (the desk video, the greeting on its
    monitor, the scroll that walks into the screen), arriving on the page
    as designed in the Figma frame: header, then the bordered frame with the
-   hero and the city strip, My approach, Selected Projects, About Me, the
-   footer. The splash takes the page's opening (the header's space, the
+   hero and the city strip, My approach, Tools & AI, Experience, Selected
+   work, About Me, the footer (sections as in the updated homepage frame,
+   2026-09-28). The splash takes the page's opening (the header's space, the
    frame's top edge, the hero) as the picture on the monitor, and holds
    everything after it directly beneath, so the page is whole the moment
    the hero arrives. The frame is split in two for that (`frame--open`,
@@ -39,6 +44,8 @@ export default function Home() {
           <div className="column frame frame--rest">
             <main>
               <Approach data={approach as ApproachData} />
+              <Tools data={tools as ToolsData} />
+              <Experience data={career as CareerData} />
               <Projects data={projects as ProjectsData} />
               <About data={about as AboutData} />
             </main>

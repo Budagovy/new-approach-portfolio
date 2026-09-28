@@ -13,9 +13,23 @@ A single 1440 x 2568 frame, which the owner sent as a PDF export and asked
 to have treated as "the visual source of truth". Order: header, then
 inside a thin grey bordered frame with an orange mark in each corner: hero
 with the city strip, My approach, Selected Projects, About Me, footer. Each
-section after the hero opens with a thin charcoal bar ("01 HOW I DO IT",
-"02 WHAT I DO", "03 WHO DOING IT"). Plain cream inside the frame, a faint
-horizontal grain outside it.
+section after the hero opens with a thin charcoal bar. Plain cream inside
+the frame, a faint horizontal grain outside it.
+
+**Updated homepage frame (2026-09-28,** the owner's `Homepage edited.pdf`,
+given as a reference "for the content and structure, not as a design to
+copy exactly"). It adds two sections after My approach, Tools & AI and
+Experience; gives My approach and both new sections a two-line opening
+(headline in ink then grey, a sentence under it, left-aligned); drops the
+visible "Selected Projects" heading so the cards open the section; renames
+the bars 01 MY APPROACH, 02 TOOLS & AI, 03 EXPERIENCE, 04 SELECTED WORK,
+05 ABOUT ME; and brings sections down from 553 to 451 frame units (the
+hero stays 553, Experience keeps 553). Decisions the owner made on it: the
+frame's headings, applied in the site's own type scale; the experience
+cards in chronological order as a zig-zag (the frame numbers them A1-A5
+but places them out of order); two capitalisation slips fixed ("How I use
+AI & Tools", "Ministry of Defense"). The tool marks are the frame's own,
+extracted from the PDF (GitHub's is vector there, so rendered and keyed).
 
 `src/app/page.tsx` is the composition and reads in that order, wrapped in
 the splash (see "The splash"). Other routes use `PageFrame`: the header,
@@ -55,7 +69,8 @@ frame's 58.33% again from 1920px up (the owner's own screen is ~2544px,
 where nothing about the layout changed). Below 1184px that column no
 longer fits and everything stacks (a vertical timeline, photo over
 biography; cards three across from 700px, one per row below). Sections
-keep the frame's 553-unit minimum height and grow where 17px copy needs
+keep a minimum height (`--section-h`, 451 units; `--hero-h` 553;
+`--section-h-tall` 553 for Experience) and grow where 17px copy needs
 it. A few fixed-height boxes became minimums so 14px text fits them (the
 section bar, the Contact button, the badge, the approach circles).
 
@@ -126,11 +141,22 @@ artwork: the owner's stated order.
   `content/experience.json`.
 - **`SectionBar`**: the charcoal bar. Decorative (`aria-hidden`); the
   section's real heading is its `h2`.
-- **`Approach`**: small centred heading; a rule across the whole frame
-  through four evenly spaced numbered circles, the first orange and the
-  rest charcoal; all four titles and descriptions shown together.
-- **`Projects`**: small centred heading; three equal 2:3 crops, 5-unit
-  gaps, small left-aligned title and tag.
+- **`SectionIntro`**: a section's opening in the updated frame: a
+  two-line headline (ink, then grey) at the headline size and a sentence
+  under it, left-aligned. Used by Approach, Tools and Experience.
+- **`Approach`**: the opening; a rule across the whole frame through four
+  evenly spaced numbered circles, the first orange and the rest charcoal;
+  all four titles and descriptions shown together. Held in view while the
+  milestones fill (`qa:approach`).
+- **`Tools`**, `content/tools.json`: the opening; one square tile per
+  tool, its mark (`public/tools/`, decorative) and its name in the mono.
+  Wraps four and three on a phone.
+- **`Experience`**, `content/career.json` (`experience.json` is the
+  hero strip's): the opening; one card per role, A1 to A5, zig-zagging on
+  a 27-column grid (a card seven wide, each five further on), each card
+  drawing the dotted path to the next itself. One column below 1184px.
+- **`Projects`**: no visible heading (a hidden `h2` names the section);
+  three equal 2:3 crops, 5-unit gaps, small left-aligned title and tag.
 - **`About`**: photo left, biography right, opening with an orange
   "Nice to meet you!". A newline inside a paragraph in `about.json` is a
   line break, as set in the frame.
@@ -283,7 +309,7 @@ header itself is fixed and floats above the video, as before), then
 `.column.frame.frame--open` (the frame's top edge and side rules, the two
 top corner marks) holding `Hero`. `next` is everything after: the rest of
 the frame (`frame--rest`: side and bottom rules, bottom marks) with
-approach, projects, about and the footer. The splash renders the opening
+approach, tools, experience, projects, about and the footer. The splash renders the opening
 at viewport size inside the monitor's clip, scales it up with the scroll,
 and holds `next` directly beneath the opening for the whole pin (a
 sticky box marked `data-hold`), so the page is whole the moment the hero

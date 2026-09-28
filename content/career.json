@@ -1,0 +1,43 @@
+{
+  "label": {
+    "index": "03",
+    "text": "Experience"
+  },
+  "heading": [
+    "The experiences",
+    "that shaped me"
+  ],
+  "intro": "From independent projects to products used by millions, each role has changed how I think, collaborate, and design.",
+  "items": [
+    {
+      "index": "A1",
+      "company": "Military Intelligence",
+      "role": "Architecture & Design",
+      "text": "Managed construction and interior design projects during my military service."
+    },
+    {
+      "index": "A2",
+      "company": "B.Studios",
+      "role": "Founder & Product Designer",
+      "text": "Founded a boutique UX/UI studio creating intuitive digital products."
+    },
+    {
+      "index": "A3",
+      "company": "Ministry of Defense",
+      "role": "Project Manager",
+      "text": "Managed projects and contractors across architecture and interior design."
+    },
+    {
+      "index": "A4",
+      "company": "Playtika",
+      "role": "Senior Product Designer",
+      "text": "Designed product experiences focused on clear and engaging user flows."
+    },
+    {
+      "index": "A5",
+      "company": "Simply",
+      "role": "Senior Product Designer",
+      "text": "Designed intuitive product experiences across digital consumer products."
+    }
+  ]
+}

@@ -1,4 +1,8 @@
-/* QA gate for the page as a whole, against the Figma frame (1440 x 2568) it is built from.
+/* QA gate for the page as a whole, against the Figma frame (1440 x 2568) it is built from, and
+   the owner's updated homepage frame (2026-09-28): two new sections, Tools & AI and Experience,
+   after My approach; a two-line opening for My approach and the new sections; the cards opening
+   Selected work with no heading; bars named MY APPROACH to ABOUT ME; sections 451 frame-px tall
+   rather than 553 (the hero stays 553, Experience keeps 553).
 
    Geometry is the frame's, proportional to the column (--u = column / 840): the column's
    width rule, the header, the hero's height, each section's minimum height. Type is NOT
@@ -48,7 +52,13 @@ const probe = () => {
     chrome: q(".splash-chrome") ? +cs(q(".splash-chrome")).opacity : 1,
     splash: { room: o(".splash-frame"), greeting: o(".splash-screen"), scale: (() => { const t = q(".splash-hero-stage") && cs(q(".splash-hero-stage")).transform; return !t || t === "none" ? 1 : +t.match(/matrix\(([^,]+)/)[1]; })() },
     accent: asRgb(accent),
-    order: qa("header.site-header, #top, #approach, #work, #about, #contact").map((e) => e.id || "header"),
+    order: qa("header.site-header, #top, #approach, #tools, #experience, #work, #about, #contact").map((e) => e.id || "header"),
+    bodies: Object.fromEntries(qa(".section-body").map((b) => [b.closest("section").id, Math.round(b.getBoundingClientRect().height)])),
+    titles: qa(".section-title").map((t) => { const lead = t.querySelector(".section-title-lead"), rest = t.querySelector(".section-title-rest"), lede = t.parentElement.querySelector(".section-lede"); return { section: t.closest("section").id, lead: lead.textContent.trim(), rest: rest ? rest.textContent.trim() : "", leadColor: cs(lead).color, restColor: rest ? cs(rest).color : null, size: parseFloat(cs(t).fontSize), left: Math.round(lead.getBoundingClientRect().left), leadTop: Math.round(lead.getBoundingClientRect().top), restTop: rest ? Math.round(rest.getBoundingClientRect().top) : null, lede: lede ? lede.textContent.trim() : "" }; }),
+    faint: cs(document.documentElement).getPropertyValue("--faint").trim(),
+    tools: qa(".tool").map((t) => { const r = t.getBoundingClientRect(), img = t.querySelector("img"); return { name: t.querySelector(".tool-name").textContent.trim(), top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), loaded: img.complete && img.naturalWidth > 0, alt: img.getAttribute("alt"), opacity: +cs(t).opacity }; }),
+    roles: qa(".role").map((c) => { const r = c.getBoundingClientRect(), a = getComputedStyle(c, "::after"); return { index: c.querySelector(".role-index").textContent.trim(), company: c.querySelector(".role-company").textContent.trim(), role: c.querySelector(".role-title").textContent.trim(), top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), bottom: Math.round(r.bottom), path: a.content !== "none" && a.content !== "normal" && (parseFloat(a.borderRightWidth) > 0 || parseFloat(a.borderLeftWidth) > 0), opacity: +cs(c).opacity }; }),
+    workHeading: (() => { const h = q("#work h2"); return h ? { text: h.textContent.trim(), hidden: h.getBoundingClientRect().width <= 1 } : null; })(),
     frame: docR(q(".frame--rest")), header: doc(q(".site-header")), headerRow: doc(q(".site-header-row")),
     bars: qa(".section-bar").map((b) => ({ ...docR(b), text: [...b.children].map((c) => c.textContent.trim()).join(" "), bg: cs(b).backgroundColor })),
     hero: doc(q(".hero")), footer: docR(q(".footer")), docH: document.documentElement.scrollHeight,
@@ -104,13 +114,19 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
 
   /* The header is rendered through the splash (it is kept out of the room and brought in with
      the hero), so in DOM order it sits inside the #top section. */
-  ok("order: header (in the splash), hero, approach, projects, about, footer", s.order.join(",") === "top,header,approach,work,about,contact", s.order.join(","));
+  ok("order: header (in the splash), hero, approach, tools, experience, projects, about, footer", s.order.join(",") === "top,header,approach,tools,experience,work,about,contact", s.order.join(","));
 
   const u = s.frame.w / 840; // one frame pixel
   ok("column: 1120 at a 1440 window (its floor), centred", near(s.frame.w, 1120, 2) && near(s.frame.left + s.frame.right, 1440 - 15, 18), `${s.frame.left}..${s.frame.right} (${s.frame.w})`);
   ok("header 64 frame-px tall, its row in the same column", near(s.header.h, 64 * u, 2) && near(s.headerRow.left, s.frame.left, 1) && near(s.headerRow.right, s.frame.right, 1), `h ${s.header.h} (64u = ${(64 * u).toFixed(0)})`);
-  ok("hero is the frame's 553 tall; sections at least that, in order, no gaps", near(s.hero.h, 553 * u, 6) && s.bars[1].top - s.bars[0].bottom >= 553 * u - 2 && s.bars[2].top - s.bars[1].bottom >= 553 * u - 2 && s.footer.top - s.bars[2].bottom >= 553 * u - 2, `hero ${s.hero.h}, approach ${s.bars[1].top - s.bars[0].bottom}, projects ${s.bars[2].top - s.bars[1].bottom}, about ${s.footer.top - s.bars[2].bottom} (553u = ${(553 * u).toFixed(0)})`);
-  ok("bars span the frame, charcoal, labelled as in the frame", s.bars.every((b) => near(b.w, s.frame.w - 2, 3)) && s.bars.map((b) => b.text.toUpperCase()).join("|") === "01 HOW I DO IT|02 WHAT I DO|03 WHO DOING IT", s.bars.map((b) => b.text).join(" | "));
+  /* The updated frame: sections 451 tall where their content allows (My approach and Tools &
+     AI do exactly), Experience 553, the hero still 553. They are minimums: a section with more
+     17px copy than the frame's type grows, never shrinks below. */
+  const B = s.bodies, U = (n) => `${n} (${(n / u).toFixed(0)}u)`;
+  ok("hero is still the frame's 553 tall", near(s.hero.h, 553 * u, 6), `hero ${U(s.hero.h)}`);
+  ok("sections brought down to the updated frame's 451: My approach and Tools & AI exactly", near(B.approach, 451 * u, 3) && near(B.tools, 451 * u, 3), `approach ${U(B.approach)}, tools ${U(B.tools)} (451u = ${(451 * u).toFixed(0)})`);
+  ok("the rest at least 451 (Experience at least 553), shorter than the old 553 where their content allows", B.work >= 451 * u - 2 && B.about >= 451 * u - 2 && B.experience >= 553 * u - 2 && B.about < 553 * u, `experience ${U(B.experience)}, work ${U(B.work)}, about ${U(B.about)}`);
+  ok("bars span the frame, charcoal, named and numbered as in the updated frame", s.bars.every((b) => near(b.w, s.frame.w - 2, 3)) && s.bars.map((b) => b.text.toUpperCase()).join("|") === "01 MY APPROACH|02 TOOLS & AI|03 EXPERIENCE|04 SELECTED WORK|05 ABOUT ME", s.bars.map((b) => b.text).join(" | "));
   ok("footer closes the frame", near(s.footer.bottom, s.frame.bottom, 3), `footer bottom ${s.footer.bottom}, frame bottom ${s.frame.bottom}`);
   ok("four orange corner marks", s.marks === 4, `${s.marks}`);
 
@@ -123,8 +139,20 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
   ok("role badge", s.badge.toUpperCase() === "YONATAN BUDAGOV SENIOR PRODUCT DESIGNER", s.badge);
   ok("hero headline at the scale's display size (48-56)", s.headlineSize >= 48 && s.headlineSize <= 56, `${s.headlineSize}px`);
 
-  ok("section headings: My approach, Selected Projects, About Me, centred", s.headings.map((h) => h.text).join("|") === "My approach|Selected Projects|About Me" && s.headings.every((h) => near(h.centre, (s.frame.left + s.frame.right) / 2, 8)), s.headings.map((h) => `${h.text}@${h.centre}`).join(", "));
-  ok("section headings about half the hero's size (26 vs 56)", s.headings.every((h) => near(h.size, 26, 0.1)) && s.headings[0].size / s.headlineSize < 0.6, `${s.headings[0].size}px / ${s.headlineSize}px`);
+  ok("About Me keeps its small centred heading", s.headings.map((h) => h.text).join("|") === "About Me" && s.headings.every((h) => near(h.centre, (s.frame.left + s.frame.right) / 2, 8)), s.headings.map((h) => `${h.text}@${h.centre}`).join(", "));
+  ok("About Me heading about half the hero's size (26 vs 56)", s.headings.every((h) => near(h.size, 26, 0.1)) && s.headings[0].size / s.headlineSize < 0.6, `${s.headings[0].size}px / ${s.headlineSize}px`);
+  const faintRgb = (() => { const n = parseInt(s.faint.slice(1), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; })();
+  ok("the updated frame's openings, in its words: My approach, Tools & AI, Experience", s.titles.map((t) => `${t.section}: ${t.lead} / ${t.rest}`).join(" | ") === "approach: My approach to / designing better products | tools: How I use AI & Tools / to bring ideas to life | experience: The experiences / that shaped me" && s.titles.every((t) => t.lede.length > 60), s.titles.map((t) => `${t.lead} / ${t.rest}`).join(" | "));
+  ok("openings: two lines, ink then grey, the headline size, left-aligned on one edge", s.titles.every((t) => t.restTop > t.leadTop && t.restColor === faintRgb && t.leadColor !== faintRgb && t.size === 36) && new Set(s.titles.map((t) => t.left)).size === 1 && s.titles[0].left < s.frame.left + 60 * u, `left ${[...new Set(s.titles.map((t) => t.left))].join(",")}, sizes ${[...new Set(s.titles.map((t) => t.size))].join(",")}`);
+  ok("Selected work opens on the cards: no visible heading, one for a screen reader", !!s.workHeading && s.workHeading.hidden && s.workHeading.text === "Selected work", JSON.stringify(s.workHeading));
+
+  ok("tools: the seven, in the frame's order, one row, marks loaded, names as the text", s.tools.map((t) => t.name).join(",") === "Cursor,Claude,Figma,OpenAI,Vercel,GitHub,Supabase" && new Set(s.tools.map((t) => t.top)).size === 1 && s.tools.every((t) => t.loaded && t.alt === "" && t.opacity === 1), s.tools.map((t) => t.name).join(", "));
+  ok("tools: on the same left edge as the section's opening", near(s.tools[0].left, s.titles.find((t) => t.section === "tools").left, 2), `tiles from ${s.tools[0].left}, heading at ${s.titles.find((t) => t.section === "tools").left}`);
+  const R = s.roles;
+  ok("experience: the five roles, A1 to A5, in order", R.map((r) => `${r.index} ${r.company}`).join(" | ") === "A1 Military Intelligence | A2 B.Studios | A3 Ministry of Defense | A4 Playtika | A5 Simply" && R.every((r) => r.opacity === 1), R.map((r) => r.company).join(", "));
+  ok("experience: a zig-zag reading left to right, A1, A3, A5 on top and A2, A4 below", R.every((r, i) => i === 0 || r.left > R[i - 1].left) && R[0].top === R[2].top && R[2].top === R[4].top && R[1].top === R[3].top && R[1].top > R[0].bottom, R.map((r) => `${r.index}@${r.left},${r.top}`).join(" "));
+  ok("experience: a dotted path from each role to the next, none after the last", R.slice(0, 4).every((r) => r.path) && !R[4].path, R.map((r) => r.path ? "path" : "-").join(" "));
+  ok("experience: inside the frame, on the section's left edge", R[0].left >= s.titles.find((t) => t.section === "experience").left - 2 && R[4].right <= s.frame.right - 30 * u, `${R[0].left}..${R[4].right}, frame ..${s.frame.right}`);
 
   ok("approach: plain ground, no grid", s.approachBg === "none", s.approachBg);
   ok("approach: all four steps shown together, titles and descriptions", s.steps.length === 4 && s.steps.every((st) => st.opacity === 1 && st.title && st.desc > 40) && new Set(s.steps.map((st) => st.top)).size === 1, JSON.stringify(s.steps.map((st) => st.opacity)));
@@ -173,6 +201,10 @@ for (const [w, h] of [[390, 844], [768, 1024]]) {
   const cardRows = new Set(s.cards.map((c) => c.top)).size;
   ok(`${w}px: steps stacked, cards ${w < 700 ? "one per row" : "three across"}, all revealed and loaded`, new Set(s.steps.map((st) => st.top)).size === 4 && cardRows === (w < 700 ? 3 : 1) && s.cards.every((c) => c.opacity === 1 && c.loaded) && s.steps.every((st) => st.opacity === 1), `${cardRows} card row(s)`);
   ok(`${w}px: about ${w < 700 ? "stacks photo over biography" : "photo beside biography"}; everything inside the frame`, (w < 700 ? s.about.photo.bottom <= s.about.bio.top : s.about.photo.right <= s.about.bio.left) && s.about.bio.right <= s.frame.right && s.cards.every((c) => c.right <= s.frame.right) && s.foot.character.right <= s.frame.right, `bio ..${s.about.bio.right}, frame ..${s.frame.right}`);
+  const toolRows = [...new Set(s.tools.map((t) => t.top))].map((top) => s.tools.filter((t) => t.top === top).length);
+  ok(`${w}px: tools ${w < 700 ? "wrap four and three" : "in one row"}, inside the frame`, toolRows.join("+") === (w < 700 ? "4+3" : "7") && s.tools.every((t) => t.right <= s.frame.right), toolRows.join("+"));
+  ok(`${w}px: the roles stack in order down one column, joined by the path`, s.roles.every((r, i) => i === 0 || r.top > s.roles[i - 1].bottom) && new Set(s.roles.map((r) => r.left)).size === 1 && s.roles.slice(0, 4).every((r) => r.path) && s.roles.every((r) => r.right <= s.frame.right), `${s.roles.length} roles at x ${[...new Set(s.roles.map((r) => r.left))].join(",")}`);
+  ok(`${w}px: openings stay two lines, ink then grey`, s.titles.length === 3 && s.titles.every((t) => t.restTop > t.leadTop), s.titles.map((t) => t.section).join(","));
   ok(`${w}px: no console errors`, errors.length === 0, errors.join(" | "));
   await page.screenshot({ path: `${OUT}page-${w}.png`, fullPage: true });
   await ctx.close();
@@ -183,7 +215,7 @@ for (const [w, h] of [[390, 844], [768, 1024]]) {
   const { ctx, page, errors } = await open({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
   await walk(page);
   const s = await page.evaluate(probe);
-  ok("reduced motion: flat splash (room above, page below), all content shown, no hydration mismatch", (await page.locator(".splash-flat").count()) === 1 && s.steps.every((st) => st.opacity === 1) && s.cards.every((c) => c.opacity === 1) && !errors.some((e) => /hydrat/i.test(e)), errors.join(" | "));
+  ok("reduced motion: flat splash (room above, page below), all content shown, no hydration mismatch", (await page.locator(".splash-flat").count()) === 1 && s.steps.every((st) => st.opacity === 1) && s.cards.every((c) => c.opacity === 1) && s.tools.every((t) => t.opacity === 1) && s.roles.every((r) => r.opacity === 1) && !errors.some((e) => /hydrat/i.test(e)), errors.join(" | "));
   await ctx.close();
 }
 

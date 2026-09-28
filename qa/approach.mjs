@@ -153,12 +153,12 @@ const at = async (page, y, wait = 90) => { await page.evaluate((v) => scrollTo(0
 
   /* Entry and exit leave the rest of the page alone. */
   const page_ = await page.evaluate(() => {
-    const ids = [...document.querySelectorAll("#approach, #work, #about")].map((e) => e.id);
+    const ids = [...document.querySelectorAll("#approach, #tools, #experience, #work, #about")].map((e) => e.id);
     const approach = document.querySelector("#approach").getBoundingClientRect();
-    const work = document.querySelector("#work").getBoundingClientRect();
-    return { ids, gap: Math.round(work.top - approach.bottom), overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+    const next = document.querySelector("#tools").getBoundingClientRect();
+    return { ids, gap: Math.round(next.top - approach.bottom), overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth };
   });
-  ok("Selected Projects still follows it directly, with no gap", page_.ids.join(",") === "approach,work,about" && page_.gap === 0, `gap ${page_.gap}px`);
+  ok("the next section (Tools & AI) still follows it directly, with no gap", page_.ids.join(",") === "approach,tools,experience,work,about" && page_.gap === 0, `gap ${page_.gap}px`);
   ok("no horizontal overflow, no console errors", page_.overflow === 0 && errors.length === 0, `${page_.overflow}px ${errors.join(" | ")}`);
 
   await at(page, start + g.run * 0.5);
