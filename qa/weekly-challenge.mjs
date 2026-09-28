@@ -185,7 +185,7 @@ async function open(url, opts) {
   ok("the countdown and the certificate share a top and a bottom edge, at their own widths", event.level && levelled(event) && Math.abs(event.images[0].w - event.images[1].w) > 8, event.images.map((i) => `${i.w}x${i.h}@${i.top}`).join(" / "));
   ok("the two template excerpts are levelled the same way", template.level && levelled(template), template.images.map((i) => `${i.w}x${i.h}@${i.top}`).join(" / "));
 
-  ok("every caption starts at its figure's left edge", s.captions.length === 8 && s.captions.every((c) => c.ok), s.captions.filter((c) => !c.ok).map((c) => c.text).join("; ") || `${s.captions.length} captions`);
+  ok("every caption starts at its figure's left edge", s.captions.length === 7 && s.captions.every((c) => c.ok), s.captions.filter((c) => !c.ok).map((c) => c.text).join("; ") || `${s.captions.length} captions`);
   ok("headings and paragraphs left-aligned", s.aligns.every((a) => a === "left" || a === "start"), s.aligns.join(","));
   /* The hero lede's 66ch cap is the owner's own setting: in the face the site ships it runs
      85-90 characters a line, which is reported to him rather than changed (see the note in

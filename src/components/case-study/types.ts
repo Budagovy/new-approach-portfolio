@@ -71,14 +71,15 @@ export type CaseBlock =
       /** Short name for the side rail and the bar above the section ("Overview"). */
       nav: string;
       heading: string[];
-      intro?: string;
+      /** One paragraph, or several. */
+      intro?: string | string[];
       /** "surface": the pale research ground. */
       tone?: "surface";
       /** "split": heading left, intro right. */
       layout?: "split";
       blocks: CaseBlock[];
     }
-  | { type: "columns"; items: { label: string; labelTone?: "accent"; title?: string; text: string }[] }
+  | { type: "columns"; items: { label: string; labelTone?: "accent"; title?: string; text: string | string[] }[] }
   | { type: "note"; label?: string; text: string }
   /** A subhead and its paragraphs, with no image beside them. */
   | { type: "prose"; text: CaseText[] }

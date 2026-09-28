@@ -104,6 +104,9 @@ function Text({ items }: { items: CaseText[] }) {
   );
 }
 
+/** Copy written as one paragraph or several, as a list either way. */
+const paragraphs = (text?: string | string[]) => (text === undefined ? [] : Array.isArray(text) ? text : [text]);
+
 /** Section numbers, from the blocks' order: the bar before a section shows that section's. */
 function numberSections(blocks: CaseBlock[]) {
   const numbers = new Map<string, string>();
@@ -135,7 +138,7 @@ function Block({ block, labels, bar }: { block: CaseBlock; labels: ZoomLabels; b
           <header className={block.layout === "split" ? "cs-head cs-head--split" : "cs-head"}>
             <p className="cs-label">{block.label}</p>
             <h2 id={`${block.id}-heading`} className="cs-h2"><Lines lines={block.heading} /></h2>
-            {block.intro && <p className="cs-intro">{block.intro}</p>}
+            {paragraphs(block.intro).map((p) => <p key={p.slice(0, 32)} className="cs-intro">{p}</p>)}
           </header>
           <Blocks blocks={block.blocks} labels={labels} />
         </section>
@@ -148,7 +151,7 @@ function Block({ block, labels, bar }: { block: CaseBlock; labels: ZoomLabels; b
             <div key={item.label} className="cs-column">
               <p className={item.labelTone === "accent" ? "cs-label cs-label--accent" : "cs-label"}>{item.label}</p>
               {item.title && <h3 className="cs-h3">{item.title}</h3>}
-              <p className="cs-p">{item.text}</p>
+              {paragraphs(item.text).map((p) => <p key={p.slice(0, 32)} className="cs-p">{p}</p>)}
             </div>
           ))}
         </div>

@@ -1,4 +1,4 @@
-# Weekly Challenge - approved copy (from Simply-Weekly-Challenge-Content.md, 2026-09-27)
+# Weekly Challenge - approved copy (from Simply-Weekly-Challenge-Content.md, 2026-09-27; final copy updates 2026-09-28)
 
 SIMPLY PIANO / WEEKLY CHALLENGE
 
@@ -44,9 +44,9 @@ Earn at least two stars in each of the three songs. The music-note icon turns go
 
 NEXT GOAL
 A certificate of achievement.
-The progress bar expands, keeping the earned music icon visible and adding a star for the certificate. Earning three stars per song completes the nine-star goal.
+After the song package is earned, the progress bar expands to reveal the final goal, keeping the earned music-note icon visible. The certificate is awarded only when the child completes this additional stage, earning three stars in each song — nine in total.
 
-The completed music reward stays visible when the progress bar opens the next goal.
+The certificate is sent to the parent’s email. I wanted it to give the child something to proudly show their parent: a way to celebrate their success together and bring the parent into the learning experience.
 
 Keep the path forward visible.
 
@@ -60,7 +60,9 @@ KEY DECISION / THE WEEKLY EXPERIENCE
 
 Make the challenge feel like an event.
 
-I used the theme’s artwork and colors to give the event its own identity. In the lobby, the three songs sit at the center, with stars on each card and overall progress above. The child can see what to play and how close they are to the reward.
+During prototype testing, we noticed that children focused on the challenge’s theme and story while overlooking other information when the screen became too busy.
+
+I made the theme the entry point and gave the lobby a clear hierarchy: three songs at the center, stars on each card and progress toward the current reward above. The next milestone appears after the first reward is earned. The aim was to turn excitement about the music into a clear next action, without asking children to take in the entire challenge at once.
 
 A countdown introduces the event before it starts. When it ends, the experience recognizes the child’s achievement and introduces the next challenge. This connects one weekend to the next.
 
