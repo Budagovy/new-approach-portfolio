@@ -120,6 +120,24 @@ export const APPROACH = {
 } as const;
 
 /**
+ * Arrowheads travelling the dotted path between the experience cards
+ * (ExperienceRoute.tsx), after the owner's reference: a dashed road with
+ * arrows gliding along it, several at once, round and round.
+ */
+export const ROUTE = {
+  /** How fast an arrow travels, CSS px per second: an unhurried walk. */
+  speed: 56,
+  /** The distance from one arrow to the next along the route, px. */
+  spacing: 130,
+  /** An arrow fades in over this many px as it sets off and out as it
+   *  arrives, so it never sits on the edge of a card. */
+  fade: 16,
+  /** Stretches shorter than this, px, are left still (the ticks between
+   *  stacked cards on a phone): too short to read as travel. */
+  shortest: 80,
+} as const;
+
+/**
  * Guided scrolling: a gentle assist that settles a wheel or trackpad
  * scroll onto the next section's landing, never a lock. The rules that
  * keep it from feeling rigid:

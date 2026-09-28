@@ -662,8 +662,25 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 /* The zig-zag (Experience.tsx): 27 narrow columns, a card seven of them
    wide, each card five further on than the last; the first, third and
    fifth on the top row, the second and fourth below. */
+/* The cards and the arrows travelling their dotted path (ExperienceRoute.tsx). */
+.experience-map { position: relative; margin-top: calc(44 * var(--u)); }
+.experience-route { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+/* A small arrowhead in the accent, the colour the page already uses for
+   progress (the milestones), pointing the way it travels. Placed and turned
+   frame by frame; centred on the dashed line. */
+.route-arrow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 11px;
+  margin: -5.5px 0 0 -5px;
+  background: var(--accent);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  opacity: 0;
+  will-change: transform, opacity;
+}
 .experience-path {
-  margin-top: calc(44 * var(--u));
   display: grid;
   grid-template-columns: repeat(27, minmax(0, 1fr));
   row-gap: var(--role-gap);
@@ -846,7 +863,8 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 
   /* Experience: one column, the path running straight down between the
      cards, like the timeline in My approach. */
-  .experience-path { margin-top: 36px; grid-template-columns: minmax(0, 34rem); --role-gap: 28px; }
+  .experience-map { margin-top: 36px; }
+  .experience-path { grid-template-columns: minmax(0, 34rem); --role-gap: 28px; }
   .role, .role--low { grid-column: auto; grid-row: auto; padding: 16px 18px 18px; }
   .role:not(.role--low):not(:last-child)::after,
   .role--low:not(:last-child)::after {

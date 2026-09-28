@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { RevealGroup, RevealItem } from "@/components/Reveal";
 import { SectionBar, type SectionLabel } from "@/components/SectionBar";
 import { SectionIntro } from "@/components/SectionIntro";
+import { ExperienceRoute } from "@/components/ExperienceRoute";
 
 export interface Role {
   index: string;
@@ -39,17 +40,21 @@ export function Experience({ data }: { data: CareerData }) {
       <SectionBar label={data.label} />
       <div className="section-body experience-body">
         <SectionIntro heading={data.heading} intro={data.intro} />
-        <RevealGroup as="ol" className="experience-path">
-          {data.items.map((role, i) => (
-            /* --col: the grid line this card starts on (see the note above). */
-            <RevealItem as="li" key={role.company} className={i % 2 ? "role role--low" : "role"} style={{ "--col": i * 5 + 1 } as CSSProperties}>
-              <span className="role-index" aria-hidden="true">{role.index}</span>
-              <h3 className="role-company">{role.company}</h3>
-              <p className="role-title">{role.role}</p>
-              <p className="role-text">{role.text}</p>
-            </RevealItem>
-          ))}
-        </RevealGroup>
+        {/* The map: the cards, and over their dotted path the arrows travelling it. */}
+        <div className="experience-map">
+          <RevealGroup as="ol" className="experience-path">
+            {data.items.map((role, i) => (
+              /* --col: the grid line this card starts on (see the note above). */
+              <RevealItem as="li" key={role.company} className={i % 2 ? "role role--low" : "role"} style={{ "--col": i * 5 + 1 } as CSSProperties}>
+                <span className="role-index" aria-hidden="true">{role.index}</span>
+                <h3 className="role-company">{role.company}</h3>
+                <p className="role-title">{role.role}</p>
+                <p className="role-text">{role.text}</p>
+              </RevealItem>
+            ))}
+          </RevealGroup>
+          <ExperienceRoute />
+        </div>
       </div>
     </section>
   );

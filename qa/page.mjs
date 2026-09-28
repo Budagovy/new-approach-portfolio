@@ -152,6 +152,33 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
   ok("experience: the five roles, A1 to A5, in order", R.map((r) => `${r.index} ${r.company}`).join(" | ") === "A1 Military Intelligence | A2 B.Studios | A3 Ministry of Defense | A4 Playtika | A5 Simply" && R.every((r) => r.opacity === 1), R.map((r) => r.company).join(", "));
   ok("experience: a zig-zag reading left to right, A1, A3, A5 on top and A2, A4 below", R.every((r, i) => i === 0 || r.left > R[i - 1].left) && R[0].top === R[2].top && R[2].top === R[4].top && R[1].top === R[3].top && R[1].top > R[0].bottom, R.map((r) => `${r.index}@${r.left},${r.top}`).join(" "));
   ok("experience: a dotted path from each role to the next, none after the last", R.slice(0, 4).every((r) => r.path) && !R[4].path, R.map((r) => r.path ? "path" : "-").join(" "));
+  /* The arrows travelling the dotted path (ExperienceRoute.tsx). Bring the section into view
+     (they run only while it is on screen), then sample them twice. */
+  {
+    const y = await page.evaluate(() => { const m = document.querySelector(".experience-map").getBoundingClientRect(); return Math.round(m.top + scrollY - 160); });
+    await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(1600);
+    const shot = () => page.evaluate(() => {
+      const legs = [...document.querySelectorAll(".role")].flatMap((c) => {
+        const a = getComputedStyle(c, "::after"); if (a.content === "none" || a.content === "normal") return [];
+        const r = c.getBoundingClientRect(), x = r.left + parseFloat(a.left), yy = r.top + parseFloat(a.top);
+        const w = parseFloat(a.width) + (parseFloat(a.borderLeftWidth) || 0) + (parseFloat(a.borderRightWidth) || 0), h = parseFloat(a.height) + (parseFloat(a.borderTopWidth) || 0) + (parseFloat(a.borderBottomWidth) || 0);
+        const out = [];
+        if (parseFloat(a.borderTopWidth)) out.push({ kind: "h", y: yy + 0.5, from: x, to: x + w });
+        if (parseFloat(a.borderBottomWidth)) out.push({ kind: "h", y: yy + h - 0.5, from: x, to: x + w });
+        if (parseFloat(a.borderRightWidth)) out.push({ kind: "v", x: x + w - 0.5, from: yy, to: yy + h });
+        return out;
+      });
+      return [...document.querySelectorAll(".route-arrow")].map((el) => {
+        const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, o = +getComputedStyle(el).opacity;
+        const onLine = legs.some((l) => l.kind === "h" ? Math.abs(cy - l.y) <= 2 && cx >= l.from - 2 && cx <= l.to + 2 : Math.abs(cx - l.x) <= 2 && cy >= l.from - 2 && cy <= l.to + 2);
+        return { cx: Math.round(cx), cy: Math.round(cy), o, onLine };
+      });
+    });
+    const a1 = await shot(); await page.waitForTimeout(500); const a2 = await shot();
+    const seen = a1.filter((x) => x.o > 0.05);
+    ok("experience: arrowheads travel the dotted path, several at once, on the dashes", a1.length >= 4 && seen.length >= 3 && seen.every((x) => x.onLine), `${a1.length} arrows, ${seen.length} showing, ${seen.filter((x) => !x.onLine).length} off the line`);
+    ok("experience: and they move (a loop, not a picture)", a1.some((x, i) => a2[i] && (Math.abs(x.cx - a2[i].cx) + Math.abs(x.cy - a2[i].cy)) >= 10), a1.map((x, i) => `${Math.abs(x.cx - a2[i].cx) + Math.abs(x.cy - a2[i].cy)}px`).join(" "));
+  }
   ok("experience: inside the frame, on the section's left edge", R[0].left >= s.titles.find((t) => t.section === "experience").left - 2 && R[4].right <= s.frame.right - 30 * u, `${R[0].left}..${R[4].right}, frame ..${s.frame.right}`);
 
   ok("approach: plain ground, no grid", s.approachBg === "none", s.approachBg);
@@ -204,6 +231,7 @@ for (const [w, h] of [[390, 844], [768, 1024]]) {
   const toolRows = [...new Set(s.tools.map((t) => t.top))].map((top) => s.tools.filter((t) => t.top === top).length);
   ok(`${w}px: tools ${w < 700 ? "wrap four and three" : "in one row"}, inside the frame`, toolRows.join("+") === (w < 700 ? "4+3" : "7") && s.tools.every((t) => t.right <= s.frame.right), toolRows.join("+"));
   ok(`${w}px: the roles stack in order down one column, joined by the path`, s.roles.every((r, i) => i === 0 || r.top > s.roles[i - 1].bottom) && new Set(s.roles.map((r) => r.left)).size === 1 && s.roles.slice(0, 4).every((r) => r.path) && s.roles.every((r) => r.right <= s.frame.right), `${s.roles.length} roles at x ${[...new Set(s.roles.map((r) => r.left))].join(",")}`);
+  ok(`${w}px: the stacked cards' short dotted ticks stay still (no travelling arrows)`, (await page.locator(".route-arrow").count()) === 0, "");
   ok(`${w}px: openings stay two lines, ink then grey`, s.titles.length === 3 && s.titles.every((t) => t.restTop > t.leadTop), s.titles.map((t) => t.section).join(","));
   ok(`${w}px: no console errors`, errors.length === 0, errors.join(" | "));
   await page.screenshot({ path: `${OUT}page-${w}.png`, fullPage: true });
@@ -215,7 +243,7 @@ for (const [w, h] of [[390, 844], [768, 1024]]) {
   const { ctx, page, errors } = await open({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
   await walk(page);
   const s = await page.evaluate(probe);
-  ok("reduced motion: flat splash (room above, page below), all content shown, no hydration mismatch", (await page.locator(".splash-flat").count()) === 1 && s.steps.every((st) => st.opacity === 1) && s.cards.every((c) => c.opacity === 1) && s.tools.every((t) => t.opacity === 1) && s.roles.every((r) => r.opacity === 1) && !errors.some((e) => /hydrat/i.test(e)), errors.join(" | "));
+  ok("reduced motion: flat splash (room above, page below), all content shown, no hydration mismatch", (await page.locator(".splash-flat").count()) === 1 && s.steps.every((st) => st.opacity === 1) && s.cards.every((c) => c.opacity === 1) && s.tools.every((t) => t.opacity === 1) && s.roles.every((r) => r.opacity === 1) && (await page.locator(".route-arrow").count()) === 0 && !errors.some((e) => /hydrat/i.test(e)), errors.join(" | "));
   await ctx.close();
 }
 
