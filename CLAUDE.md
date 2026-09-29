@@ -122,10 +122,13 @@ artwork: the owner's stated order.
   shows either side as it does beside the frame. Name left; nav and the
   Contact button grouped right; Contact is a compact square-cornered
   rectangle; small orange dot under the active item.
-- **`Hero`**: static. Role badge, the two-line headline ("I design
-  products that" / "make life easier.", the second line orange and bold),
-  one line of subtitle, the city strip on the foot. It is what the page
-  opens on: the frame has no introductory sequence.
+- **`Hero`**: role badge, the two-line headline ("I design products
+  that" / the second line orange and bold, ROLLING: `RollingPhrase`), one
+  line of subtitle, the city strip on the foot. The second line opens on
+  "make life easier." (the frame's phrase) and rolls every 2.2s through
+  the phrases in `content/hero.json` (`HEADLINE` in motion.ts), each
+  rolling up and out as the next comes in from below; still under reduced
+  motion; read once by a screen reader rather than announced each time.
 - **`CityStrip`** wraps `<portfolio-city-strip>`, an approved web component
   (plain JS plus a `.d.ts`; `allowJs` is off) with assets in
   `public/city-strip/`. It is imported inside an effect because the module
@@ -420,7 +423,8 @@ or `page.route`).
 ## What was here before, and where it went
 
 Until the "match the Figma frame" commit the hero's second line rotated
-through seven phrases; "My approach" was held in place while scroll revealed its
+through seven phrases (brought back at the owner's request on
+2026-09-29: see `Hero` above); "My approach" was held in place while scroll revealed its
 steps one by one, the next section kept in view beneath it. The frame has
 none of that ("show all four step titles and descriptions
 simultaneously", "replace the rotating phrases"), so those were removed.

@@ -1,6 +1,14 @@
 {
   "badge": "Yonatan Budagov Senior Product Designer",
   "lead": "I design products that",
-  "emphasis": "make life easier.",
+  "phrases": [
+    "make life easier.",
+    "solve real problems.",
+    "make complexity simple.",
+    "feel intuitive.",
+    "turn friction into flow.",
+    "help people do more.",
+    "help businesses grow."
+  ],
   "note": "6 years of connecting user needs with business goals"
 }

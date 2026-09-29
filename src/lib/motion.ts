@@ -81,6 +81,17 @@ export const HERO = {
 } as const;
 
 /**
+ * The hero headline's rolling second line (RollingPhrase.tsx), as it was
+ * before the Figma rebuild: each phrase holds, then rolls up and out as the
+ * next rolls in from below, on a spring.
+ */
+export const HEADLINE = {
+  /** How long each phrase holds, ms. */
+  hold: 2200,
+  spring: { type: "spring", stiffness: 260, damping: 26 },
+} as const;
+
+/**
  * The greeting typed onto the monitor at rest, after the typewriter the
  * owner pointed at (21st.dev, designali-in): one character at a time
  * behind a thin cursor that blinks, a beat before it starts, held with

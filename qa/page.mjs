@@ -68,7 +68,8 @@ const probe = () => {
     cta: { radius: cs(q(".site-header-cta")).borderRadius, bg: cs(q(".site-header-cta")).backgroundColor, text: q(".site-header-cta").textContent.trim() },
     dot: !!q(".site-header-link[aria-current] .site-header-dot"),
     badge: q(".hero-badge").textContent.trim(),
-    headline: qa(".hero-headline > span").map((s) => ({ text: s.textContent.trim(), color: cs(s).color, weight: cs(s).fontWeight, h: s.getBoundingClientRect().height })),
+    headline: [q(".hero-headline > span:first-child"), q(".hero-roll")].map((s) => ({ text: s === q(".hero-roll") ? (qa(".hero-roll-phrase").find((p) => +cs(p).opacity > 0.9) || {}).textContent || "" : s.textContent.trim(), color: cs(s).color, weight: cs(s).fontWeight, h: s.getBoundingClientRect().height })),
+    roll: { phrases: qa(".hero-roll-phrase").map((p) => p.textContent.trim()), said: (q(".hero-headline .visually-hidden") || {}).textContent || "", hidden: q(".hero-roll").getAttribute("aria-hidden") },
     headlineSize: parseFloat(cs(q(".hero-headline")).fontSize),
     note: { text: q(".hero-note").textContent.trim(), lines: Math.round(q(".hero-note").getBoundingClientRect().height / parseFloat(cs(q(".hero-note")).lineHeight)) },
     headings: qa(".section-heading").map((h) => ({ text: h.textContent.trim(), size: parseFloat(cs(h).fontSize), centre: Math.round((h.getBoundingClientRect().left + h.getBoundingClientRect().right) / 2) })),
@@ -133,7 +134,16 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
   ok("header: name left, nav and Contact grouped right", s.name.left < s.frame.left + 120 * u && s.group.left > 720 && near(s.group.right, s.frame.right - 52 * u, 5), `name ${s.name.left}, group ${s.group.left}..${s.group.right}`);
   ok("Contact: square-cornered orange button; active dot under Welcome", s.cta.radius === "0px" && s.cta.bg === s.accent && s.cta.text === "Contact" && s.dot, JSON.stringify(s.cta));
 
-  ok("hero headline, exactly", s.headline.map((h) => h.text).join(" / ") === "I design products that / make life easier.", s.headline.map((h) => h.text).join(" / "));
+  ok("hero headline: the frame's lead, and its phrase first of the rolling ones", s.headline[0].text === "I design products that" && s.roll.phrases[0] === "make life easier." && s.roll.phrases.length === 7 && s.roll.said === "make life easier." && s.roll.hidden === "true", `"${s.headline[0].text}" / ${s.roll.phrases.join(" | ")}`);
+  /* The second line rolls (RollingPhrase.tsx): watch it change, and that nothing around it moves. */
+  {
+    const look = () => page.evaluate(() => { const vis = [...document.querySelectorAll(".hero-roll-phrase")].find((p) => +getComputedStyle(p).opacity > 0.9); const box = (sel) => Math.round(document.querySelector(sel).getBoundingClientRect().top); return { phrase: vis ? vis.textContent.trim() : "", lead: box(".hero-headline > span:first-child"), note: box(".hero-note"), roll: box(".hero-roll") }; });
+    const seen = [await look()];
+    for (let i = 0; i < 6; i++) { await page.waitForTimeout(1100); seen.push(await look()); }
+    const phrases = [...new Set(seen.map((x) => x.phrase).filter(Boolean))];
+    ok("hero: the orange line rolls on to the next phrase every couple of seconds", phrases.length >= 3 && phrases.every((p) => s.roll.phrases.includes(p)), phrases.join(" -> "));
+    ok("hero: nothing around it moves while it rolls (the lead line and the subtitle stay put)", new Set(seen.map((x) => x.lead)).size === 1 && new Set(seen.map((x) => x.note)).size === 1 && new Set(seen.map((x) => x.roll)).size === 1, `lead ${[...new Set(seen.map((x) => x.lead))]}, note ${[...new Set(seen.map((x) => x.note))]}`);
+  }
   ok("second line orange and bold; each line on one line", s.headline[1].color === s.accent && +s.headline[1].weight >= 700 && s.headline.every((h) => h.h < s.headlineSize * 1.4), `${s.headline[1].color} ${s.headline[1].weight}`);
   ok("subtitle, exactly, on one line", s.note.text === "6 years of connecting user needs with business goals" && s.note.lines === 1, `${s.note.lines} line(s)`);
   ok("role badge", s.badge.toUpperCase() === "YONATAN BUDAGOV SENIOR PRODUCT DESIGNER", s.badge);
@@ -243,7 +253,7 @@ for (const [w, h] of [[390, 844], [768, 1024]]) {
   const { ctx, page, errors } = await open({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
   await walk(page);
   const s = await page.evaluate(probe);
-  ok("reduced motion: flat splash (room above, page below), all content shown, no hydration mismatch", (await page.locator(".splash-flat").count()) === 1 && s.steps.every((st) => st.opacity === 1) && s.cards.every((c) => c.opacity === 1) && s.tools.every((t) => t.opacity === 1) && s.roles.every((r) => r.opacity === 1) && (await page.locator(".route-arrow").count()) === 0 && !errors.some((e) => /hydrat/i.test(e)), errors.join(" | "));
+  ok("reduced motion: flat splash (room above, page below), all content shown, no hydration mismatch", (await page.locator(".splash-flat").count()) === 1 && s.headline[1].text === "make life easier." && s.steps.every((st) => st.opacity === 1) && s.cards.every((c) => c.opacity === 1) && s.tools.every((t) => t.opacity === 1) && s.roles.every((r) => r.opacity === 1) && (await page.locator(".route-arrow").count()) === 0 && !errors.some((e) => /hydrat/i.test(e)), errors.join(" | "));
   await ctx.close();
 }
 

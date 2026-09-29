@@ -87,7 +87,7 @@ for (const [w, h, mobile] of [[1440, 900, false], [1920, 1080, false], [2544, 12
   const off = rest.filter((i) => !SCALE.some((s) => Math.abs(i.size - s) < 0.05));
   ok(`${tag} every text size is on the scale (14 / 17 / 26 / 36)`, off.length === 0, off.length ? off.slice(0, 4).map((i) => `${i.who} ${i.size}px "${i.text}"`).join("; ") : `${rest.length} text runs: ${[...new Set(rest.map((i) => i.size))].sort((a, b) => a - b).join(", ")}`);
   const d = display[0]?.size ?? 0;
-  ok(`${tag} hero display ${w >= 1184 ? "48-56" : "32-48"}, used nowhere else`, display.length === 2 && (w >= 1184 ? d >= 48 && d <= 56 : d >= 32 && d <= 48), `${d}px`);
+  ok(`${tag} hero display ${w >= 1184 ? "48-56" : "32-48"}, used nowhere else`, display.length >= 2 && display.every((i) => i.size === d) && (w >= 1184 ? d >= 48 && d <= 56 : d >= 32 && d <= 48), `${d}px, ${display.length} runs (the lead and the rolling phrases)`);
 
   const heads = items.filter((i) => ["h1", "h2", "h3"].includes(i.tag) || i.who === "project-title" || display.includes(i));
   const looseHead = heads.filter((i) => i.lh && i.lh > 1.31 && i.size >= 17 && !i.who.startsWith("footer-label"));

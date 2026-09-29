@@ -368,6 +368,21 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   letter-spacing: -0.035em;
   color: var(--ink);
 }
+/* The rolling line (RollingPhrase.tsx): every phrase in one grid cell, so
+   the line is as wide as the widest phrase and nothing moves as they
+   change; clipped, so a phrase rolls in and out of view rather than across
+   the line above. A little room above and below (given back in margin)
+   keeps descenders and accents clear of the clip. */
+.hero-roll {
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  padding-block: 0.08em;
+  margin-block: -0.08em;
+}
+.hero-roll-phrase { grid-area: 1 / 1; }
 .hero-emphasis {
   font-weight: 700;
   color: var(--accent);
