@@ -62,7 +62,7 @@ const audit = () => {
       const contrast = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
       const large = size >= 24 || (size >= 18.66 && weight >= 700);
       const lh = cs.lineHeight === "normal" ? null : parseFloat(cs.lineHeight) / size;
-      out.push({ who: (el.className && el.className.toString().split(" ")[0]) || el.tagName.toLowerCase(), tag: el.tagName.toLowerCase(), hero: !!el.closest?.(".hero-headline"), text: text.slice(0, 34), size: +size.toFixed(2), weight, lh: lh && +lh.toFixed(2), tracking: cs.letterSpacing, contrast: +contrast.toFixed(2), need: large ? 3 : 4.5, lines: lh ? Math.round(r.height / (lh * size)) : 1, chars: text.length, w: Math.round(r.width) });
+      out.push({ who: (el.className && el.className.toString().split(" ")[0]) || el.tagName.toLowerCase(), tag: el.tagName.toLowerCase(), hero: !!el.closest?.(".hero-headline"), strip: el.getRootNode() instanceof ShadowRoot && el.getRootNode().host.tagName === "PORTFOLIO-CITY-STRIP", text: text.slice(0, 34), size: +size.toFixed(2), weight, lh: lh && +lh.toFixed(2), tracking: cs.letterSpacing, contrast: +contrast.toFixed(2), need: large ? 3 : 4.5, lines: lh ? Math.round(r.height / (lh * size)) : 1, chars: text.length, w: Math.round(r.width) });
     }
   };
   visit(document);
@@ -84,7 +84,11 @@ for (const [w, h, mobile] of [[1440, 900, false], [1920, 1080, false], [2544, 12
   const display = items.filter((i) => i.hero);
   const rest = items.filter((i) => !display.includes(i));
 
-  const off = rest.filter((i) => !SCALE.some((s) => Math.abs(i.size - s) < 0.05));
+  /* The owner's one exception (2026-09-29): the city strip's career label (number, company,
+     role) set 15% over the scale. Exactly that, there only; anything else off the scale fails. */
+  const stripLabel = (i) => i.strip && ["number", "company", "separator", "role"].includes(i.who) && SCALE.some((s) => Math.abs(i.size - s * 1.15) < 0.05);
+  const off = rest.filter((i) => !SCALE.some((s) => Math.abs(i.size - s) < 0.05) && !stripLabel(i));
+  if (rest.some(stripLabel)) console.log(`NOTE  ${tag} the city strip's career label is 15% over the scale, by the owner's choice: ${[...new Set(rest.filter(stripLabel).map((i) => `${i.who} ${i.size}px`))].join(", ")}`);
   ok(`${tag} every text size is on the scale (14 / 17 / 26 / 36)`, off.length === 0, off.length ? off.slice(0, 4).map((i) => `${i.who} ${i.size}px "${i.text}"`).join("; ") : `${rest.length} text runs: ${[...new Set(rest.map((i) => i.size))].sort((a, b) => a - b).join(", ")}`);
   const d = display[0]?.size ?? 0;
   ok(`${tag} hero display ${w >= 1184 ? "48-56" : "32-48"}, used nowhere else`, display.length >= 2 && display.every((i) => i.size === d) && (w >= 1184 ? d >= 48 && d <= 56 : d >= 32 && d <= 48), `${d}px, ${display.length} runs (the lead and the rolling phrases)`);

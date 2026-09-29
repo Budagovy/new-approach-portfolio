@@ -418,11 +418,13 @@ portfolio-city-strip {
   --strip-pad: calc(28 * var(--u));
   --strip-gap: calc(11 * var(--u));
   --strip-sep: calc(4 * var(--u));
-  --strip-number: var(--fs-small);
-  --strip-company: var(--fs-body);
+  /* The career label (number, company, role) 15% up from the scale, at the
+     owner's request (2026-09-29): 16.1 / 19.55 / 16.1px. */
+  --strip-number: calc(var(--fs-small) * 1.15);
+  --strip-company: calc(var(--fs-body) * 1.15);
   --strip-company-tracking: -0.01em;
   --strip-company-weight: 700;
-  --strip-role: var(--fs-small);
+  --strip-role: calc(var(--fs-small) * 1.15);
   --strip-small: var(--fs-small);
   --strip-scene-h: calc(97 * var(--u));
   --strip-walker-h: 38%;
