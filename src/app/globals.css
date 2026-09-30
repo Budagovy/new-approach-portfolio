@@ -438,11 +438,13 @@ portfolio-city-strip {
   display: flex;
   align-items: center;
   gap: calc(7 * var(--u));
-  min-height: max(calc(17 * var(--u)), 2.25rem);
+  /* Quieter at the owner's request (2026-09-30): 12px type, 28px tall, the
+     same size as the case studies' bars. Wayfinding chrome, like the rail. */
+  min-height: max(calc(17 * var(--u)), 1.75rem);
   padding-inline: calc(20 * var(--u));
   background: var(--bar);
   color: var(--bg);
-  font-size: var(--fs-small);
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;

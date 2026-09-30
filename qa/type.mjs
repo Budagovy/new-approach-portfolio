@@ -48,6 +48,8 @@ const audit = () => {
       if (el.closest?.(".splash-screen")) continue;
       /* Case-study wayfinding chrome (the section rail, bar labels) is at the reference's 10-12px, by design. */
       if (el.closest?.(".cs-rail, .cs-bar")) continue;
+      /* The homepage's section bars likewise, at 12px since 2026-09-30 (the owner's request). */
+      if (el.closest?.(".section-bar")) continue;
       /* Text for a screen reader alone (clipped to nothing) is not page type. */
       if (el.closest?.(".visually-hidden")) continue;
       const text = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join("").trim();
