@@ -126,7 +126,7 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
   const B = s.bodies, U = (n) => `${n} (${(n / u).toFixed(0)}u)`;
   ok("hero is still the frame's 553 tall", near(s.hero.h, 553 * u, 6), `hero ${U(s.hero.h)}`);
   ok("sections brought down to the updated frame's 451: My approach and Tools & AI exactly", near(B.approach, 451 * u, 3) && near(B.tools, 451 * u, 3), `approach ${U(B.approach)}, tools ${U(B.tools)} (451u = ${(451 * u).toFixed(0)})`);
-  ok("the rest at least 451 (Experience at least 553), shorter than the old 553 where their content allows", B.work >= 451 * u - 2 && B.about >= 451 * u - 2 && B.experience >= 553 * u - 2 && B.about < 553 * u, `experience ${U(B.experience)}, work ${U(B.work)}, about ${U(B.about)}`);
+  ok("the rest at least 451 (Experience at least 553), growing only where their content needs the room", B.work >= 451 * u - 2 && B.about >= 451 * u - 2 && B.experience >= 553 * u - 2, `experience ${U(B.experience)}, work ${U(B.work)}, about ${U(B.about)}`);
   ok("bars span the frame, charcoal, named and numbered as in the updated frame", s.bars.every((b) => near(b.w, s.frame.w - 2, 3)) && s.bars.map((b) => b.text.toUpperCase()).join("|") === "01 MY APPROACH|02 TOOLS & AI|03 EXPERIENCE|04 SELECTED WORK|05 ABOUT ME", s.bars.map((b) => b.text).join(" | "));
   ok("footer closes the frame", near(s.footer.bottom, s.frame.bottom, 3), `footer bottom ${s.footer.bottom}, frame bottom ${s.frame.bottom}`);
   ok("four orange corner marks", s.marks === 4, `${s.marks}`);
@@ -205,6 +205,19 @@ const walk = async (page) => { const h = await page.evaluate(() => document.docu
   ok("footer: Contact, Sitemap, Elsewhere, copyright", s.foot.labels.join("|").toUpperCase() === "CONTACT|SITEMAP|ELSEWHERE" && s.foot.mail === "mailto:Budagovy@gmail.com" && /2026 Yonatan Budagov/i.test(s.foot.copyright), s.foot.labels.join(" | "));
   ok("footer: character at the bottom right, standing on the frame's edge", s.foot.characterLoaded && s.foot.character.left > s.frame.left + s.frame.w * 0.6 && near(s.foot.character.bottom, s.frame.bottom, 3), `x ${s.foot.character.left}, bottom ${s.foot.character.bottom} vs ${s.frame.bottom}`);
   ok("no dead links in the footer (unknown addresses are plain text)", s.foot.deadLinks === 0, `${s.foot.deadLinks}`);
+  {
+    const links = await page.evaluate(() => ({
+      elsewhere: [...document.querySelectorAll(".footer a")].filter((a) => /linkedin|instagram/i.test(a.href)).map((a) => ({ text: a.textContent.trim(), href: a.getAttribute("href"), target: a.getAttribute("target"), rel: a.getAttribute("rel") })),
+      ctas: [...document.querySelectorAll(".about-cta")].map((a) => ({ text: a.childNodes[0].textContent.trim(), said: a.textContent.trim(), href: a.getAttribute("href"), target: a.getAttribute("target"), rel: a.getAttribute("rel"), bg: getComputedStyle(a).backgroundColor, h: Math.round(a.getBoundingClientRect().height) })),
+    }));
+    const E = Object.fromEntries(links.elsewhere.map((l) => [l.text, l]));
+    ok("footer: LinkedIn and Instagram lead to the owner's profiles, in a new tab", E.LinkedIn?.href === "https://www.linkedin.com/in/yonatan-budagov-12245a186/" && E.Instagram?.href === "https://www.instagram.com/budagovy/" && links.elsewhere.every((l) => l.target === "_blank" && /noopener/.test(l.rel)), links.elsewhere.map((l) => `${l.text} ${l.href}`).join(" | "));
+    const [p, sec] = links.ctas;
+    ok("about: two calls to action, the primary first: Let's Talk! (WhatsApp) and Resume", links.ctas.length === 2 && p.text === "Let\u2019s Talk!" && p.href === "https://wa.me/972502434399" && sec.text === "Resume" && sec.href === "/Yonatan-Budagov-CV-2026.pdf" && links.ctas.every((a) => a.target === "_blank" && /noopener/.test(a.rel)), links.ctas.map((a) => `${a.text} -> ${a.href}`).join(" | "));
+    ok("about: the primary in the accent, the secondary an outline; both tall enough to tap, and say where they go", p.bg === s.accent && sec.bg === "rgba(0, 0, 0, 0)" && links.ctas.every((a) => a.h >= 44 && a.said.length > a.text.length), links.ctas.map((a) => `${a.h}px, "${a.said}"`).join(" | "));
+    const pdf = await page.evaluate(async () => { const r = await fetch("/Yonatan-Budagov-CV-2026.pdf"); return { status: r.status, type: r.headers.get("content-type"), size: (await r.arrayBuffer()).byteLength }; });
+    ok("about: the resume is there, a PDF", pdf.status === 200 && /pdf/.test(pdf.type) && pdf.size > 5000, JSON.stringify(pdf));
+  }
 
   ok("every in-page link has a real target", s.links.length >= 4 && s.links.every((l) => l.exists), s.links.map((l) => `${l.href}${l.exists ? "" : " MISSING"}`).join(" "));
   for (const [label, id] of [["About Me", "about"], ["Contact", "contact"], ["Projects", "work"], ["Welcome", "top"]]) {

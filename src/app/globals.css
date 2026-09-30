@@ -793,6 +793,32 @@ a.project:hover .project-media img { scale: calc(var(--zoom, 1) * 1.03); }
 .about-bio p { white-space: pre-line; }
 .about-bio p + p { margin-top: calc(14 * var(--u)); }
 .about-hello { font-weight: 700; color: var(--accent); }
+/* The calls to action under the biography (2026-09-30): the primary in the
+   header Contact button's own treatment (orange, square corners, bold
+   14px), the secondary its outline in ink. 44px tall, to tap. */
+.about-actions {
+  margin-top: calc(22 * var(--u));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.about-cta {
+  display: inline-grid;
+  place-items: center;
+  min-height: 2.75rem;
+  padding-inline: 1.25rem;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
+}
+.about-cta:hover { background: color-mix(in srgb, var(--accent) 86%, var(--bar)); border-color: color-mix(in srgb, var(--accent) 86%, var(--bar)); }
+.about-cta--secondary { border-color: var(--ink-strong); background: transparent; color: var(--ink-strong); }
+.about-cta--secondary:hover { border-color: var(--ink-strong); background: var(--ink-strong); color: var(--bg); }
+@media (prefers-reduced-motion: reduce) { .about-cta { transition: none; } }
 
 /* --- Footer --------------------------------------------------------------- */
 .footer {
